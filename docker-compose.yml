@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  shortlink:
+    build: .
+    container_name: shortlink-app
+    restart: unless-stopped
+    environment:
+      - BASE_URL=https://shortlinks.sube.top
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./shortlinks.db:/app/shortlinks.db
+
