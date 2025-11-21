@@ -9,15 +9,20 @@ from typing import Optional, Dict, List
 class ShortLinkClient:
     """短链服务客户端"""
     
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8000", api_key: Optional[str] = None):
         """
         初始化客户端
         
         Args:
             base_url: 短链服务的地址，例如: https://s.yourdomain.com
+            api_key: API密钥（如果服务启用了认证）
         """
         self.base_url = base_url.rstrip('/')
         self.api_url = f"{self.base_url}/api"
+        self.api_key = api_key
+        self.headers = {}
+        if api_key:
+            self.headers["X-API-Key"] = api_key
     
     def shorten(self, url: str, custom_code: Optional[str] = None) -> Dict:
         """
@@ -47,6 +52,7 @@ class ShortLinkClient:
             response = requests.post(
                 f"{self.api_url}/shorten",
                 json=data,
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -59,6 +65,7 @@ class ShortLinkClient:
         try:
             response = requests.get(
                 f"{self.api_url}/info/{short_code}",
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -71,6 +78,7 @@ class ShortLinkClient:
         try:
             response = requests.get(
                 f"{self.api_url}/stats/{short_code}",
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -83,6 +91,7 @@ class ShortLinkClient:
         try:
             response = requests.delete(
                 f"{self.api_url}/{short_code}",
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -96,6 +105,7 @@ class ShortLinkClient:
             response = requests.get(
                 f"{self.api_url}/list",
                 params={"skip": skip, "limit": limit},
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()

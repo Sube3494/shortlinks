@@ -36,7 +36,19 @@
 
 将域名 `shortlinks.sube.top` 的 A 记录指向服务器 IP。
 
-#### 2. 启动短链服务
+#### 2. 配置 API 密钥（可选）
+
+编辑 `docker-compose.yml`，设置 `API_KEY` 环境变量：
+
+```yaml
+environment:
+  - BASE_URL=https://shortlinks.sube.top
+  - API_KEY=your-secret-api-key-here  # 设置你的API密钥
+```
+
+**注意：** 如果不设置 `API_KEY` 或设置为空，则不启用认证，任何人都可以调用API。
+
+#### 3. 启动短链服务
 
 ```bash
 # 构建镜像并启动（首次运行会自动构建）
@@ -46,7 +58,7 @@ docker-compose up -d
 docker-compose up
 ```
 
-#### 3. 配置外部 Caddy
+#### 4. 配置外部 Caddy
 
 将 `Caddyfile` 复制到 Caddy 配置目录，或使用当前目录的 Caddyfile：
 
@@ -61,7 +73,7 @@ caddy run --config Caddyfile
 
 Caddy 会自动申请 Let's Encrypt SSL 证书并配置 HTTPS。
 
-#### 4. 查看日志
+#### 5. 查看日志
 
 ```bash
 # 短链服务日志
@@ -71,7 +83,7 @@ docker-compose logs -f
 sudo journalctl -u caddy -f
 ```
 
-#### 5. 停止服务
+#### 6. 停止服务
 
 ```bash
 docker-compose down
@@ -79,15 +91,35 @@ docker-compose down
 
 ## API 使用
 
+### API 密钥认证
+
+**重要：** 如果设置了 `API_KEY` 环境变量，所有 API 接口都需要认证（访问短链除外）。
+
+**认证方式：**
+1. **Header 方式（推荐）：** 在请求头中添加 `X-API-Key: your-api-key`
+2. **Query 参数方式：** 在URL中添加 `?api_key=your-api-key`
+
 ### 创建短链
 
+**使用 Header 认证：**
 ```bash
 POST https://shortlinks.sube.top/api/shorten
 Content-Type: application/json
+X-API-Key: your-api-key
 
 {
   "url": "https://www.example.com/very/long/url",
   "custom_code": "example"  # 可选
+}
+```
+
+**使用 Query 参数认证：**
+```bash
+POST https://shortlinks.sube.top/api/shorten?api_key=your-api-key
+Content-Type: application/json
+
+{
+  "url": "https://www.example.com/very/long/url"
 }
 ```
 
@@ -108,10 +140,14 @@ Content-Type: application/json
 ```python
 import requests
 
+API_KEY = "your-api-key"  # 替换为你的API密钥
+headers = {"X-API-Key": API_KEY}
+
 # 创建短链
 response = requests.post(
     "https://shortlinks.sube.top/api/shorten",
-    json={"url": "https://www.example.com/very/long/url"}
+    json={"url": "https://www.example.com/very/long/url"},
+    headers=headers
 )
 
 result = response.json()
@@ -119,12 +155,20 @@ short_url = result['short_url']  # 使用这个短链接
 print(short_url)
 ```
 
+**或者使用 Query 参数：**
+```python
+response = requests.post(
+    f"https://shortlinks.sube.top/api/shorten?api_key={API_KEY}",
+    json={"url": "https://www.example.com/very/long/url"}
+)
+```
+
 ### 使用 SDK
 
 ```python
 from shortlink_client import ShortLinkClient
 
-client = ShortLinkClient("https://shortlinks.sube.top")
+client = ShortLinkClient("https://shortlinks.sube.top", api_key="your-api-key")
 short_url = client.shorten("https://www.example.com")['short_url']
 ```
 

@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, Header, Query
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Optional
@@ -38,6 +39,44 @@ app.add_middleware(
 # 获取基础URL（用于生成完整短链）
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
+# API密钥（从环境变量读取）
+API_KEY = os.getenv("API_KEY", "")
+
+# API密钥Header
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    api_key: Optional[str] = Query(None)
+):
+    """
+    验证API密钥
+    支持通过 Header (X-API-Key) 或 Query参数 (api_key) 传递
+    """
+    # 如果没有设置API_KEY，则不启用认证
+    if not API_KEY:
+        return True
+    
+    # 优先使用Header中的密钥，如果没有则使用Query参数
+    provided_key = x_api_key or api_key
+    
+    # 如果设置了API_KEY但没有提供密钥，拒绝访问
+    if not provided_key:
+        raise HTTPException(
+            status_code=401,
+            detail="缺少API密钥，请在Header中添加 X-API-Key 或在URL中添加 api_key 参数"
+        )
+    
+    # 验证密钥
+    if provided_key != API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="无效的API密钥"
+        )
+    
+    return True
+
 
 @app.get("/")
 async def root():
@@ -60,7 +99,8 @@ async def root():
 @app.post("/api/shorten", response_model=ShortLinkResponse)
 async def create_short_link(
     request: ShortLinkCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
 ):
     """
     创建短链
@@ -145,7 +185,8 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
 @app.get("/api/info/{short_code}", response_model=ShortLinkResponse)
 async def get_short_link_info(
     short_code: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
 ):
     """
     获取短链详细信息
@@ -170,7 +211,8 @@ async def get_short_link_info(
 @app.get("/api/stats/{short_code}", response_model=ShortLinkStats)
 async def get_short_link_stats(
     short_code: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
 ):
     """
     获取短链统计信息
@@ -195,7 +237,8 @@ async def get_short_link_stats(
 async def list_short_links(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
 ):
     """
     列出所有短链
@@ -221,7 +264,8 @@ async def list_short_links(
 @app.delete("/api/{short_code}")
 async def delete_short_link(
     short_code: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
 ):
     """
     删除短链
