@@ -108,7 +108,7 @@ async def create_short_link(
     - **url**: 原始URL（必需）
     - **custom_code**: 自定义短码（可选，6-10个字符）
     """
-    # 规范化URL
+    # 规范化URL（会自动清理无效转义字符）
     original_url = normalize_url(request.url)
     
     # 验证URL格式

@@ -103,24 +103,38 @@ docker-compose down
 
 **使用 Header 认证：**
 ```bash
-POST https://shortlinks.sube.top/api/shorten
-Content-Type: application/json
-X-API-Key: your-api-key
-
-{
-  "url": "https://www.example.com/very/long/url",
-  "custom_code": "example"  # 可选
-}
+curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: your-api-key' \
+  -d '{"url": "https://www.example.com/very/long/url"}'
 ```
 
-**使用 Query 参数认证：**
+**注意：** 如果 URL 中包含特殊字符（如反斜杠 `\`），需要正确转义：
 ```bash
-POST https://shortlinks.sube.top/api/shorten?api_key=your-api-key
-Content-Type: application/json
+# 方法1: 使用单引号包裹 JSON，URL 中的反斜杠需要转义为 \\
+curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: your-api-key' \
+  -d '{"url": "https://example.com/path\\?param=value"}'
 
-{
-  "url": "https://www.example.com/very/long/url"
-}
+# 方法2: 使用文件（推荐，避免转义问题）
+echo '{"url": "https://example.com/path?param=value"}' > /tmp/data.json
+curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: your-api-key' \
+  -d @/tmp/data.json
+
+# 方法3: 使用 Python requests（最简单）
+python3 -c "
+import requests
+import json
+response = requests.post(
+    'https://shortlinks.sube.top/api/shorten',
+    headers={'X-API-Key': 'your-api-key'},
+    json={'url': 'https://example.com/path?param=value'}
+)
+print(response.json())
+"
 ```
 
 **响应：**

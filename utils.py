@@ -28,8 +28,11 @@ def validate_url(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """规范化URL（确保有协议前缀）"""
-    if not url.startswith(('http://', 'https://')):
-        return 'https://' + url
-    return url
+    """规范化URL（确保有协议前缀，清理无效转义字符）"""
+    # 清理URL中常见的无效转义字符（这些可能是JSON转义错误导致的）
+    cleaned_url = url.replace('\\?', '?').replace('\\=', '=').replace('\\&', '&')
+    
+    if not cleaned_url.startswith(('http://', 'https://')):
+        return 'https://' + cleaned_url
+    return cleaned_url
 
