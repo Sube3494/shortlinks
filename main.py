@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException, Depends, Request, Header, Query, Request, Body
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, HTTPException, Depends, Request, Header, Query, Request
+from fastapi.responses import RedirectResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Optional
@@ -28,6 +30,25 @@ app = FastAPI(
     description="一个简单易用的短链服务，支持API调用",
     version="1.0.0"
 )
+
+# 修复 JSON 中无效转义字符的中间件
+class FixJsonEscapeMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        if request.url.path == "/api/shorten" and request.method == "POST":
+            body = await request.body()
+            if body:
+                body_str = body.decode('utf-8')
+                # 修复无效的转义序列：\? \= \& 等（保留有效的转义序列）
+                fixed_body = re.sub(r'\\([^"\\/bfnrtu0-9])', r'\1', body_str)
+                # 重新创建请求对象
+                async def receive():
+                    return {"type": "http.request", "body": fixed_body.encode('utf-8')}
+                request._receive = receive
+        
+        response = await call_next(request)
+        return response
+
+app.add_middleware(FixJsonEscapeMiddleware)
 
 # 配置CORS，允许跨域请求
 app.add_middleware(
@@ -100,7 +121,7 @@ async def root():
 
 @app.post("/api/shorten", response_model=ShortLinkResponse)
 async def create_short_link(
-    http_request: Request,
+    request: ShortLinkCreate,
     db: Session = Depends(get_db),
     _: bool = Depends(verify_api_key)
 ):
@@ -110,42 +131,22 @@ async def create_short_link(
     - **url**: 原始URL（必需）
     - **custom_code**: 自定义短码（可选，6-10个字符）
     """
-    # 读取原始请求体并修复无效的转义字符
-    body_bytes = await http_request.body()
-    body_str = body_bytes.decode('utf-8')
-    
-    # 修复无效的转义序列：\? \= \& 等
-    fixed_body = re.sub(r'\\([^"\\/bfnrtu])', r'\1', body_str)
-    
-    # 解析 JSON
-    try:
-        data = json.loads(fixed_body)
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=400, detail=f"JSON格式错误: {str(e)}")
-    
-    # 验证必需字段
-    if 'url' not in data:
-        raise HTTPException(status_code=400, detail="缺少必需字段: url")
-    
-    url = data.get('url', '')
-    custom_code = data.get('custom_code')
-    
-    # 规范化URL
-    original_url = normalize_url(url)
+    # 规范化URL（会自动清理无效转义字符）
+    original_url = normalize_url(request.url)
     
     # 验证URL格式
     if not validate_url(original_url):
         raise HTTPException(status_code=400, detail="无效的URL格式")
     
     # 处理自定义短码或生成新短码
-    if custom_code:
+    if request.custom_code:
         # 验证自定义短码格式
-        if not (6 <= len(custom_code) <= 10):
+        if not (6 <= len(request.custom_code) <= 10):
             raise HTTPException(
                 status_code=400,
                 detail="自定义短码长度必须在6-10个字符之间"
             )
-        if not custom_code.isalnum():
+        if not request.custom_code.isalnum():
             raise HTTPException(
                 status_code=400,
                 detail="自定义短码只能包含字母和数字"
@@ -153,14 +154,14 @@ async def create_short_link(
         
         # 检查自定义短码是否已存在
         existing = db.query(ShortLink).filter(
-            ShortLink.short_code == custom_code
+            ShortLink.short_code == request.custom_code
         ).first()
         if existing:
             raise HTTPException(
                 status_code=409,
-                detail=f"短码 '{custom_code}' 已被使用"
+                detail=f"短码 '{request.custom_code}' 已被使用"
             )
-        short_code = custom_code
+        short_code = request.custom_code
     else:
         short_code = get_unique_short_code()
     
