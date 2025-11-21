@@ -143,7 +143,7 @@ short_url = client.shorten("https://www.example.com")['short_url']
 
 ## 数据持久化
 
-数据库文件 `shortlinks.db` 保存在项目目录，容器重启数据不会丢失。
+数据库文件保存在 `./data/shortlinks.db`，容器重启数据不会丢失。
 
 ## 常用命令
 

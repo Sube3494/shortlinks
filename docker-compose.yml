@@ -10,5 +10,5 @@ services:
     ports:
       - "18000:8000"
     volumes:
-      - ./shortlinks.db:/app/shortlinks.db
+      - ./data:/app/data
 

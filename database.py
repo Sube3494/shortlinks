@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 import os
 
 # 数据库文件路径
-DATABASE_URL = "sqlite:///./shortlinks.db"
+import os
+db_path = os.getenv("DATABASE_PATH", "/app/data/shortlinks.db")
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
+DATABASE_URL = f"sqlite:///{db_path}"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

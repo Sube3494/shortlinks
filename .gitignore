@@ -27,6 +27,7 @@ wheels/
 *.db
 *.sqlite
 *.sqlite3
+data/
 
 # IDE
 .vscode/
