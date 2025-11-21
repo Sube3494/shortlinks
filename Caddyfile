@@ -1,5 +1,5 @@
 shortlinks.sube.top {
-    reverse_proxy localhost:8000 {
+    reverse_proxy localhost:18000 {
         header_up Host {host}
         header_up X-Real-IP {remote_host}
         header_up X-Forwarded-For {remote_host}

@@ -23,11 +23,11 @@
 
 2. **docker-compose.yml** 定义服务：
    - `build: .` 使用当前目录的 Dockerfile 构建镜像
-   - 运行 shortlink 服务，监听 8000 端口
+   - 运行 shortlink 服务，端口映射 `18000:8000`（外部18000映射到容器内8000）
    - 挂载数据库文件持久化数据
 
 3. **Caddyfile** 配置外部 Caddy：
-   - 反向代理到 `localhost:8000`
+   - 反向代理到 `localhost:18000`
    - 自动申请 SSL 证书
 
 ### 部署步骤
