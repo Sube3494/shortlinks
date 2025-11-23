@@ -9,6 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY . .
 
+# 确保 static 目录存在
+RUN mkdir -p static || true
+
 # 暴露端口
 EXPOSE 8000
 

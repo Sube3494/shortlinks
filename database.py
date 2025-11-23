@@ -24,6 +24,7 @@ class ShortLink(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     click_count = Column(Integer, default=0)
     last_accessed = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)  # 过期时间
 
 
 def init_db():

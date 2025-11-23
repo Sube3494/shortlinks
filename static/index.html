@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短链服务 - 简单、高效、可靠</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            /* Light Mode */
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #e0e7ff;
+            --accent: #a855f7;
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --input-bg: #f1f5f9;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+            
+            --radius-sm: 8px;
+            --radius: 16px;
+            --radius-lg: 24px;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --backdrop: blur(12px);
+        }
+
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-dark: #6366f1;
+            --primary-light: rgba(99, 102, 241, 0.15);
+            --accent: #c084fc;
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --input-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --success: #34d399;
+            --error: #f87171;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.4s ease;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin: 40px 0 60px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.1));
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 540px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: var(--backdrop);
+            -webkit-backdrop-filter: var(--backdrop);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 48px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        [data-theme="light"] .card {
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        [data-theme="dark"] .card {
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .tabs {
+            background: var(--input-bg);
+            padding: 6px;
+            border-radius: var(--radius);
+            display: inline-flex;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .tab {
+            padding: 12px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            user-select: none;
+        }
+
+        .tab:hover {
+            color: var(--text-main);
+        }
+
+        .tab.active {
+            background: var(--card-bg);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Forms */
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            margin-left: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], textarea {
+            width: 100%;
+            padding: 16px 20px 16px 52px;
+            border: 2px solid transparent;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text-main);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        textarea {
+            padding: 20px;
+            min-height: 140px;
+        }
+
+        input:focus, textarea:focus {
+            background: var(--card-bg);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        input:focus + i, .input-wrapper:focus-within i {
+            color: var(--primary);
+        }
+
+        input:hover, textarea:hover {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        /* Button Styles */
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 18px 32px;
+            border-radius: var(--radius);
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0));
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Results */
+        .result-card {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-top: 32px;
+            display: none;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 16px;
+            font-size: 1.1rem;
+        }
+
+        .short-url-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .short-url-content {
+            flex: 1;
+            padding: 12px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .short-url-content a {
+            color: inherit;
+            text-decoration: none;
+            padding-bottom: 2px;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+
+        .short-url-content a:hover {
+            border-color: var(--primary);
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .icon-btn:hover {
+            background: var(--input-bg);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* Settings Toggle */
+        .settings-btn {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            width: 50px;
+            height: 50px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 90;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-btn:hover {
+            transform: rotate(90deg);
+            color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            width: 50px;
+            height: 50px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 90;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            color: var(--warning);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--warning);
+        }
+
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .settings-modal.show {
+            opacity: 1;
+        }
+
+        .settings-content {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255,255,255,0.1);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .settings-modal.show .settings-content {
+            transform: scale(1);
+        }
+
+        /* Links List */
+        .links-section {
+            margin-top: 80px;
+        }
+
+        .links-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .links-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .refresh-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
+        }
+
+        .link-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            backdrop-filter: blur(5px);
+        }
+
+        .link-card:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .link-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .link-info h3 a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .link-info h3 a:hover {
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .link-original {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 600px;
+            opacity: 0.8;
+        }
+
+        .link-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .link-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--input-bg);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .expired-tag {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .link-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px var(--primary-light);
+        }
+
+        .action-btn.delete:hover {
+            background: var(--error);
+            border-color: var(--error);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: auto;
+            opacity: 0.7;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .toast {
+            background: rgba(30, 41, 59, 0.9);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 50px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--error); }
+        .toast.info i { color: var(--primary); }
+        .toast span { color: white; }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translate(-50%, 20px); } /* Fixed transform for center alignment */
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        
+        /* Override slideUp for non-centered elements if needed */
+        .result-card { animation: slideUpSimple 0.4s ease; }
+        @keyframes slideUpSimple {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Batch List */
+        .batch-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--card-bg);
+        }
+
+        .batch-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .batch-item:last-child { border-bottom: none; }
+        .batch-item:hover { background: var(--input-bg); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        @media (max-width: 640px) {
+            .header h1 { font-size: 2.5rem; }
+            .container { padding: 20px; }
+            .card { padding: 24px; }
+            .link-card { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .link-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
+            .link-original { max-width: 100%; }
+            .settings-btn, .theme-toggle { top: 16px; width: 40px; height: 40px; }
+            .settings-btn { right: 16px; }
+            .theme-toggle { left: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主题切换按钮 -->
+    <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <i class="fas fa-sun"></i>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="settings-modal" id="settingsModal" onclick="closeSettings(event)">
+        <div class="settings-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="font-size: 1.2rem; font-weight: 700;">设置</h3>
+                <i class="fas fa-times" onclick="document.getElementById('settingsModal').classList.remove('show'); setTimeout(() => document.getElementById('settingsModal').style.display = 'none', 300);" style="cursor: pointer; color: var(--text-secondary);"></i>
+            </div>
+            
+            <div class="input-group">
+                <label>API 密钥</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="apiKey" placeholder="如果服务启用了认证，请输入密钥">
+                </div>
+                <small style="color: var(--text-secondary); margin-top: 8px; display: block; font-size: 0.85rem;">
+                    如果服务未启用认证，请留空。
+                </small>
+            </div>
+            <button class="btn" onclick="saveSettings()">
+                <i class="fas fa-save"></i> 保存设置
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 设置按钮 -->
+        <div class="settings-btn-container">
+            <div class="settings-btn" onclick="openSettings()" title="设置">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+
+        <div class="header">
+            <h1>短链服务</h1>
+            <p>快速生成、管理和追踪您的短链接，支持自定义短码和有效期控制。</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs-container">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('single')" id="tab-single">
+                        <i class="fas fa-link"></i> 单个创建
+                    </div>
+                    <div class="tab" onclick="switchTab('batch')" id="tab-batch">
+                        <i class="fas fa-layer-group"></i> 批量创建
+                    </div>
+                </div>
+            </div>
+
+            <!-- 单个创建模式 -->
+            <div id="singleMode">
+                <div class="input-group">
+                    <label>长链接</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-globe"></i>
+                        <input type="text" id="longUrl" placeholder="请输入要缩短的链接 (https://...)">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <label>自定义短码 (可选)</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-tag"></i>
+                            <input type="text" id="customCode" placeholder="例如: my-link" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>有效期 (小时)</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hourglass-half"></i>
+                            <input type="number" id="expiresInHours" placeholder="留空永久有效" min="1">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="createShortLink()" id="createBtn">
+                    <span class="btn-text">生成短链</span>
+                    <div class="loading-spinner" style="display: none;"></div>
+                </button>
+
+                <div class="result-card" id="singleResult">
+                    <div class="result-header">
+                        <i class="fas fa-check-circle"></i> 创建成功
+                    </div>
+                    <div class="short-url-box">
+                        <div class="short-url-content" id="shortUrlText"></div>
+                        <button class="icon-btn" onclick="copyShortLink()" title="复制">
+                            <i class="far fa-copy"></i>
+                        </button>
+                        <button class="icon-btn" onclick="openShortLink()" title="打开">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                    <div id="expiresInfo" style="margin-top: 12px; font-size: 0.9rem; color: var(--text-secondary);"></div>
+                </div>
+            </div>
+
+            <!-- 批量创建模式 -->
+            <div id="batchMode" style="display: none;">
+                <div class="input-group">
+                    <label>批量链接 (每行一个)</label>
+                    <textarea id="batchUrls" placeholder="https://example.com/url1&#10;https://example.com/url2&#10;https://example.com/url3"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label>有效期 (小时) - 应用于所有链接</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-hourglass-half"></i>
+                        <input type="number" id="batchExpiresInHours" placeholder="留空永久有效" min="1">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="createBatchShortLinks()" id="batchBtn">
+                    <span class="btn-text">批量生成</span>
+                    <div class="loading-spinner" style="display: none;"></div>
+                </button>
+
+                <div class="result-card" id="batchResult">
+                    <div class="result-header" style="justify-content: space-between;">
+                        <span><i class="fas fa-check-circle"></i> 批量处理完成</span>
+                        <button class="btn-outline" onclick="copyAllBatchUrls()" style="padding: 5px 12px; font-size: 0.85rem; border-radius: 6px; background: white;">
+                            复制全部
+                        </button>
+                    </div>
+                    <div class="batch-list" id="batchList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="links-section">
+            <div class="links-header">
+                <h2><i class="fas fa-history" style="color: var(--primary);"></i> 最近记录</h2>
+                <button class="refresh-btn" onclick="loadLinks()">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+            <div id="linksContainer"></div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Sube. All rights reserved.</p>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentBatchResults = [];
+
+        // 初始化
+        window.onload = () => {
+            // 加载保存的 API Key
+            const savedKey = localStorage.getItem('shortlink_api_key');
+            if (savedKey) document.getElementById('apiKey').value = savedKey;
+            
+            // 初始化主题
+            initTheme();
+            
+            loadLinks();
+        };
+
+        // 主题相关
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            const icon = document.querySelector('#themeBtn i');
+            
+            // 添加切换动画
+            icon.style.transform = 'scale(0.5) rotate(180deg)';
+            icon.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (theme === 'dark') {
+                    icon.className = 'fas fa-moon';
+                } else {
+                    icon.className = 'fas fa-sun';
+                }
+                icon.style.transform = 'scale(1) rotate(0)';
+                icon.style.opacity = '1';
+            }, 200);
+        }
+
+        // 界面交互
+        function switchTab(mode) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            document.getElementById('singleMode').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('batchMode').style.display = mode === 'batch' ? 'block' : 'none';
+            document.getElementById('singleResult').style.display = 'none';
+            document.getElementById('batchResult').style.display = 'none';
+        }
+
+        function openSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = 'flex';
+            // 强制重绘以触发过渡
+            modal.offsetHeight;
+            modal.classList.add('show');
+        }
+
+        function closeSettings(e) {
+            if (e.target === document.getElementById('settingsModal')) {
+                const modal = document.getElementById('settingsModal');
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        function saveSettings() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (key) {
+                localStorage.setItem('shortlink_api_key', key);
+            } else {
+                localStorage.removeItem('shortlink_api_key');
+            }
+            
+            const modal = document.getElementById('settingsModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+            
+            showToast('设置已保存', 'success');
+            loadLinks();
+        }
+
+        // 工具函数
+        function getHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const apiKey = document.getElementById('apiKey').value;
+            if (apiKey) headers['X-API-Key'] = apiKey;
+            return headers;
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${msg}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板', 'success'))
+                .catch(() => showToast('复制失败', 'error'));
+        }
+
+        function setLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            const text = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.loading-spinner');
+            btn.disabled = isLoading;
+            text.style.display = isLoading ? 'none' : 'block';
+            spinner.style.display = isLoading ? 'inline-block' : 'none';
+        }
+
+        // 业务逻辑
+        async function createShortLink() {
+            const longUrl = document.getElementById('longUrl').value.trim();
+            if (!longUrl) return showToast('请输入长链接', 'error');
+
+            setLoading('createBtn', true);
+            document.getElementById('singleResult').style.display = 'none';
+
+            try {
+                const data = { url: longUrl };
+                const code = document.getElementById('customCode').value.trim();
+                const hours = document.getElementById('expiresInHours').value.trim();
+                
+                if (code) data.custom_code = code;
+                if (hours) data.expires_in_hours = parseInt(hours);
+
+                const res = await fetch(`${API_BASE}/api/shorten`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    const link = `<a href="${result.short_url}" target="_blank">${result.short_url}</a>`;
+                    document.getElementById('shortUrlText').innerHTML = link;
+                    
+                    const expiresDiv = document.getElementById('expiresInfo');
+                    if (result.expires_at) {
+                        expiresDiv.innerHTML = `<i class="fas fa-hourglass-half"></i> 有效期至: ${new Date(result.expires_at).toLocaleString()}`;
+                    } else {
+                        expiresDiv.innerHTML = '<i class="fas fa-infinity"></i> 永久有效';
+                    }
+
+                    document.getElementById('singleResult').style.display = 'block';
+                    document.getElementById('longUrl').value = '';
+                    document.getElementById('customCode').value = '';
+                    document.getElementById('expiresInHours').value = '';
+                    loadLinks();
+                    showToast('创建成功', 'success');
+                } else {
+                    showToast(result.detail || '创建失败', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                setLoading('createBtn', false);
+            }
+        }
+
+        function copyShortLink() {
+            const url = document.querySelector('#shortUrlText a')?.href;
+            if (url) copyText(url);
+        }
+
+        function openShortLink() {
+            const url = document.querySelector('#shortUrlText a')?.href;
+            if (url) window.open(url, '_blank');
+        }
+
+        async function createBatchShortLinks() {
+            const text = document.getElementById('batchUrls').value.trim();
+            if (!text) return showToast('请输入链接', 'error');
+
+            const urls = text.split('\n').map(u => u.trim()).filter(u => u);
+            if (urls.length === 0) return;
+
+            setLoading('batchBtn', true);
+            document.getElementById('batchResult').style.display = 'none';
+
+            try {
+                const data = { urls };
+                const hours = document.getElementById('batchExpiresInHours').value.trim();
+                if (hours) {
+                    data.expires_in_hours = parseInt(hours);
+                }
+
+                const res = await fetch(`${API_BASE}/api/shorten/batch`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    currentBatchResults = result;
+                    const html = result.map(link => `
+                        <div class="batch-item">
+                            <div style="overflow: hidden; margin-right: 10px;">
+                                <div style="color: var(--primary); font-weight: 600;">${link.short_url}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${link.original_url}</div>
+                            </div>
+                            <button class="icon-btn" onclick="copyText('${link.short_url}')">
+                                <i class="far fa-copy"></i>
+                            </button>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('batchList').innerHTML = html;
+                    document.getElementById('batchResult').style.display = 'block';
+                    document.getElementById('batchUrls').value = '';
+                    document.getElementById('batchExpiresInHours').value = '';
+                    loadLinks();
+                    showToast(`批量创建成功 ${result.length} 个`, 'success');
+                } else {
+                    showToast(result.detail || '批量创建失败', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                setLoading('batchBtn', false);
+            }
+        }
+
+        function copyAllBatchUrls() {
+            if (!currentBatchResults.length) return;
+            copyText(currentBatchResults.map(l => l.short_url).join('\n'));
+        }
+
+        async function loadLinks() {
+            const container = document.getElementById('linksContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner" style="border-color: var(--primary-light); border-top-color: var(--primary); width: 30px; height: 30px; margin: 0 auto;"></div></div>';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/list?limit=20`, { headers: getHeaders() });
+                if (!res.ok) throw new Error('加载失败');
+                const links = await res.json();
+
+                if (!links.length) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: var(--backdrop);">
+                            <div style="width: 80px; height: 80px; background: var(--input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="fas fa-inbox" style="font-size: 2.5rem; color: var(--text-secondary); opacity: 0.5;"></i>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 1.1rem;">暂无记录，快来创建一个吧！</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = links.map(link => {
+                    const isExpired = link.expires_at && new Date(link.expires_at) < new Date();
+                    const expiredStyle = isExpired ? 'opacity: 0.75; border-color: var(--error);' : '';
+                    
+                    return `
+                        <div class="link-card" style="${expiredStyle}">
+                            <div class="link-info" style="flex: 1; min-width: 0;">
+                                <h3>
+                                    <a href="${link.short_url}" target="_blank">${link.short_url}</a>
+                                    ${isExpired ? '<span class="link-tag expired-tag" style="font-size: 0.75rem; margin-left: 10px;">已过期</span>' : ''}
+                                </h3>
+                                <div class="link-original" title="${link.original_url}">${link.original_url}</div>
+                                <div class="link-meta">
+                                    <span class="link-tag"><i class="far fa-clock"></i> ${new Date(link.created_at).toLocaleDateString()}</span>
+                                    <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
+                                    ${link.expires_at ? 
+                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${new Date(link.expires_at).toLocaleDateString()}</span>` : 
+                                        '<span class="link-tag"><i class="fas fa-infinity"></i> 永久</span>'}
+                                </div>
+                            </div>
+                            <div class="link-actions">
+                                <button class="action-btn" onclick="copyText('${link.short_url}')" title="复制">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                                <button class="action-btn" onclick="showStats('${link.short_code}')" title="统计">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                                <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="删除">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius);">加载失败: ${err.message}</div>`;
+            }
+        }
+
+        async function deleteLink(code) {
+            if (!confirm('确定要删除这个短链吗？')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/${code}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    showToast('删除成功', 'success');
+                    loadLinks();
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (err) {
+                showToast('请求失败', 'error');
+            }
+        }
+
+        async function showStats(code) {
+            try {
+                const res = await fetch(`${API_BASE}/api/stats/${code}`, { headers: getHeaders() });
+                const data = await res.json();
+                alert(`
+                    📊 统计信息
+                    ----------------
+                    短码: ${data.short_code}
+                    点击: ${data.click_count}
+                    创建: ${new Date(data.created_at).toLocaleString()}
+                    最后访问: ${data.last_accessed ? new Date(data.last_accessed).toLocaleString() : '从未访问'}
+                `);
+            } catch (err) {
+                showToast('获取统计失败', 'error');
+            }
+        }
+
+        // 回车提交
+        document.getElementById('longUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createShortLink();
+        });
+    </script>
+</body>
+</html>

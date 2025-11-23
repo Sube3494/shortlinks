@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Request, Header, Query, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -19,7 +20,7 @@ except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
 from database import get_db, init_db, ShortLink
-from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats
+from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate
 from utils import get_unique_short_code, normalize_url, validate_url
 
 # 初始化数据库
@@ -58,6 +59,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+except Exception:
+    pass  # 如果 static 目录不存在，跳过
 
 # 获取基础URL（用于生成完整短链）
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
@@ -103,11 +110,17 @@ def verify_api_key(
 
 @app.get("/")
 async def root():
-    """API根路径，返回API信息"""
+    """API根路径，返回网页界面或API信息"""
+    # 如果存在静态文件，返回网页
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html")
+    
+    # 否则返回API信息
     return {
         "message": "短链服务 API",
         "version": "1.0.0",
         "docs": "/docs",
+        "web": "/static/index.html",
         "endpoints": {
             "创建短链": "POST /api/shorten",
             "获取短链信息": "GET /api/info/{short_code}",
@@ -165,10 +178,17 @@ async def create_short_link(
     else:
         short_code = get_unique_short_code()
     
+    # 计算过期时间
+    expires_at = None
+    if request.expires_in_hours and request.expires_in_hours > 0:
+        from datetime import timedelta
+        expires_at = datetime.utcnow() + timedelta(hours=request.expires_in_hours)
+    
     # 创建短链记录
     short_link = ShortLink(
         short_code=short_code,
-        original_url=original_url
+        original_url=original_url,
+        expires_at=expires_at
     )
     
     db.add(short_link)
@@ -181,8 +201,74 @@ async def create_short_link(
         original_url=short_link.original_url,
         created_at=short_link.created_at,
         click_count=short_link.click_count,
-        last_accessed=short_link.last_accessed
+        last_accessed=short_link.last_accessed,
+        expires_at=short_link.expires_at
     )
+
+
+@app.post("/api/shorten/batch", response_model=List[ShortLinkResponse])
+async def create_batch_short_links(
+    request: BatchShortLinkCreate,
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_api_key)
+):
+    """
+    批量创建短链
+    
+    - **urls**: URL列表（必需）
+    - **expires_in_hours**: 过期时间（小时数，可选，应用于所有URL）
+    """
+    results = []
+    errors = []
+    
+    for idx, url in enumerate(request.urls):
+        try:
+            # 规范化URL
+            original_url = normalize_url(url.strip())
+            
+            # 验证URL格式
+            if not validate_url(original_url):
+                errors.append(f"第 {idx + 1} 个URL无效: {url}")
+                continue
+            
+            # 生成短码
+            short_code = get_unique_short_code()
+            
+            # 计算过期时间
+            expires_at = None
+            if request.expires_in_hours and request.expires_in_hours > 0:
+                from datetime import timedelta
+                expires_at = datetime.utcnow() + timedelta(hours=request.expires_in_hours)
+            
+            # 创建短链记录
+            short_link = ShortLink(
+                short_code=short_code,
+                original_url=original_url,
+                expires_at=expires_at
+            )
+            
+            db.add(short_link)
+            db.commit()
+            db.refresh(short_link)
+            
+            results.append(ShortLinkResponse(
+                short_code=short_link.short_code,
+                short_url=f"{BASE_URL}/{short_link.short_code}",
+                original_url=short_link.original_url,
+                created_at=short_link.created_at,
+                click_count=short_link.click_count,
+                last_accessed=short_link.last_accessed,
+                expires_at=short_link.expires_at
+            ))
+        except Exception as e:
+            errors.append(f"第 {idx + 1} 个URL处理失败: {str(e)}")
+            db.rollback()
+            continue
+    
+    if errors and not results:
+        raise HTTPException(status_code=400, detail="; ".join(errors))
+    
+    return results
 
 
 @app.get("/{short_code}")
@@ -196,6 +282,10 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     
     if not short_link:
         raise HTTPException(status_code=404, detail="短链不存在")
+    
+    # 检查是否过期
+    if short_link.expires_at and datetime.utcnow() > short_link.expires_at:
+        raise HTTPException(status_code=410, detail="短链已过期")
     
     # 更新访问统计
     short_link.click_count += 1
@@ -227,7 +317,8 @@ async def get_short_link_info(
         original_url=short_link.original_url,
         created_at=short_link.created_at,
         click_count=short_link.click_count,
-        last_accessed=short_link.last_accessed
+        last_accessed=short_link.last_accessed,
+        expires_at=short_link.expires_at
     )
 
 
@@ -278,7 +369,8 @@ async def list_short_links(
             original_url=link.original_url,
             created_at=link.created_at,
             click_count=link.click_count,
-            last_accessed=link.last_accessed
+            last_accessed=link.last_accessed,
+            expires_at=link.expires_at
         )
         for link in short_links
     ]

@@ -1,12 +1,19 @@
 from pydantic import BaseModel, HttpUrl
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
 class ShortLinkCreate(BaseModel):
     """创建短链请求模型"""
     url: str
     custom_code: Optional[str] = None  # 自定义短码（可选）
+    expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选）
+
+
+class BatchShortLinkCreate(BaseModel):
+    """批量创建短链请求模型"""
+    urls: List[str]  # URL列表
+    expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选，应用于所有URL）
 
 
 class ShortLinkResponse(BaseModel):
@@ -17,6 +24,7 @@ class ShortLinkResponse(BaseModel):
     created_at: datetime
     click_count: int
     last_accessed: Optional[datetime] = None
+    expires_at: Optional[datetime] = None  # 过期时间
 
     class Config:
         from_attributes = True
