@@ -61,10 +61,14 @@ app.add_middleware(
 )
 
 # 挂载静态文件
-try:
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-except Exception:
-    pass  # 如果 static 目录不存在，跳过
+static_dirs = ["static", os.path.join(os.path.dirname(__file__), "static"), "/app/static"]
+for static_dir in static_dirs:
+    if os.path.exists(static_dir):
+        try:
+            app.mount("/static", StaticFiles(directory=static_dir), name="static")
+            break
+        except Exception:
+            continue
 
 # 获取基础URL（用于生成完整短链）
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
@@ -109,27 +113,26 @@ def verify_api_key(
 
 
 @app.get("/")
-async def root():
+async def root(request: Request):
     """API根路径，返回网页界面或API信息"""
-    # 如果存在静态文件，返回网页
-    if os.path.exists("static/index.html"):
-        return FileResponse("static/index.html")
+    # 获取当前工作目录和可能的静态文件路径
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_paths = [
+        os.path.join(current_dir, "static", "index.html"),
+        os.path.join(os.getcwd(), "static", "index.html"),
+        "static/index.html",
+        "/app/static/index.html",
+    ]
     
-    # 否则返回API信息
-    return {
-        "message": "短链服务 API",
-        "version": "1.0.0",
-        "docs": "/docs",
-        "web": "/static/index.html",
-        "endpoints": {
-            "创建短链": "POST /api/shorten",
-            "获取短链信息": "GET /api/info/{short_code}",
-            "获取短链统计": "GET /api/stats/{short_code}",
-            "列出所有短链": "GET /api/list",
-            "删除短链": "DELETE /api/{short_code}",
-            "访问短链": "GET /{short_code}"
-        }
-    }
+    # 尝试找到并返回网页文件
+    for path in possible_paths:
+        abs_path = os.path.abspath(path)
+        if os.path.exists(abs_path) and os.path.isfile(abs_path):
+            return FileResponse(abs_path)
+    
+    # 如果找不到文件，返回重定向到静态文件路由或API信息
+    # 尝试通过静态文件路由访问
+    return RedirectResponse(url="/static/index.html")
 
 
 @app.post("/api/shorten", response_model=ShortLinkResponse)
