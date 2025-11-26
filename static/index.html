@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="简单、高效、可靠的短链接生成服务">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>短链服务 - 简单、高效、可靠</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -157,16 +161,19 @@
             cursor: pointer;
             font-weight: 600;
             color: var(--text-secondary);
-            transition: var(--transition);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.95rem;
             user-select: none;
+            position: relative;
+            overflow: hidden;
         }
 
         .tab:hover {
             color: var(--text-main);
+            background: rgba(0,0,0,0.02);
         }
 
         .tab.active {
@@ -248,40 +255,30 @@
             font-size: 1.05rem;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 2px 4px -1px rgba(99, 102, 241, 0.15);
             position: relative;
             overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4), 0 4px 6px -2px rgba(99, 102, 241, 0.2);
+            filter: brightness(1.05);
         }
 
         .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0));
-            opacity: 0;
-            transition: var(--transition);
-        }
-
-        .btn:hover::after {
-            opacity: 1;
+            transform: scale(0.98) translateY(0);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            filter: brightness(0.95);
         }
 
         /* Results */
@@ -341,22 +338,31 @@
         .icon-btn {
             width: 44px;
             height: 44px;
-            border: none;
+            border: 1px solid transparent;
             background: transparent;
             border-radius: 10px;
             cursor: pointer;
             color: var(--text-secondary);
-            transition: var(--transition);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
+            position: relative;
+            overflow: hidden;
         }
 
         .icon-btn:hover {
             background: var(--input-bg);
             color: var(--primary);
-            transform: scale(1.05);
+            border-color: var(--border-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+            background: var(--border-color);
         }
 
         /* Settings Toggle */
@@ -374,12 +380,12 @@
             height: 50px;
             background: var(--card-bg);
             border-radius: 50%;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
@@ -389,15 +395,20 @@
         .settings-btn:hover {
             transform: rotate(90deg);
             color: var(--primary);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
             border-color: var(--primary);
         }
 
         .github-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             color: var(--primary);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
             border-color: var(--primary);
+        }
+
+        .settings-btn:active, .github-btn:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* Theme Toggle */
@@ -493,19 +504,25 @@
             color: var(--text-secondary);
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .refresh-btn:hover {
             border-color: var(--primary);
             color: var(--primary);
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
             transform: translateY(-1px);
+            background: var(--input-bg);
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.98);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .link-card {
@@ -593,21 +610,31 @@
             height: 42px;
             border-radius: 12px;
             border: 1px solid var(--border-color);
-            background: var(--input-bg);
+            background: var(--card-bg);
             color: var(--text-secondary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: var(--transition);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .action-btn:hover {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
-            box-shadow: 0 4px 12px var(--primary-light);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .action-btn.delete:hover {
@@ -676,10 +703,10 @@
         .loading-spinner {
             width: 20px;
             height: 20px;
-            border: 2.5px solid rgba(255,255,255,0.3);
+            border: 2.5px solid rgba(255,255,255,0.2);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
+            border-top-color: #fff;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -724,14 +751,30 @@
 
         @media (max-width: 640px) {
             .header h1 { font-size: 2.5rem; }
-            .container { padding: 20px; }
-            .card { padding: 24px; }
-            .link-card { flex-direction: column; align-items: flex-start; gap: 16px; }
-            .link-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
-            .link-original { max-width: 100%; }
-            .settings-btn-container { top: 16px; right: 16px; }
-            .settings-btn, .github-btn, .theme-toggle { width: 40px; height: 40px; }
+            .header p { font-size: 1rem; padding: 0 15px; }
+            .container { padding: 20px 15px; margin: 40px auto; }
+            .card { padding: 24px 20px; }
+            
+            .tabs-container { margin-bottom: 30px; width: 100%; }
+            .tabs { width: 100%; display: flex; }
+            .tab { flex: 1; justify-content: center; padding: 12px; font-size: 0.9rem; }
+            
+            .input-group { margin-bottom: 20px; }
+            div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; gap: 15px !important; }
+            
+            .link-card { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+            .link-info { width: 100%; }
+            .link-actions { width: 100%; justify-content: flex-end; margin-top: 4px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+            .link-original { max-width: 100%; font-size: 0.85rem; }
+            
+            .settings-btn-container { top: 16px; right: 16px; gap: 8px; }
+            .settings-btn, .github-btn, .theme-toggle { width: 42px; height: 42px; font-size: 1.1rem; }
             .theme-toggle { top: 16px; left: 16px; }
+            
+            .toast { max-width: 90%; font-size: 0.9rem; padding: 14px 20px; bottom: 20px; }
+            
+            /* 优化移动端点击目标 */
+            input, button, .tab, .action-btn { min-height: 44px; }
         }
     </style>
 </head>
@@ -753,7 +796,7 @@
                 <label>API 密钥</label>
                 <div class="input-wrapper">
                     <i class="fas fa-key"></i>
-                    <input type="password" id="apiKey" placeholder="如果服务启用了认证，请输入密钥">
+                    <input type="password" id="apiKey" placeholder="如果服务启用了认证，请输入密钥" autocomplete="off">
                 </div>
                 <small style="color: var(--text-secondary); margin-top: 8px; display: block; font-size: 0.85rem;">
                     如果服务未启用认证，请留空。
@@ -799,7 +842,7 @@
                     <label>长链接</label>
                     <div class="input-wrapper">
                         <i class="fas fa-globe"></i>
-                        <input type="text" id="longUrl" placeholder="请输入要缩短的链接 (https://...)">
+                        <input type="text" id="longUrl" placeholder="请输入要缩短的链接 (https://...)" inputmode="url" enterkeyhint="go">
                     </div>
                 </div>
 
@@ -808,14 +851,14 @@
                         <label>自定义短码 (可选)</label>
                         <div class="input-wrapper">
                             <i class="fas fa-tag"></i>
-                            <input type="text" id="customCode" placeholder="例如: my-link" maxlength="10">
+                            <input type="text" id="customCode" placeholder="例如: my-link" maxlength="10" autocorrect="off" autocapitalize="off" spellcheck="false">
                         </div>
                     </div>
                     <div class="input-group">
                         <label>有效期 (小时)</label>
                         <div class="input-wrapper">
                             <i class="fas fa-hourglass-half"></i>
-                            <input type="number" id="expiresInHours" placeholder="留空永久有效" min="1">
+                            <input type="number" id="expiresInHours" placeholder="留空永久有效" min="1" inputmode="numeric">
                         </div>
                     </div>
                 </div>
@@ -853,7 +896,7 @@
                     <label>有效期 (小时) - 应用于所有链接</label>
                     <div class="input-wrapper">
                         <i class="fas fa-hourglass-half"></i>
-                        <input type="number" id="batchExpiresInHours" placeholder="留空永久有效" min="1">
+                        <input type="number" id="batchExpiresInHours" placeholder="留空永久有效" min="1" inputmode="numeric">
                     </div>
                 </div>
 
