@@ -21,7 +21,7 @@ class ShortLink(Base):
     id = Column(Integer, primary_key=True, index=True)
     short_code = Column(String(10), unique=True, index=True, nullable=False)
     original_url = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
     click_count = Column(Integer, default=0)
     last_accessed = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)  # 过期时间

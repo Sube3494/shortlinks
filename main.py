@@ -185,7 +185,7 @@ async def create_short_link(
     expires_at = None
     if request.expires_in_hours and request.expires_in_hours > 0:
         from datetime import timedelta
-        expires_at = datetime.utcnow() + timedelta(hours=request.expires_in_hours)
+        expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
     
     # 创建短链记录
     short_link = ShortLink(
@@ -241,7 +241,7 @@ async def create_batch_short_links(
             expires_at = None
             if request.expires_in_hours and request.expires_in_hours > 0:
                 from datetime import timedelta
-                expires_at = datetime.utcnow() + timedelta(hours=request.expires_in_hours)
+                expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
             
             # 创建短链记录
             short_link = ShortLink(
@@ -287,12 +287,12 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="短链不存在")
     
     # 检查是否过期
-    if short_link.expires_at and datetime.utcnow() > short_link.expires_at:
+    if short_link.expires_at and datetime.now() > short_link.expires_at:
         raise HTTPException(status_code=410, detail="短链已过期")
     
     # 更新访问统计
     short_link.click_count += 1
-    short_link.last_accessed = datetime.utcnow()
+    short_link.last_accessed = datetime.now()
     db.commit()
     
     return RedirectResponse(url=short_link.original_url, status_code=302)

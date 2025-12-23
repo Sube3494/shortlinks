@@ -34,7 +34,7 @@
 
 #### 1. 配置 DNS
 
-将域名 `shortlinks.sube.top` 的 A 记录指向服务器 IP。
+将域名的 A 记录指向服务器 IP。
 
 #### 2. 配置 API 密钥（可选）
 
@@ -42,7 +42,7 @@
 
 ```yaml
 environment:
-  - BASE_URL=https://shortlinks.sube.top
+  - BASE_URL=https://XXXX
   - API_KEY=your-secret-api-key-here  # 设置你的API密钥
 ```
 
@@ -103,7 +103,7 @@ docker-compose down
 
 **使用 Header 认证：**
 ```bash
-curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+curl -X POST 'https://xxxxxx/api/shorten' \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: your-api-key' \
   -d '{"url": "https://www.example.com/very/long/url"}'
@@ -112,14 +112,14 @@ curl -X POST 'https://shortlinks.sube.top/api/shorten' \
 **注意：** 如果 URL 中包含特殊字符（如反斜杠 `\`），需要正确转义：
 ```bash
 # 方法1: 使用单引号包裹 JSON，URL 中的反斜杠需要转义为 \\
-curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+curl -X POST 'https://xxxxxx/api/shorten' \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: your-api-key' \
   -d '{"url": "https://example.com/path\\?param=value"}'
 
 # 方法2: 使用文件（推荐，避免转义问题）
 echo '{"url": "https://example.com/path?param=value"}' > /tmp/data.json
-curl -X POST 'https://shortlinks.sube.top/api/shorten' \
+curl -X POST 'https://xxxxxxx/api/shorten' \
   -H 'Content-Type: application/json' \
   -H 'X-API-Key: your-api-key' \
   -d @/tmp/data.json
@@ -129,7 +129,7 @@ python3 -c "
 import requests
 import json
 response = requests.post(
-    'https://shortlinks.sube.top/api/shorten',
+    'https://xxxxxxx/api/shorten',
     headers={'X-API-Key': 'your-api-key'},
     json={'url': 'https://example.com/path?param=value'}
 )
@@ -141,7 +141,7 @@ print(response.json())
 ```json
 {
   "short_code": "abc123",
-  "short_url": "https://shortlinks.sube.top/abc123",
+  "short_url": "https://xxxxxxx/abc123",
   "original_url": "https://www.example.com/very/long/url",
   "created_at": "2024-01-01T12:00:00",
   "click_count": 0,
@@ -159,7 +159,7 @@ headers = {"X-API-Key": API_KEY}
 
 # 创建短链
 response = requests.post(
-    "https://shortlinks.sube.top/api/shorten",
+    "https://xxxxxxx/api/shorten",
     json={"url": "https://www.example.com/very/long/url"},
     headers=headers
 )
@@ -172,7 +172,7 @@ print(short_url)
 **或者使用 Query 参数：**
 ```python
 response = requests.post(
-    f"https://shortlinks.sube.top/api/shorten?api_key={API_KEY}",
+    f"https://xxxxxxxxxx/api/shorten?api_key={API_KEY}",
     json={"url": "https://www.example.com/very/long/url"}
 )
 ```
@@ -182,7 +182,7 @@ response = requests.post(
 ```python
 from shortlink_client import ShortLinkClient
 
-client = ShortLinkClient("https://shortlinks.sube.top", api_key="your-api-key")
+client = ShortLinkClient("https://xxxxxxxxx", api_key="your-api-key")
 short_url = client.shorten("https://www.example.com")['short_url']
 ```
 
@@ -197,7 +197,7 @@ short_url = client.shorten("https://www.example.com")['short_url']
 
 ## API 文档
 
-启动服务后访问：https://shortlinks.sube.top/docs
+启动服务后访问：https://xxxxxxxxxx/docs
 
 ## 数据持久化
 
