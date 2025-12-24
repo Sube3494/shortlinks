@@ -1,4 +1,3 @@
-```python
 from fastapi import FastAPI, HTTPException, Depends, Header, Query, Request
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
