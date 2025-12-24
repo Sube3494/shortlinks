@@ -14,6 +14,7 @@ Description:
 """
 
 import secrets
+from sqlalchemy import text
 from database import SessionLocal, ShortLink, APIKey, init_db, engine
 
 
@@ -24,13 +25,13 @@ def upgrade_database():
     # 直接使用原生 SQL 检查和添加列
     with engine.connect() as conn:
         # 检查列是否已存在
-        result = conn.execute(engine.text("PRAGMA table_info(shortlinks)"))
+        result = conn.execute(text("PRAGMA table_info(shortlinks)"))
         columns = [row[1] for row in result.fetchall()]
         
         if 'created_by_key_id' not in columns:
             print("📝 添加 created_by_key_id 列...")
             # SQLite 添加列
-            conn.execute(engine.text(
+            conn.execute(text(
                 "ALTER TABLE shortlinks ADD COLUMN created_by_key_id INTEGER"
             ))
             conn.commit()
