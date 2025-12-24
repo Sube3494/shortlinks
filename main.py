@@ -161,7 +161,8 @@ def verify_api_key(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     api_key: Optional[str] = Query(None),
     request: Request = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    update_stats: bool = True  # 是否更新使用统计
 ) -> Optional[int]:
     """
     验证API密钥并返回 Key ID
@@ -200,10 +201,11 @@ def verify_api_key(
                     detail="API Key 已过期"
                 )
             
-            # 更新使用统计
-            db_key.last_used_at = datetime.now()
-            db_key.usage_count += 1
-            db.commit()
+            # 只在需要时更新使用统计
+            if update_stats:
+                db_key.last_used_at = datetime.now()
+                db_key.usage_count += 1
+                db.commit()
             
             return db_key.id  # 返回 Key ID
         else:
@@ -253,12 +255,17 @@ async def root(request: Request):
 
 @app.get("/api/key/info")
 async def get_current_key_info(
-    key_id: Optional[int] = Depends(verify_api_key),
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    api_key: Optional[str] = Query(None),
+    request: Request = None,
     db: Session = Depends(get_db)
 ):
     """
-    获取当前 API Key 的信息
+    获取当前 API Key 的信息（不更新使用统计）
     """
+    # 使用不更新统计的认证
+    key_id = verify_api_key(x_api_key, api_key, request, db, update_stats=False)
+    
     if key_id is None:
         # 无认证模式
         return {
