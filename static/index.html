@@ -10,6 +10,9 @@
     <title>短链服务 - 简单、高效、可靠</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Light Mode - Enhanced */
@@ -340,11 +343,14 @@
         .short-url-content {
             flex: 1;
             padding: 8px 12px;
-            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
             font-size: 1rem;
             color: var(--primary);
             word-break: break-all;
             font-weight: 500;
+            letter-spacing: -0.02em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .short-url-content a {
@@ -537,8 +543,9 @@
         .link-info h3 {
             font-size: 0.95rem;
             margin-bottom: 6px;
-            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
             font-weight: 600;
+            letter-spacing: -0.02em;
         }
 
         .link-info h3 a {
@@ -1159,6 +1166,9 @@
         <div class="settings-btn-container">
             <a href="https://github.com/Sube3494/shortlinks" target="_blank" rel="noopener noreferrer" class="github-btn" title="GitHub">
                 <i class="fab fa-github"></i>
+            </a>
+            <a href="/static/api-docs.html" class="github-btn" title="API 文档">
+                <i class="fas fa-book"></i>
             </a>
             <div class="settings-btn" onclick="openSettings()" title="设置">
                 <i class="fas fa-cog"></i>
