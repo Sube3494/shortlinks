@@ -1024,18 +1024,22 @@
                 padding: 24px 20px; 
             }
             
-            /* Stack links vertically on mobile */
+            /* 移动端卡片重新设计 */
             .link-card { 
-                padding: 12px;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 14px;
+                gap: 0;
             }
             
             .link-info {
                 width: 100%;
+                margin-bottom: 12px;
             }
             
             .link-info h3 {
                 font-size: 0.9rem;
-                margin-bottom: 8px;
+                margin-bottom: 10px;
             }
             
             .link-meta {
@@ -1045,13 +1049,17 @@
             }
             
             .link-actions { 
-                gap: 4px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 6px;
+                padding-top: 12px;
+                border-top: 1px solid var(--border-color);
             }
             
             .action-btn {
-                width: 28px;
-                height: 28px;
-                font-size: 0.8rem;
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
             }
             
             .link-original { 
