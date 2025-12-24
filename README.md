@@ -1,6 +1,19 @@
-# 短链服务
+<div align="center">
+  <img src="static/shortlink.png" alt="短链服务 Logo" width="200"/>
+  
+  <h1>短链服务</h1>
+  
+  <p>基于 FastAPI 的短链服务，使用 Docker Compose 快速部署</p>
+  
+  <p>
+    <img src="https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python&logoColor=white" alt="Python"/>
+    <img src="https://img.shields.io/badge/FastAPI-0.100+-00C7B7?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI"/>
+    <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/>
+    <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License"/>
+  </p>
+</div>
 
-基于 FastAPI 的短链服务，使用 Docker Compose + Caddy 部署，自动配置 HTTPS。
+---
 
 ## 功能特性
 
@@ -26,17 +39,9 @@
    - 运行 shortlink 服务，端口映射 `18000:8000`（外部18000映射到容器内8000）
    - 挂载数据库文件持久化数据
 
-3. **Caddyfile** 配置外部 Caddy：
-   - 反向代理到 `localhost:18000`
-   - 自动申请 SSL 证书
-
 ### 部署步骤
 
-#### 1. 配置 DNS
-
-将域名的 A 记录指向服务器 IP。
-
-#### 2. 配置 API 密钥
+#### 1. 配置 API 密钥
 
 **推荐方式：使用多 Key 管理（新功能）**
 
@@ -67,7 +72,7 @@ environment:
 - 如果数据库中没有任何 Key 且未设置环境变量，则不启用认证，任何人都可以调用API
 - 多 Key 管理优先于环境变量，推荐使用多 Key 方式
 
-#### 3. 启动短链服务
+#### 2. 启动短链服务
 
 ```bash
 # 构建镜像并启动（首次运行会自动构建）
@@ -77,32 +82,16 @@ docker-compose up -d
 docker-compose up
 ```
 
-#### 4. 配置外部 Caddy
+访问 `http://localhost:18000` 即可使用服务。如需配置域名和 HTTPS，请自行配置反向代理（如 Nginx、Traefik 等）。
 
-将 `Caddyfile` 复制到 Caddy 配置目录，或使用当前目录的 Caddyfile：
-
-```bash
-# 如果 Caddy 使用系统服务
-sudo cp Caddyfile /etc/caddy/Caddyfile
-sudo systemctl reload caddy
-
-# 或者直接运行 Caddy
-caddy run --config Caddyfile
-```
-
-Caddy 会自动申请 Let's Encrypt SSL 证书并配置 HTTPS。
-
-#### 5. 查看日志
+#### 3. 查看日志
 
 ```bash
 # 短链服务日志
 docker-compose logs -f
-
-# Caddy 日志（如果使用系统服务）
-sudo journalctl -u caddy -f
 ```
 
-#### 6. 停止服务
+#### 4. 停止服务
 
 ```bash
 docker-compose down

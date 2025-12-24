@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>短链服务 - 简单、高效、可靠</title>
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/shortlink.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -96,7 +96,7 @@
 
         /* Header */
         .header {
-            text-align: left;
+            text-align: center;
             margin-bottom: 40px;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 24px;
@@ -113,6 +113,20 @@
             color: var(--text-secondary);
             font-size: 1.05rem;
             line-height: 1.6;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px auto;
+            display: block;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .header-logo:hover {
+            transform: scale(1.05);
         }
 
         /* Card/Section */
@@ -1188,6 +1202,7 @@
         </div>
 
         <div class="header">
+            <img src="/static/shortlink.png" alt="短链服务" class="header-logo">
             <h1>短链服务</h1>
             <p>快速生成、管理和追踪您的短链接，支持自定义短码和有效期控制。</p>
         </div>
@@ -1333,6 +1348,9 @@
     <script>
         const API_BASE = window.location.origin;
         let currentBatchResults = [];
+        // 分页状态
+        let currentPage = 1;
+        const pageSize = 5;
 
         // 初始化
         window.onload = () => {
@@ -1437,7 +1455,7 @@
             }, 300);
             
             showToast('设置已保存', 'success');
-            loadLinks();
+            loadLinks(1);  // 重置到第一页
             
             // 加载 Key 信息
             loadKeyInfo();
@@ -1449,6 +1467,18 @@
             const apiKey = document.getElementById('apiKey').value;
             if (apiKey) headers['X-API-Key'] = apiKey;
             return headers;
+        }
+
+        // 格式化时间为 YYYY-MM-DD HH:mm:ss
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         }
 
         function showToast(msg, type = 'info') {
@@ -1516,7 +1546,7 @@
                     document.getElementById('longUrl').value = '';
                     document.getElementById('customCode').value = '';
                     document.getElementById('expiresInHours').value = '';
-                    loadLinks();
+                    loadLinks(1);  // 重置到第一页
                     showToast('创建成功', 'success');
                 } else {
                     showToast(result.detail || '创建失败', 'error');
@@ -1581,7 +1611,7 @@
                     document.getElementById('batchResult').style.display = 'block';
                     document.getElementById('batchUrls').value = '';
                     document.getElementById('batchExpiresInHours').value = '';
-                    loadLinks();
+                    loadLinks(1);  // 重置到第一页
                     showToast(`批量创建成功 ${result.length} 个`, 'success');
                 } else {
                     showToast(result.detail || '批量创建失败', 'error');
@@ -1598,12 +1628,15 @@
             copyText(currentBatchResults.map(l => l.short_url).join('\n'));
         }
 
-        async function loadLinks() {
+        async function loadLinks(page = 1) {
+            currentPage = page;
+            const skip = (page - 1) * pageSize;
+            
             const container = document.getElementById('linksContainer');
             container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner" style="border-color: var(--primary-light); border-top-color: var(--primary); width: 30px; height: 30px; margin: 0 auto;"></div></div>';
 
             try {
-                const res = await fetch(`${API_BASE}/api/list?limit=20`, { headers: getHeaders() });
+                const res = await fetch(`${API_BASE}/api/list?skip=${skip}&limit=${pageSize}`, { headers: getHeaders() });
                 
                 // 检查认证错误
                 if (res.status === 401 || res.status === 403) {
@@ -1631,7 +1664,7 @@
                 if (!res.ok) throw new Error('加载失败');
                 const links = await res.json();
 
-                if (!links.length) {
+                if (!links.length && page === 1) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: var(--backdrop);">
                             <div style="width: 80px; height: 80px; background: var(--input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -1639,6 +1672,7 @@
                             </div>
                             <p style="color: var(--text-secondary); font-size: 1.1rem;">暂无记录，快来创建一个吧！</p>
                         </div>`;
+                    updatePagination(0);
                     return;
                 }
 
@@ -1654,7 +1688,7 @@
                                     ${isExpired ? '<span class="link-tag expired-tag" style="font-size: 0.75rem; margin-left: 10px;">已过期</span>' : ''}
                                 </h3>
                                 <div class="link-meta">
-                                    <span class="link-tag"><i class="far fa-clock"></i> ${new Date(link.created_at).toLocaleDateString()}</span>
+                                    <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
                                     <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
                                     ${link.expires_at ? 
                                         `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${new Date(link.expires_at).toLocaleDateString()}</span>` : 
@@ -1675,8 +1709,54 @@
                         </div>
                     `;
                 }).join('');
+                
+                // 更新分页控件
+                updatePagination(links.length);
+                
             } catch (err) {
                 container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius);">加载失败: ${err.message}</div>`;
+            }
+        }
+
+        function updatePagination(itemCount) {
+            let paginationHtml = '';
+            
+            if (currentPage > 1 || itemCount === pageSize) {
+                paginationHtml = `
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <button 
+                            class="btn-outline" 
+                            onclick="loadLinks(${currentPage - 1})" 
+                            ${currentPage === 1 ? 'disabled' : ''}
+                            style="padding: 8px 16px; opacity: ${currentPage === 1 ? '0.5' : '1'}; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'};">
+                            <i class="fas fa-chevron-left"></i> 上一页
+                        </button>
+                        <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">
+                            第 ${currentPage} 页
+                        </span>
+                        <button 
+                            class="btn-outline" 
+                            onclick="loadLinks(${currentPage + 1})" 
+                            ${itemCount < pageSize ? 'disabled' : ''}
+                            style="padding: 8px 16px; opacity: ${itemCount < pageSize ? '0.5' : '1'}; cursor: ${itemCount < pageSize ? 'not-allowed' : 'pointer'};">
+                            下一页 <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // 在链接容器后添加分页控件
+            const container = document.getElementById('linksContainer');
+            const existingPagination = container.nextElementSibling;
+            if (existingPagination && existingPagination.id === 'paginationContainer') {
+                existingPagination.remove();
+            }
+            
+            if (paginationHtml) {
+                const paginationDiv = document.createElement('div');
+                paginationDiv.id = 'paginationContainer';
+                paginationDiv.innerHTML = paginationHtml;
+                container.parentNode.insertBefore(paginationDiv, container.nextSibling);
             }
         }
 
@@ -1689,7 +1769,7 @@
                     });
                     if (res.ok) {
                         showToast('删除成功', 'success');
-                        loadLinks();
+                        loadLinks(1);  // 重置到第一页
                     } else {
                         showToast('删除失败', 'error');
                     }

@@ -539,6 +539,9 @@ async def list_short_links(
         query = query.filter(ShortLink.created_by_key_id == key_id)
     # 否则显示所有（开放模式）
     
+    # 按创建时间降序排序(最新的在前)
+    query = query.order_by(ShortLink.created_at.desc())
+    
     short_links = query.offset(skip).limit(limit).all()
     
     return [
