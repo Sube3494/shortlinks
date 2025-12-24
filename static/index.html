@@ -1470,9 +1470,19 @@
             return headers;
         }
 
+        // 解析 API 返回的时间（无论是 UTC 还是本地时间）
+        function parseApiDate(dateString) {
+            if (!dateString) return new Date();
+            // 如果是字符串且看起来像 ISO 格式但没有时区信息，默认视为 UTC
+            if (typeof dateString === 'string' && dateString.indexOf('T') > -1 && !dateString.endsWith('Z') && !dateString.includes('+')) {
+                return new Date(dateString + 'Z');
+            }
+            return new Date(dateString);
+        }
+
         // 格式化时间为 YYYY-MM-DD HH:mm:ss
         function formatDateTime(dateString) {
-            const date = new Date(dateString);
+            const date = parseApiDate(dateString);
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -1538,7 +1548,7 @@
                     
                     const expiresDiv = document.getElementById('expiresInfo');
                     if (result.expires_at) {
-                        expiresDiv.innerHTML = `<i class="fas fa-hourglass-half"></i> 有效期至: ${new Date(result.expires_at).toLocaleString()}`;
+                        expiresDiv.innerHTML = `<i class="fas fa-hourglass-half"></i> 有效期至: ${parseApiDate(result.expires_at).toLocaleString()}`;
                     } else {
                         expiresDiv.innerHTML = '<i class="fas fa-infinity"></i> 永久有效';
                     }
@@ -1678,7 +1688,7 @@
                 }
 
                 container.innerHTML = links.map(link => {
-                    const isExpired = link.expires_at && new Date(link.expires_at) < new Date();
+                    const isExpired = link.expires_at && parseApiDate(link.expires_at) < new Date();
                     const expiredStyle = isExpired ? 'opacity: 0.75; border-color: var(--error);' : '';
                     
                     return `
@@ -1692,7 +1702,7 @@
                                     <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
                                     <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
                                     ${link.expires_at ? 
-                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${new Date(link.expires_at).toLocaleDateString()}</span>` : 
+                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${parseApiDate(link.expires_at).toLocaleDateString()}</span>` : 
                                         '<span class="link-tag"><i class="fas fa-infinity"></i> 永久</span>'}
                                 </div>
                             </div>
@@ -1823,7 +1833,7 @@
                         </div>
                         <div class="stats-info">
                             <div class="stats-label">创建时间</div>
-                            <div class="stats-value">${new Date(data.created_at).toLocaleString('zh-CN', {
+                            <div class="stats-value">${parseApiDate(data.created_at).toLocaleString('zh-CN', {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
@@ -1838,7 +1848,7 @@
                         </div>
                         <div class="stats-info">
                             <div class="stats-label">最后访问</div>
-                            <div class="stats-value">${data.last_accessed ? new Date(data.last_accessed).toLocaleString('zh-CN', {
+                            <div class="stats-value">${data.last_accessed ? parseApiDate(data.last_accessed).toLocaleString('zh-CN', {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
@@ -1933,7 +1943,7 @@
                 
                 // 格式化有效期
                 if (data.expires_at) {
-                    const expiresDate = new Date(data.expires_at);
+                    const expiresDate = parseApiDate(data.expires_at);
                     const dateStr = expiresDate.toLocaleString('zh-CN', {
                         year: 'numeric',
                         month: '2-digit',
