@@ -1702,7 +1702,7 @@
                                     <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
                                     <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
                                     ${link.expires_at ? 
-                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${parseApiDate(link.expires_at).toLocaleDateString()}</span>` : 
+                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
                                         '<span class="link-tag"><i class="fas fa-infinity"></i> 永久</span>'}
                                 </div>
                             </div>
