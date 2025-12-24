@@ -832,11 +832,47 @@
             align-items: center;
             gap: 14px;
             transition: all 0.2s;
+            position: relative;
         }
 
         .stats-item:hover {
             border-color: var(--primary);
             transform: translateX(4px);
+        }
+
+        /* 原始链接特殊样式 */
+        .stats-item.with-copy {
+            padding-right: 52px;
+        }
+
+        .stats-copy-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .stats-copy-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .stats-copy-btn:active {
+            transform: translateY(-50%) scale(0.9);
         }
 
         .stats-icon {
@@ -871,6 +907,12 @@
             font-size: 1.05rem;
             font-weight: 600;
             color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
             word-break: break-all;
         }
 
@@ -984,20 +1026,32 @@
             
             /* Stack links vertically on mobile */
             .link-card { 
-                flex-direction: column; 
-                align-items: flex-start;
-                gap: 12px;
+                padding: 12px;
             }
             
             .link-info {
                 width: 100%;
             }
             
+            .link-info h3 {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+            }
+            
+            .link-meta {
+                font-size: 0.7rem;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            
             .link-actions { 
-                width: 100%; 
-                justify-content: flex-end; 
-                padding-top: 12px;
-                border-top: 1px solid var(--border-color);
+                gap: 4px;
+            }
+            
+            .action-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.8rem;
             }
             
             .link-original { 
@@ -1037,9 +1091,9 @@
                 white-space: normal;
             }
             
-            /* Larger Touch Targets */
-            .btn, input, .tab, .action-btn {
-                min-height: 48px;
+            /* Larger Touch Targets - 只对主要输入元素 */
+            .btn, input, .tab {
+                min-height: 44px;
             }
             
             .tabs-container {
@@ -1586,14 +1640,17 @@
                 
                 const statsGrid = document.getElementById('statsGrid');
                 statsGrid.innerHTML = `
-                    <div class="stats-item">
+                    <div class="stats-item with-copy">
                         <div class="stats-icon">
                             <i class="fas fa-link"></i>
                         </div>
                         <div class="stats-info">
                             <div class="stats-label">原始链接</div>
-                            <div class="stats-value" style="word-break: break-all; font-size: 0.85rem;">${data.original_url}</div>
+                            <div class="stats-value" style="font-size: 0.85rem;" title="${data.original_url}">${data.original_url}</div>
                         </div>
+                        <button class="stats-copy-btn" onclick="copyText('${data.original_url.replace(/'/g, "\\'")}')">
+                            <i class="far fa-copy"></i>
+                        </button>
                     </div>
                     <div class="stats-item">
                         <div class="stats-icon">
