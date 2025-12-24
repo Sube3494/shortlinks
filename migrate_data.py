@@ -14,12 +14,37 @@ Description:
 """
 
 import secrets
-from database import SessionLocal, ShortLink, APIKey, init_db
+from database import SessionLocal, ShortLink, APIKey, init_db, engine
+
+
+def upgrade_database():
+    """升级数据库结构：添加新列"""
+    print("\n🔧 检查数据库结构...")
+    
+    # 直接使用原生 SQL 检查和添加列
+    with engine.connect() as conn:
+        # 检查列是否已存在
+        result = conn.execute(engine.text("PRAGMA table_info(shortlinks)"))
+        columns = [row[1] for row in result.fetchall()]
+        
+        if 'created_by_key_id' not in columns:
+            print("📝 添加 created_by_key_id 列...")
+            # SQLite 添加列
+            conn.execute(engine.text(
+                "ALTER TABLE shortlinks ADD COLUMN created_by_key_id INTEGER"
+            ))
+            conn.commit()
+            print("✅ 数据库结构已更新")
+        else:
+            print("✅ 数据库结构已是最新")
 
 
 def migrate_existing_links():
     """为现有的未分配短链创建系统 Key 并关联"""
-    # 初始化数据库（确保新字段已创建）
+    # 先升级数据库结构
+    upgrade_database()
+    
+    # 初始化数据库（确保 api_keys 表存在）
     init_db()
     
     db = SessionLocal()
