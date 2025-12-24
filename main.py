@@ -230,6 +230,18 @@ def verify_api_key(
     return None
 
 
+def verify_api_key_no_stats(
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    api_key: Optional[str] = Query(None),
+    request: Request = None,
+    db: Session = Depends(get_db)
+) -> Optional[int]:
+    """
+    验证API密钥但不更新使用统计
+    用于 GET 请求等只读操作
+    """
+    return verify_api_key(x_api_key, api_key, request, db, update_stats=False)
+
 @app.get("/")
 async def root(request: Request):
     """API根路径，返回网页界面或API信息"""
@@ -459,7 +471,7 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
 async def get_short_link_info(
     short_code: str,
     db: Session = Depends(get_db),
-    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
+    key_id: Optional[int] = Depends(verify_api_key_no_stats)  # 获取当前 Key ID (不统计次数)
 ):
     """
     获取短链详细信息
@@ -491,7 +503,7 @@ async def get_short_link_info(
 async def get_short_link_stats(
     short_code: str,
     db: Session = Depends(get_db),
-    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
+    key_id: Optional[int] = Depends(verify_api_key_no_stats)  # 获取当前 Key ID (不统计次数)
 ):
     """
     获取短链统计信息
@@ -522,7 +534,7 @@ async def list_short_links(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
+    key_id: Optional[int] = Depends(verify_api_key_no_stats)  # 获取当前 Key ID (不统计次数)
 ):
     """
     列出短链
