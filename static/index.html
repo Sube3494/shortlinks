@@ -1154,6 +1154,18 @@
                 <small style="color: var(--text-secondary); margin-top: 8px; display: block; font-size: 0.85rem;">
                     如果服务未启用认证，请留空。
                 </small>
+                <!-- Key 信息显示区域 -->
+                <div id="keyInfo" style="display: none; margin-top: 16px; padding: 16px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                        <strong style="color: var(--text-main);">当前密钥信息</strong>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+                        <div><i class="fas fa-tag" style="width: 20px; color: var(--primary);"></i> 名称: <span id="keyName" style="color: var(--text-main); font-weight: 500;"></span></div>
+                        <div><i class="fas fa-calendar-alt" style="width: 20px; color: var(--primary);"></i> 有效期: <span id="keyExpires" style="color: var(--text-main); font-weight: 500;"></span></div>
+                        <div><i class="fas fa-chart-line" style="width: 20px; color: var(--primary);"></i> 使用次数: <span id="keyUsage" style="color: var(--text-main); font-weight: 500;"></span></div>
+                    </div>
+                </div>
             </div>
             <button class="btn" onclick="saveSettings()">
                 <i class="fas fa-save"></i> 保存设置
@@ -1386,9 +1398,18 @@
         function openSettings() {
             const modal = document.getElementById('settingsModal');
             modal.style.display = 'flex';
-            // 强制重绘以触发过渡
-            modal.offsetHeight;
-            modal.classList.add('show');
+            setTimeout(() => {
+                modal.classList.add('show');
+            }, 10);
+            
+            // 加载已保存的设置
+            const savedKey = localStorage.getItem('shortlink_api_key');
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+            }
+            
+            // 加载 Key 信息
+            loadKeyInfo();
         }
 
         function closeSettings(e) {
@@ -1417,6 +1438,9 @@
             
             showToast('设置已保存', 'success');
             loadLinks();
+            
+            // 加载 Key 信息
+            loadKeyInfo();
         }
 
         // 工具函数
@@ -1583,13 +1607,23 @@
                 
                 // 检查认证错误
                 if (res.status === 401 || res.status === 403) {
+                    // 区分未设置密钥和密钥错误
+                    const isInvalidKey = res.status === 403;
+                    const iconClass = isInvalidKey ? 'fa-exclamation-triangle' : 'fa-key';
+                    const iconColor = isInvalidKey ? 'var(--error)' : 'var(--primary)';
+                    const iconBg = isInvalidKey ? 'rgba(239, 68, 68, 0.1)' : 'var(--primary-light)';
+                    const title = isInvalidKey ? 'API 密钥无效' : '此服务需要 API 密钥';
+                    const message = isInvalidKey 
+                        ? '您保存的密钥无效或已过期，请检查后重新设置' 
+                        : '请点击右上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用';
+                    
                     container.innerHTML = `
                         <div style="text-align: center; padding: 60px 20px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color);">
-                            <div style="width: 80px; height: 80px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                <i class="fas fa-key" style="font-size: 2.5rem; color: var(--primary);"></i>
+                            <div style="width: 80px; height: 80px; background: ${iconBg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <i class="fas ${iconClass}" style="font-size: 2.5rem; color: ${iconColor};"></i>
                             </div>
-                            <p style="color: var(--text-main); font-size: 1.1rem; font-weight: 600; margin-bottom: 12px;">此服务需要 API 密钥</p>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem;">请点击右上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用</p>
+                            <p style="color: var(--text-main); font-size: 1.1rem; font-weight: 600; margin-bottom: 12px;">${title}</p>
+                            <p style="color: var(--text-secondary); font-size: 0.95rem;">${message}</p>
                         </div>`;
                     return;
                 }
@@ -1792,6 +1826,62 @@
         document.getElementById('longUrl').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
         });
+
+        // 加载 API Key 信息
+        async function loadKeyInfo() {
+            const keyInfoDiv = document.getElementById('keyInfo');
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/key/info`, { headers: getHeaders() });
+                
+                if (!res.ok) {
+                    keyInfoDiv.style.display = 'none';
+                    return;
+                }
+                
+                const data = await res.json();
+                
+                if (!data.authenticated) {
+                    keyInfoDiv.style.display = 'none';
+                    return;
+                }
+                
+                // 显示 Key 信息
+                document.getElementById('keyName').textContent = data.name;
+                document.getElementById('keyUsage').textContent = data.usage_count || 0;
+                
+                // 格式化有效期
+                if (data.expires_at) {
+                    const expiresDate = new Date(data.expires_at);
+                    const dateStr = expiresDate.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const expiresSpan = document.getElementById('keyExpires');
+                    if (data.is_expired) {
+                        expiresSpan.innerHTML = `${dateStr} <span style="color: var(--error); font-weight: 600;">(已过期)</span>`;
+                    } else {
+                        expiresSpan.textContent = dateStr;
+                        expiresSpan.style.color = 'var(--text-main)';
+                    }
+                } else {
+                    const expiresSpan = document.getElementById('keyExpires');
+                    expiresSpan.textContent = '永不过期';
+                    expiresSpan.style.color = 'var(--success)';
+                }
+                
+                keyInfoDiv.style.display = 'block';
+                
+            } catch (e) {
+                console.error('加载 Key 信息失败:', e);
+                keyInfoDiv.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>
+```

@@ -1,16 +1,23 @@
-from fastapi import FastAPI, HTTPException, Depends, Request, Header, Query, Request
-from fastapi.responses import RedirectResponse, Response, FileResponse
+```python
+from fastapi import FastAPI, HTTPException, Depends, Header, Query, Request
+from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 from sqlalchemy.orm import Session
-from datetime import datetime
-from typing import List, Optional
+from datetime import datetime, timedelta
+from typing import Optional, List
 import os
 import json
 import re
+import random
+import string
+from urllib.parse import unquote, quote
+import unicodedata
+from collections import defaultdict
+import time
 
 # 尝试加载 .env 文件
 try:
@@ -76,17 +83,104 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 # API密钥Header
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
+# ==================== IP 限流配置 ====================
+# 防暴力破解配置
+MAX_FAILURES = 5           # 最大失败次数
+FAILURE_WINDOW = 300       # 失败窗口期（秒）= 5分钟
+BAN_DURATION = 900         # 封禁时长（秒）= 15分钟
+
+# IP 限流数据结构
+# {ip: [(timestamp1, timestamp2, ...), ban_until]}
+ip_failures = defaultdict(lambda: {'attempts': [], 'ban_until': None})
+
+def get_client_ip(request: Request) -> str:
+    """获取客户端真实 IP"""
+    # 优先从 X-Forwarded-For 获取（如果有反向代理）
+    forwarded = request.headers.get('X-Forwarded-For')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    
+    # 其次从 X-Real-IP 获取
+    real_ip = request.headers.get('X-Real-IP')
+    if real_ip:
+        return real_ip
+    
+    # 最后使用直连 IP
+    return request.client.host if request.client else 'unknown'
+
+def is_ip_banned(ip: str) -> bool:
+    """检查 IP 是否被封禁"""
+    if ip not in ip_failures:
+        return False
+    
+    ban_until = ip_failures[ip]['ban_until']
+    if ban_until and time.time() < ban_until:
+        return True
+    
+    # 解除过期的封禁
+    if ban_until and time.time() >= ban_until:
+        ip_failures[ip]['ban_until'] = None
+        ip_failures[ip]['attempts'] = []
+    
+    return False
+
+def record_auth_failure(ip: str):
+    """记录认证失败"""
+    now = time.time()
+    
+    # 清理过期的失败记录
+    ip_failures[ip]['attempts'] = [
+        t for t in ip_failures[ip]['attempts']
+        if now - t < FAILURE_WINDOW
+    ]
+    
+    # 添加当前失败记录
+    ip_failures[ip]['attempts'].append(now)
+    
+    # 检查是否达到封禁阈值
+    if len(ip_failures[ip]['attempts']) >= MAX_FAILURES:
+        ip_failures[ip]['ban_until'] = now + BAN_DURATION
+        print(f"⚠️  IP {ip} 被临时封禁 {BAN_DURATION//60} 分钟（失败尝试: {len(ip_failures[ip]['attempts'])}）")
+        return True
+    
+    return False
+
+def get_remaining_ban_time(ip: str) -> int:
+    """获取剩余封禁时间（秒）"""
+    if ip not in ip_failures:
+        return 0
+    
+    ban_until = ip_failures[ip]['ban_until']
+    if not ban_until:
+        return 0
+    
+    remaining = int(ban_until - time.time())
+    return max(0, remaining)
+
 
 def verify_api_key(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     api_key: Optional[str] = Query(None),
+    request: Request = None,
     db: Session = Depends(get_db)
 ) -> Optional[int]:
     """
     验证API密钥并返回 Key ID
     支持通过 Header (X-API-Key) 或 Query参数 (api_key) 传递
+    集成 IP 限流防暴力破解
     返回: Key ID (如果认证成功) 或 None (如果无需认证)
     """
+    # 获取客户端 IP
+    client_ip = get_client_ip(request)
+    
+    # 检查 IP 是否被封禁
+    if is_ip_banned(client_ip):
+        remaining = get_remaining_ban_time(client_ip)
+        raise HTTPException(
+            status_code=429,
+            detail=f"访问受限，请在 {remaining//60} 分钟后重试"
+        )
+    
     # 获取提供的密钥
     provided_key = x_api_key or api_key
     
@@ -100,6 +194,8 @@ def verify_api_key(
         if db_key:
             # 检查是否过期
             if db_key.expires_at and datetime.now() > db_key.expires_at:
+                # 记录失败
+                record_auth_failure(client_ip)
                 raise HTTPException(
                     status_code=403,
                     detail="API Key 已过期"
@@ -112,7 +208,8 @@ def verify_api_key(
             
             return db_key.id  # 返回 Key ID
         else:
-            # 提供了密钥但无效
+            # 提供了密钥但无效 - 记录失败
+            record_auth_failure(client_ip)
             raise HTTPException(
                 status_code=403,
                 detail="无效的API密钥"
@@ -153,6 +250,38 @@ async def root(request: Request):
     # 如果找不到文件，返回重定向到静态文件路由或API信息
     # 尝试通过静态文件路由访问
     return RedirectResponse(url="/static/index.html")
+
+
+@app.get("/api/key/info")
+async def get_current_key_info(
+    key_id: Optional[int] = Depends(verify_api_key),
+    db: Session = Depends(get_db)
+):
+    """
+    获取当前 API Key 的信息
+    """
+    if key_id is None:
+        # 无认证模式
+        return {
+            "authenticated": False,
+            "message": "服务未启用认证"
+        }
+    
+    # 查询当前 Key
+    api_key = db.query(APIKey).filter(APIKey.id == key_id).first()
+    
+    if not api_key:
+        raise HTTPException(status_code=404, detail="Key 不存在")
+    
+    return {
+        "authenticated": True,
+        "name": api_key.name,
+        "created_at": api_key.created_at.isoformat(),
+        "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+        "is_expired": api_key.expires_at and datetime.now() > api_key.expires_at if api_key.expires_at else False,
+        "usage_count": api_key.usage_count,
+        "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None
+    }
 
 
 @app.post("/api/shorten", response_model=ShortLinkResponse)
