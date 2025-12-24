@@ -553,13 +553,7 @@
         }
 
         .link-original {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 450px;
+            display: none; /* 隐藏原始链接显示 */
         }
 
         .link-meta {
@@ -590,8 +584,8 @@
         }
 
         .action-btn {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: var(--radius);
             border: 1px solid var(--border-color);
             background: var(--surface-color);
@@ -601,6 +595,7 @@
             align-items: center;
             justify-content: center;
             transition: var(--transition);
+            font-size: 0.85rem;
         }
 
         .action-btn:hover {
@@ -1236,11 +1231,11 @@
         </div>
     </div>
 
-    <!-- 统计信息模态框 -->
+    <!-- 详细信息模态框 -->
     <div class="stats-modal" id="statsModal" onclick="closeStats(event)">
         <div class="stats-content">
             <div class="stats-header">
-                <h3><i class="fas fa-chart-bar"></i> 统计信息</h3>
+                <h3><i class="fas fa-info-circle"></i> 详细信息</h3>
                 <button class="stats-close" onclick="closeStatsModal()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -1538,7 +1533,6 @@
                                     <a href="${link.short_url}" target="_blank">${link.short_url}</a>
                                     ${isExpired ? '<span class="link-tag expired-tag" style="font-size: 0.75rem; margin-left: 10px;">已过期</span>' : ''}
                                 </h3>
-                                <div class="link-original" title="${link.original_url}">${link.original_url}</div>
                                 <div class="link-meta">
                                     <span class="link-tag"><i class="far fa-clock"></i> ${new Date(link.created_at).toLocaleDateString()}</span>
                                     <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
@@ -1551,8 +1545,8 @@
                                 <button class="action-btn" onclick="copyText('${link.short_url}')" title="复制">
                                     <i class="far fa-copy"></i>
                                 </button>
-                                <button class="action-btn" onclick="showStats('${link.short_code}')" title="统计">
-                                    <i class="fas fa-chart-bar"></i>
+                                <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细">
+                                    <i class="fas fa-info-circle"></i>
                                 </button>
                                 <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="删除">
                                     <i class="far fa-trash-alt"></i>
@@ -1585,13 +1579,22 @@
             });
         }
 
-        async function showStats(code) {
+        async function showStats(code, originalUrl) {
             try {
                 const res = await fetch(`${API_BASE}/api/stats/${code}`, { headers: getHeaders() });
                 const data = await res.json();
                 
                 const statsGrid = document.getElementById('statsGrid');
                 statsGrid.innerHTML = `
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-label">原始链接</div>
+                            <div class="stats-value" style="word-break: break-all; font-size: 0.85rem;">${data.original_url}</div>
+                        </div>
+                    </div>
                     <div class="stats-item">
                         <div class="stats-icon">
                             <i class="fas fa-tag"></i>
