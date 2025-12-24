@@ -36,7 +36,24 @@
 
 将域名的 A 记录指向服务器 IP。
 
-#### 2. 配置 API 密钥（可选）
+#### 2. 配置 API 密钥
+
+**推荐方式：使用多 Key 管理（新功能）**
+
+服务启动后，使用命令行工具管理 API Keys：
+
+```bash
+# 创建第一个 Key
+docker exec -it shortlink-app python manage_keys.py create --name "主密钥"
+
+# 创建带过期时间的 Key
+docker exec -it shortlink-app python manage_keys.py create --name "临时密钥" --expires-days 30
+
+# 查看所有 Key
+docker exec -it shortlink-app python manage_keys.py list
+```
+
+**传统方式：使用环境变量（向后兼容）**
 
 编辑 `docker-compose.yml`，设置 `API_KEY` 环境变量：
 
@@ -46,7 +63,9 @@ environment:
   - API_KEY=your-secret-api-key-here  # 设置你的API密钥
 ```
 
-**注意：** 如果不设置 `API_KEY` 或设置为空，则不启用认证，任何人都可以调用API。
+**注意：** 
+- 如果数据库中没有任何 Key 且未设置环境变量，则不启用认证，任何人都可以调用API
+- 多 Key 管理优先于环境变量，推荐使用多 Key 方式
 
 #### 3. 启动短链服务
 
@@ -88,6 +107,88 @@ sudo journalctl -u caddy -f
 ```bash
 docker-compose down
 ```
+
+## API Key 管理
+
+### 命令行工具
+
+服务支持多 API Key 管理,每个 Key 可以独立设置名称、过期时间并追踪使用统计。
+
+#### 创建 API Key
+
+```bash
+# 创建永久有效的 Key
+docker exec -it shortlink-app python manage_keys.py create --name "移动端APP"
+
+# 创建带过期时间的 Key (90天后过期)
+docker exec -it shortlink-app python manage_keys.py create --name "临时密钥" --expires-days 90
+```
+
+**输出示例：**
+```
+✅ API Key 创建成功!
+
+ID: 1
+名称: 移动端APP
+密钥: AbCdEf123456...xyz  (请妥善保存,仅显示一次!)
+创建时间: 2025-12-24 15:30:00
+过期时间: 永不过期
+```
+
+#### 列出所有 Key
+
+```bash
+docker exec -it shortlink-app python manage_keys.py list
+```
+
+**输出示例：**
+```
+🔑 共有 2 个活跃的 API Keys:
+
+ID    名称                密钥前缀         过期时间         最后使用              使用次数    
+---------------------------------------------------------------------------------------------
+1     移动端APP           AbCdEf123...    Never           2小时前               234         
+2     CI/CD流水线         XyZ789Abc...    2025-03-20      5分钟前               45          
+```
+
+#### 查看 Key 详情
+
+```bash
+docker exec -it shortlink-app python manage_keys.py info 1
+```
+
+#### 更新 Key
+
+```bash
+# 修改名称
+docker exec -it shortlink-app python manage_keys.py update 1 --name "移动端APP-v2"
+
+# 延长有效期
+docker exec -it shortlink-app python manage_keys.py update 1 --expires-days 180
+
+# 设置为永不过期
+docker exec -it shortlink-app python manage_keys.py update 1 --expires-days 0
+```
+
+#### 撤销 Key
+
+```bash
+# 软删除,Key 立即失效但保留记录
+docker exec -it shortlink-app python manage_keys.py revoke 1
+```
+
+#### 删除 Key
+
+```bash
+# 永久删除,需要 --confirm 确认
+docker exec -it shortlink-app python manage_keys.py delete 1 --confirm
+```
+
+### 向后兼容说明
+
+- **优先级**: 数据库中的 Key > 环境变量 `API_KEY`
+- **建议**: 新项目使用多 Key 管理,旧项目可继续使用环境变量
+- **迁移**: 可同时保留环境变量作为紧急后备密钥
 
 ## API 使用
 

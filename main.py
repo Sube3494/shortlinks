@@ -19,7 +19,7 @@ try:
 except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
-from database import get_db, init_db, ShortLink
+from database import get_db, init_db, ShortLink, APIKey
 from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate
 from utils import get_unique_short_code, normalize_url, validate_url
 
@@ -73,43 +73,63 @@ for static_dir in static_dirs:
 # 获取基础URL（用于生成完整短链）
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
-# API密钥（从环境变量读取）
-API_KEY = os.getenv("API_KEY", "")
-
 # API密钥Header
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def verify_api_key(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    api_key: Optional[str] = Query(None)
-):
+    api_key: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+) -> Optional[int]:
     """
-    验证API密钥
+    验证API密钥并返回 Key ID
     支持通过 Header (X-API-Key) 或 Query参数 (api_key) 传递
+    返回: Key ID (如果认证成功) 或 None (如果无需认证)
     """
-    # 如果没有设置API_KEY，则不启用认证
-    if not API_KEY:
-        return True
-    
-    # 优先使用Header中的密钥，如果没有则使用Query参数
+    # 获取提供的密钥
     provided_key = x_api_key or api_key
     
-    # 如果设置了API_KEY但没有提供密钥，拒绝访问
-    if not provided_key:
+    # 1. 如果提供了密钥，查询数据库
+    if provided_key:
+        db_key = db.query(APIKey).filter(
+            APIKey.key == provided_key,
+            APIKey.is_active == True
+        ).first()
+        
+        if db_key:
+            # 检查是否过期
+            if db_key.expires_at and datetime.now() > db_key.expires_at:
+                raise HTTPException(
+                    status_code=403,
+                    detail="API Key 已过期"
+                )
+            
+            # 更新使用统计
+            db_key.last_used_at = datetime.now()
+            db_key.usage_count += 1
+            db.commit()
+            
+            return db_key.id  # 返回 Key ID
+        else:
+            # 提供了密钥但无效
+            raise HTTPException(
+                status_code=403,
+                detail="无效的API密钥"
+            )
+    
+    # 2. 没有提供密钥，检查是否需要认证
+    has_db_keys = db.query(APIKey).filter(APIKey.is_active == True).count() > 0
+    
+    if has_db_keys:
+        # 有配置认证但没有提供密钥
         raise HTTPException(
             status_code=401,
             detail="缺少API密钥，请在Header中添加 X-API-Key 或在URL中添加 api_key 参数"
         )
     
-    # 验证密钥
-    if provided_key != API_KEY:
-        raise HTTPException(
-            status_code=403,
-            detail="无效的API密钥"
-        )
-    
-    return True
+    # 3. 无任何认证要求，允许访问
+    return None
 
 
 @app.get("/")
@@ -139,7 +159,7 @@ async def root(request: Request):
 async def create_short_link(
     request: ShortLinkCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
     创建短链
@@ -191,7 +211,8 @@ async def create_short_link(
     short_link = ShortLink(
         short_code=short_code,
         original_url=original_url,
-        expires_at=expires_at
+        expires_at=expires_at,
+        created_by_key_id=key_id  # 记录创建者
     )
     
     db.add(short_link)
@@ -213,7 +234,7 @@ async def create_short_link(
 async def create_batch_short_links(
     request: BatchShortLinkCreate,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
     批量创建短链
@@ -247,7 +268,8 @@ async def create_batch_short_links(
             short_link = ShortLink(
                 short_code=short_code,
                 original_url=original_url,
-                expires_at=expires_at
+                expires_at=expires_at,
+                created_by_key_id=key_id  # 记录创建者
             )
             
             db.add(short_link)
@@ -302,10 +324,11 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
 async def get_short_link_info(
     short_code: str,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
     获取短链详细信息
+    只能查询自己创建的短链
     """
     short_link = db.query(ShortLink).filter(
         ShortLink.short_code == short_code
@@ -313,6 +336,10 @@ async def get_short_link_info(
     
     if not short_link:
         raise HTTPException(status_code=404, detail="短链不存在")
+    
+    # 权限检查: 只能查询自己创建的
+    if key_id is not None and short_link.created_by_key_id != key_id:
+        raise HTTPException(status_code=403, detail="无权查看此短链")
     
     return ShortLinkResponse(
         short_code=short_link.short_code,
@@ -329,10 +356,11 @@ async def get_short_link_info(
 async def get_short_link_stats(
     short_code: str,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
     获取短链统计信息
+    只能查询自己创建的短链
     """
     short_link = db.query(ShortLink).filter(
         ShortLink.short_code == short_code
@@ -340,6 +368,10 @@ async def get_short_link_stats(
     
     if not short_link:
         raise HTTPException(status_code=404, detail="短链不存在")
+    
+    # 权限检查: 只能查询自己创建的
+    if key_id is not None and short_link.created_by_key_id != key_id:
+        raise HTTPException(status_code=403, detail="无权查看此短链")
     
     return ShortLinkStats(
         short_code=short_link.short_code,
@@ -355,15 +387,24 @@ async def list_short_links(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
-    列出所有短链
+    列出短链
+    只返回当前 Key 创建的短链
     
     - **skip**: 跳过的记录数（分页）
     - **limit**: 返回的最大记录数
     """
-    short_links = db.query(ShortLink).offset(skip).limit(limit).all()
+    # 查询短链，添加权限过滤
+    query = db.query(ShortLink)
+    
+    # 如果有认证，只显示当前 Key 创建的
+    if key_id is not None:
+        query = query.filter(ShortLink.created_by_key_id == key_id)
+    # 否则显示所有（开放模式）
+    
+    short_links = query.offset(skip).limit(limit).all()
     
     return [
         ShortLinkResponse(
@@ -383,10 +424,11 @@ async def list_short_links(
 async def delete_short_link(
     short_code: str,
     db: Session = Depends(get_db),
-    _: bool = Depends(verify_api_key)
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
     """
     删除短链
+    只能删除自己创建的短链
     """
     short_link = db.query(ShortLink).filter(
         ShortLink.short_code == short_code
@@ -394,6 +436,10 @@ async def delete_short_link(
     
     if not short_link:
         raise HTTPException(status_code=404, detail="短链不存在")
+    
+    # 权限检查: 只能删除自己创建的
+    if key_id is not None and short_link.created_by_key_id != key_id:
+        raise HTTPException(status_code=403, detail="无权删除此短链")
     
     db.delete(short_link)
     db.commit()

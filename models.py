@@ -41,3 +41,31 @@ class ShortLinkStats(BaseModel):
     class Config:
         from_attributes = True
 
+
+class APIKeyCreate(BaseModel):
+    """创建API密钥请求模型"""
+    name: str
+    expires_in_days: Optional[int] = None  # 过期天数，可选
+
+
+class APIKeyResponse(BaseModel):
+    """API密钥响应模型"""
+    id: int
+    key: str
+    name: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    last_used_at: Optional[datetime] = None
+    usage_count: int
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class APIKeyUpdate(BaseModel):
+    """更新API密钥请求模型"""
+    name: Optional[str] = None
+    expires_in_days: Optional[int] = None
+    is_active: Optional[bool] = None
+

@@ -7,7 +7,6 @@ services:
     restart: unless-stopped
     environment:
       - BASE_URL=https://
-      - API_KEY=${API_KEY:-}  # 设置API密钥，留空则不启用认证
     ports:
       - "18000:8000"
     volumes:
