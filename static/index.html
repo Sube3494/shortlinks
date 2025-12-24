@@ -154,6 +154,10 @@
             color: var(--text-main);
         }
 
+        .tab:active {
+            transform: scale(0.96);
+        }
+
         .tab.active {
             background: var(--primary-light);
             color: var(--primary);
@@ -241,8 +245,8 @@
         }
         
         .btn:active {
-            transform: translateY(0);
-            box-shadow: none;
+            transform: translateY(1px) scale(0.98);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .btn:disabled {
@@ -268,6 +272,11 @@
             border-color: var(--text-secondary);
         }
 
+        .btn-outline:active {
+            transform: scale(0.96);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
         /* Results */
         .result-card {
             margin-top: 24px;
@@ -276,7 +285,21 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             display: none;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); /* Slight inset depth */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+                max-height: 500px;
+            }
         }
 
         .result-header {
@@ -342,7 +365,8 @@
         }
         
         .icon-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.90);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* Toggles & Fixed Buttons */
@@ -574,7 +598,258 @@
         }
         
         .action-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Confirm Modal */
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .confirm-modal.show {
+            opacity: 1;
+        }
+
+        .confirm-content {
+            background: var(--surface-color);
+            padding: 32px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 420px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .confirm-modal.show .confirm-content {
+            transform: scale(1);
+        }
+
+        .confirm-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .confirm-header i {
+            font-size: 1.5rem;
+            color: var(--warning);
+        }
+
+        .confirm-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .confirm-message {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .confirm-btn {
+            padding: 10px 24px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .confirm-btn.cancel {
+            background: var(--secondary-bg);
+            color: var(--text-main);
+            border-color: var(--border-color);
+        }
+
+        .confirm-btn.cancel:hover {
+            background: var(--border-color);
+        }
+
+        .confirm-btn.cancel:active {
+            transform: scale(0.96);
+        }
+
+        .confirm-btn.confirm {
+            background: var(--error);
+            color: #ffffff;
+        }
+
+        .confirm-btn.confirm:hover {
+            background: #dc2626;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+        }
+
+        .confirm-btn.confirm:active {
+            transform: scale(0.96);
+            box-shadow: none;
+        }
+
+        /* Stats Modal */
+        .stats-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1500;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .stats-modal.show {
+            opacity: 1;
+        }
+
+        .stats-content {
+            background: var(--surface-color);
+            padding: 32px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 480px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.9) translateY(-20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .stats-modal.show .stats-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stats-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-header i {
+            color: var(--primary);
+        }
+
+        .stats-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .stats-close:hover {
+            background: var(--secondary-bg);
+            color: var(--text-main);
+        }
+
+        .stats-close:active {
+            transform: scale(0.9);
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .stats-item {
+            background: var(--secondary-bg);
+            padding: 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all 0.2s;
+        }
+
+        .stats-item:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .stats-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stats-icon i {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .stats-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .stats-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stats-value {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            word-break: break-all;
+        }
+
+        .stats-value.mono {
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+            font-size: 0.95rem;
         }
 
         /* Footer */
@@ -914,6 +1189,34 @@
         </div>
     </div>
 
+    <!-- 确认对话框 -->
+    <div class="confirm-modal" id="confirmModal" onclick="closeConfirm(event)">
+        <div class="confirm-content">
+            <div class="confirm-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>确认操作</h3>
+            </div>
+            <div class="confirm-message" id="confirmMessage"></div>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="confirm-btn confirm" id="confirmBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息模态框 -->
+    <div class="stats-modal" id="statsModal" onclick="closeStats(event)">
+        <div class="stats-content">
+            <div class="stats-header">
+                <h3><i class="fas fa-chart-bar"></i> 统计信息</h3>
+                <button class="stats-close" onclick="closeStatsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+    </div>
+
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
@@ -948,7 +1251,9 @@
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
             
-            const icon = document.querySelector('#themeBtn i');
+            const icon = document.querySelector('.theme-toggle i');
+            
+            if (!icon) return; // 防御性检查
             
             // 添加切换动画
             icon.style.transform = 'scale(0.5) rotate(180deg)';
@@ -969,8 +1274,12 @@
         function switchTab(mode) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${mode}`).classList.add('active');
-            document.getElementById('singleMode').style.display = mode === 'single' ? 'block' : 'none';
-            document.getElementById('batchMode').style.display = mode === 'batch' ? 'block' : 'none';
+            
+            const singleMode = document.getElementById('singleMode');
+            const batchMode = document.getElementById('batchMode');
+            
+            singleMode.style.display = mode === 'single' ? 'block' : 'none';
+            batchMode.style.display = mode === 'batch' ? 'block' : 'none';
             document.getElementById('singleResult').style.display = 'none';
             document.getElementById('batchResult').style.display = 'none';
         }
@@ -1226,37 +1535,132 @@
         }
 
         async function deleteLink(code) {
-            if (!confirm('确定要删除这个短链吗？')) return;
-            try {
-                const res = await fetch(`${API_BASE}/api/${code}`, {
-                    method: 'DELETE',
-                    headers: getHeaders()
-                });
-                if (res.ok) {
-                    showToast('删除成功', 'success');
-                    loadLinks();
-                } else {
-                    showToast('删除失败', 'error');
+            showConfirm('确定要删除这个短链吗? 此操作无法撤销。', async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/api/${code}`, {
+                        method: 'DELETE',
+                        headers: getHeaders()
+                    });
+                    if (res.ok) {
+                        showToast('删除成功', 'success');
+                        loadLinks();
+                    } else {
+                        showToast('删除失败', 'error');
+                    }
+                } catch (err) {
+                    showToast('请求失败', 'error');
                 }
-            } catch (err) {
-                showToast('请求失败', 'error');
-            }
+            });
         }
 
         async function showStats(code) {
             try {
                 const res = await fetch(`${API_BASE}/api/stats/${code}`, { headers: getHeaders() });
                 const data = await res.json();
-                alert(`
-                    📊 统计信息
-                    ----------------
-                    短码: ${data.short_code}
-                    点击: ${data.click_count}
-                    创建: ${new Date(data.created_at).toLocaleString()}
-                    最后访问: ${data.last_accessed ? new Date(data.last_accessed).toLocaleString() : '从未访问'}
-                `);
+                
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-label">短码</div>
+                            <div class="stats-value mono">${data.short_code}</div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-label">点击次数</div>
+                            <div class="stats-value">${data.click_count}</div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="far fa-clock"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-label">创建时间</div>
+                            <div class="stats-value">${new Date(data.created_at).toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}</div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-label">最后访问</div>
+                            <div class="stats-value">${data.last_accessed ? new Date(data.last_accessed).toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }) : '从未访问'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                const modal = document.getElementById('statsModal');
+                modal.style.display = 'flex';
+                modal.offsetHeight;
+                modal.classList.add('show');
             } catch (err) {
                 showToast('获取统计失败', 'error');
+            }
+        }
+
+        // 确认对话框
+        let confirmCallback = null;
+
+        function showConfirm(message, onConfirm) {
+            confirmCallback = onConfirm;
+            document.getElementById('confirmMessage').textContent = message;
+            
+            const modal = document.getElementById('confirmModal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('show');
+            
+            document.getElementById('confirmBtn').onclick = () => {
+                closeConfirmModal();
+                if (confirmCallback) confirmCallback();
+            };
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                confirmCallback = null;
+            }, 250);
+        }
+
+        function closeConfirm(event) {
+            if (event.target === document.getElementById('confirmModal')) {
+                closeConfirmModal();
+            }
+        }
+
+        function closeStatsModal() {
+            const modal = document.getElementById('statsModal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 250);
+        }
+
+        function closeStats(event) {
+            if (event.target === document.getElementById('statsModal')) {
+                closeStatsModal();
             }
         }
 
