@@ -8,12 +8,14 @@ class ShortLinkCreate(BaseModel):
     url: str
     custom_code: Optional[str] = None  # 自定义短码（可选）
     expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选）
+    expires_in_minutes: Optional[int] = None  # 过期时间（分钟数，可选，优先级高于 hours）
 
 
 class BatchShortLinkCreate(BaseModel):
     """批量创建短链请求模型"""
     urls: List[str]  # URL列表
     expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选，应用于所有URL）
+    expires_in_minutes: Optional[int] = None  # 过期时间（分钟数，可选，优先级高于 hours）
 
 
 class ShortLinkResponse(BaseModel):

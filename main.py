@@ -17,6 +17,7 @@ from urllib.parse import unquote, quote
 import unicodedata
 from collections import defaultdict
 import time
+import hashlib  # 用于 URL MD5 哈希
 
 # 尝试加载 .env 文件
 try:
@@ -25,7 +26,7 @@ try:
 except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
-from database import get_db, init_db, ShortLink, APIKey
+from database import get_db, init_db, ShortLink, APIKey, SessionLocal
 from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate
 from utils import get_unique_short_code, normalize_url, validate_url
 
@@ -242,6 +243,55 @@ def verify_api_key_no_stats(
     """
     return verify_api_key(x_api_key, api_key, request, db, update_stats=False)
 
+
+def verify_admin_key(
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
+    admin_key: Optional[str] = Query(None)
+) -> None:
+    """
+    验证超级管理员密钥
+    用于保护 /api/admin/* 端点
+    """
+    provided_key = x_admin_key or admin_key
+    admin_key_env = os.getenv("ADMIN_KEY")
+    
+    if not admin_key_env:
+        raise HTTPException(
+            status_code=503,
+            detail="管理功能未启用: 请设置 ADMIN_KEY 环境变量"
+        )
+    
+    if not provided_key or provided_key != admin_key_env:
+        raise HTTPException(
+            status_code=403,
+            detail="无效的管理员密钥"
+        )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """应用启动事件: 初始化首次 API Key"""
+    initial_key = os.getenv("INITIAL_API_KEY")
+    if initial_key and ":" in initial_key:
+        key_value, key_name = initial_key.split(":", 1)
+        
+        # 检查是否已存在
+        db = SessionLocal()
+        try:
+            existing = db.query(APIKey).filter(APIKey.key == key_value).first()
+            if not existing:
+                api_key = APIKey(
+                    key=key_value,
+                    name=key_name.strip(),
+                    created_at=datetime.now(),
+                    is_active=True
+                )
+                db.add(api_key)
+                db.commit()
+                print(f"✅ 自动创建初始 API Key: {key_name}")
+        finally:
+            db.close()
+
 @app.get("/")
 async def root(request: Request):
     """API根路径，返回网页界面或API信息"""
@@ -263,6 +313,31 @@ async def root(request: Request):
     # 如果找不到文件，返回重定向到静态文件路由或API信息
     # 尝试通过静态文件路由访问
     return RedirectResponse(url="/static/index.html")
+
+
+# 获取自定义管理后台路径
+ADMIN_PATH = os.getenv("ADMIN_PATH", "/admin")
+if not ADMIN_PATH.startswith("/"):
+    ADMIN_PATH = "/" + ADMIN_PATH
+
+@app.get(ADMIN_PATH)
+@app.get(f"{ADMIN_PATH}.html")
+async def admin_page(request: Request):
+    """管理后台页面"""
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    possible_paths = [
+        os.path.join(current_dir, "static", "admin.html"),
+        os.path.join(os.getcwd(), "static", "admin.html"),
+        "static/admin.html",
+        "/app/static/admin.html",
+    ]
+    
+    for path in possible_paths:
+        abs_path = os.path.abspath(path)
+        if os.path.exists(abs_path) and os.path.isfile(abs_path):
+            return FileResponse(abs_path)
+    
+    return RedirectResponse(url="/static/admin.html")
 
 
 @app.get("/api/key/info")
@@ -321,6 +396,32 @@ async def create_short_link(
     if not validate_url(original_url):
         raise HTTPException(status_code=400, detail="无效的URL格式")
     
+    # 计算 URL MD5 哈希
+    url_hash = hashlib.md5(original_url.encode('utf-8')).hexdigest()
+    
+    # 检查是否已存在相同 URL 的短链（全局去重）
+    existing = db.query(ShortLink).filter(
+        ShortLink.url_hash == url_hash
+    ).first()
+    
+    if existing:
+        # 检查是否过期
+        if existing.expires_at and datetime.now() > existing.expires_at:
+            # 已过期，删除旧记录，稍后创建新的
+            db.delete(existing)
+            db.commit()
+        else:
+            # 未过期，直接返回已有短链
+            return ShortLinkResponse(
+                short_code=existing.short_code,
+                short_url=f"{BASE_URL}/{existing.short_code}",
+                original_url=existing.original_url,
+                created_at=existing.created_at,
+                click_count=existing.click_count,
+                last_accessed=existing.last_accessed,
+                expires_at=existing.expires_at
+            )
+    
     # 处理自定义短码或生成新短码
     if request.custom_code:
         # 验证自定义短码格式
@@ -336,10 +437,10 @@ async def create_short_link(
             )
         
         # 检查自定义短码是否已存在
-        existing = db.query(ShortLink).filter(
+        existing_code = db.query(ShortLink).filter(
             ShortLink.short_code == request.custom_code
         ).first()
-        if existing:
+        if existing_code:
             raise HTTPException(
                 status_code=409,
                 detail=f"短码 '{request.custom_code}' 已被使用"
@@ -348,16 +449,18 @@ async def create_short_link(
     else:
         short_code = get_unique_short_code()
     
-    # 计算过期时间
+    # 计算过期时间（优先使用分钟，其次小时）
     expires_at = None
-    if request.expires_in_hours and request.expires_in_hours > 0:
-        from datetime import timedelta
+    if request.expires_in_minutes and request.expires_in_minutes > 0:
+        expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
+    elif request.expires_in_hours and request.expires_in_hours > 0:
         expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
     
     # 创建短链记录
     short_link = ShortLink(
         short_code=short_code,
         original_url=original_url,
+        url_hash=url_hash,  # 保存 MD5 哈希
         expires_at=expires_at,
         created_by_key_id=key_id  # 记录创建者
     )
@@ -402,19 +505,42 @@ async def create_batch_short_links(
                 errors.append(f"第 {idx + 1} 个URL无效: {url}")
                 continue
             
+            # 计算 URL MD5 哈希
+            url_hash = hashlib.md5(original_url.encode('utf-8')).hexdigest()
+            
+            # 检查是否已存在相同 URL 的短链（去重）
+            existing = db.query(ShortLink).filter(
+                ShortLink.url_hash == url_hash
+            ).first()
+            
+            if existing and not (existing.expires_at and datetime.now() > existing.expires_at):
+                # 存在且未过期，复用已有短链
+                results.append(ShortLinkResponse(
+                    short_code=existing.short_code,
+                    short_url=f"{BASE_URL}/{existing.short_code}",
+                    original_url=existing.original_url,
+                    created_at=existing.created_at,
+                    click_count=existing.click_count,
+                    last_accessed=existing.last_accessed,
+                    expires_at=existing.expires_at
+                ))
+                continue
+            
             # 生成短码
             short_code = get_unique_short_code()
             
-            # 计算过期时间
+            # 计算过期时间（优先使用分钟，其次小时）
             expires_at = None
-            if request.expires_in_hours and request.expires_in_hours > 0:
-                from datetime import timedelta
+            if request.expires_in_minutes and request.expires_in_minutes > 0:
+                expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
+            elif request.expires_in_hours and request.expires_in_hours > 0:
                 expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
             
             # 创建短链记录
             short_link = ShortLink(
                 short_code=short_code,
                 original_url=original_url,
+                url_hash=url_hash,  # 保存 MD5 哈希
                 expires_at=expires_at,
                 created_by_key_id=key_id  # 记录创建者
             )
@@ -595,6 +721,175 @@ async def delete_short_link(
     db.commit()
     
     return {"message": f"短链 '{short_code}' 已成功删除"}
+
+
+# ==================== 管理员 API ====================
+# 用于 Vercel 等 Serverless 环境管理 API Keys
+
+@app.post("/api/admin/keys/create")
+async def admin_create_api_key(
+    name: str,
+    expires_days: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    创建新的 API Key (需要管理员权限)
+    
+    - **name**: Key 名称/备注
+    - **expires_days**: 过期天数 (可选, 0 表示永不过期)
+    """
+    # 生成随机密钥
+    new_key = ''.join(random.choices(string.ascii_letters + string.digits, k=48))
+    
+    # 计算过期时间
+    expires_at = None
+    if expires_days and expires_days > 0:
+        expires_at = datetime.now() + timedelta(days=expires_days)
+    
+    # 创建记录
+    api_key = APIKey(
+        key=new_key,
+        name=name,
+        created_at=datetime.now(),
+        expires_at=expires_at,
+        is_active=True
+    )
+    
+    db.add(api_key)
+    db.commit()
+    db.refresh(api_key)
+    
+    return {
+        "id": api_key.id,
+        "name": api_key.name,
+        "key": new_key,  # 仅创建时返回完整密钥
+        "created_at": api_key.created_at.isoformat(),
+        "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+        "message": "⚠️ 请妥善保存密钥,后续无法再次查看完整密钥"
+    }
+
+
+@app.get("/api/admin/keys/list")
+async def admin_list_api_keys(
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    列出所有 API Keys (需要管理员权限)
+    """
+    keys = db.query(APIKey).filter(APIKey.is_active == True).all()
+    
+    return {
+        "total": len(keys),
+        "keys": [
+            {
+                "id": key.id,
+                "name": key.name,
+                "key_prefix": key.key[:12] + "...",  # 仅显示前缀
+                "created_at": key.created_at.isoformat(),
+                "expires_at": key.expires_at.isoformat() if key.expires_at else None,
+                "is_expired": key.expires_at and datetime.now() > key.expires_at if key.expires_at else False,
+                "usage_count": key.usage_count,
+                "last_used_at": key.last_used_at.isoformat() if key.last_used_at else None
+            }
+            for key in keys
+        ]
+    }
+
+
+@app.get("/api/admin/keys/{key_id}")
+async def admin_get_api_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    获取 API Key 详情 (需要管理员权限)
+    """
+    key = db.query(APIKey).filter(APIKey.id == key_id).first()
+    
+    if not key:
+        raise HTTPException(status_code=404, detail="Key 不存在")
+    
+    # 统计该 Key 创建的短链数量
+    shortlinks_count = db.query(ShortLink).filter(
+        ShortLink.created_by_key_id == key_id
+    ).count()
+    
+    return {
+        "id": key.id,
+        "name": key.name,
+        "key_prefix": key.key[:12] + "...",
+        "created_at": key.created_at.isoformat(),
+        "expires_at": key.expires_at.isoformat() if key.expires_at else None,
+        "is_expired": key.expires_at and datetime.now() > key.expires_at if key.expires_at else False,
+        "is_active": key.is_active,
+        "usage_count": key.usage_count,
+        "last_used_at": key.last_used_at.isoformat() if key.last_used_at else None,
+        "shortlinks_count": shortlinks_count
+    }
+
+
+@app.put("/api/admin/keys/{key_id}")
+async def admin_update_api_key(
+    key_id: int,
+    name: Optional[str] = None,
+    expires_days: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    更新 API Key (需要管理员权限)
+    
+    - **name**: 新名称 (可选)
+    - **expires_days**: 新的过期天数 (可选, 0 表示永不过期)
+    """
+    key = db.query(APIKey).filter(APIKey.id == key_id).first()
+    
+    if not key:
+        raise HTTPException(status_code=404, detail="Key 不存在")
+    
+    # 更新名称
+    if name:
+        key.name = name
+    
+    # 更新过期时间
+    if expires_days is not None:
+        if expires_days == 0:
+            key.expires_at = None
+        else:
+            key.expires_at = datetime.now() + timedelta(days=expires_days)
+    
+    db.commit()
+    db.refresh(key)
+    
+    return {
+        "id": key.id,
+        "name": key.name,
+        "expires_at": key.expires_at.isoformat() if key.expires_at else None,
+        "message": "更新成功"
+    }
+
+
+@app.delete("/api/admin/keys/{key_id}")
+async def admin_revoke_api_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    撤销 API Key (软删除, 需要管理员权限)
+    """
+    key = db.query(APIKey).filter(APIKey.id == key_id).first()
+    
+    if not key:
+        raise HTTPException(status_code=404, detail="Key 不存在")
+    
+    key.is_active = False
+    db.commit()
+    
+    return {"message": f"Key '{key.name}' 已撤销"}
 
 
 if __name__ == "__main__":

@@ -20,11 +20,143 @@
 - ✅ 创建短链（支持自定义短码）
 - ✅ 短链重定向
 - ✅ 访问统计（点击次数、最后访问时间）
+- ✅ **URL MD5 去重**（相同 URL 自动复用已有短链，避免重复生成）
 - ✅ RESTful API 接口
 - ✅ 自动生成 API 文档
 - ✅ CORS 支持，允许跨域调用
+- ✅ 多数据库支持（SQLite / MySQL / TiDB / PostgreSQL）
+- ✅ 多部署方式（Docker / Vercel Serverless）
+- ✅ Web API 管理密钥（适用于 Serverless 环境）
 
-## 部署
+## 部署方式
+
+本项目支持两种部署方式：
+
+| 方式 | 适用场景 | 数据库 | Key 管理 |
+|------|---------|--------|---------|
+| **Docker** | VPS / 本地开发 | SQLite (默认) / 云端数据库 (可选) | CLI 工具 / Web API |
+| **Vercel** | Serverless | 云端数据库 (TiDB/MySQL) | Web API |
+
+---
+
+## 部署选项一: Vercel Serverless
+
+### 优势
+- ✅ 无需服务器,零运维成本
+- ✅ 自动扩容,高可用性
+- ✅ 全球 CDN 加速
+- ✅ HTTPS 开箱即用
+
+### 前置要求
+
+1. **TiDB Cloud 数据库** (推荐) 或其他 MySQL 兼容数据库
+   - 注册 [TiDB Cloud](https://tidbcloud.com/)
+   - 创建 Serverless Tier 集群 (免费)
+   - 获取连接信息 (HOST, PORT, USERNAME, PASSWORD)
+
+2. **GitHub 仓库** (存放代码)
+
+### 部署步骤
+
+#### 1. 准备数据库连接字符串
+
+TiDB 连接字符串格式:
+```
+mysql+pymysql://USERNAME:PASSWORD@HOST:4000/DATABASE?ssl=true
+```
+
+示例 (根据你的 TiDB 连接参数):
+```
+mysql+pymysql://2hVGNSjRBBnEQwq.root:YOUR_PASSWORD@gateway01.eu-central-1.prod.aws.tidbcloud.com:4000/test?ssl=true
+```
+
+> 💡 **提示**: 如果需要 SSL 证书验证,可以添加更多参数,详见 [TiDB 文档](https://docs.pingcap.com/tidbcloud/secure-connections-to-serverless-tier-clusters)
+
+#### 2. 部署到 Vercel
+
+**方式 A: 通过 Vercel Dashboard (推荐)**
+
+1. Fork 本项目到你的 GitHub
+2. 访问 [Vercel Dashboard](https://vercel.com/new)
+3. 导入你的 GitHub 仓库
+4. 配置环境变量:
+   - `DATABASE_URL` = `mysql+pymysql://...` (你的 TiDB 连接字符串)
+   - `BASE_URL` = `https://your-domain.vercel.app`
+   - `ADMIN_KEY` = `your-super-secret-admin-key` (至少 32 字符,用于管理 API Keys)
+   - `INITIAL_API_KEY` (可选) = `your-first-api-key:初始密钥` (首次部署自动创建)
+5. 点击 "Deploy" 部署
+
+**方式 B: 通过 Vercel CLI**
+
+```bash
+# 安装 Vercel CLI
+npm i -g vercel
+
+# 登录
+vercel login
+
+# 部署
+vercel
+
+# 配置环境变量
+vercel env add DATABASE_URL
+vercel env add BASE_URL
+vercel env add ADMIN_KEY
+vercel env add INITIAL_API_KEY
+
+# 重新部署
+vercel --prod
+```
+
+#### 3. 管理 API Keys (Web API)
+
+Vercel 部署后,使用 Web API 管理 Keys:
+
+**创建 Key:**
+```bash
+curl -X POST https://your-domain.vercel.app/api/admin/keys/create \
+  -H "X-Admin-Key: your-super-secret-admin-key" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "移动端APP", "expires_days": 90}'
+```
+
+**列出所有 Keys:**
+```bash
+curl https://your-domain.vercel.app/api/admin/keys/list \
+  -H "X-Admin-Key: your-super-secret-admin-key"
+```
+
+**查看 Key 详情:**
+```bash
+curl https://your-domain.vercel.app/api/admin/keys/1 \
+  -H "X-Admin-Key: your-super-secret-admin-key"
+```
+
+**更新 Key:**
+```bash
+curl -X PUT https://your-domain.vercel.app/api/admin/keys/1 \
+  -H "X-Admin-Key: your-super-secret-admin-key" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "新名称", "expires_days": 180}'
+```
+
+**撤销 Key:**
+```bash
+curl -X DELETE https://your-domain.vercel.app/api/admin/keys/1 \
+  -H "X-Admin-Key: your-super-secret-admin-key"
+```
+
+#### 4. 验证部署
+
+访问 `https://your-domain.vercel.app/docs` 查看 API 文档
+
+---
+
+## 部署选项二: Docker
+
+### 适用场景
+- VPS 服务器部署
+- 本地开发测试
 
 ### 工作原理
 
@@ -41,9 +173,47 @@
 
 ### 部署步骤
 
-#### 1. 配置 API 密钥
+#### 1. 数据库配置 (可选)
 
-**推荐方式：使用多 Key 管理（新功能）**
+**默认: SQLite** (无需配置,数据保存在 `./data/shortlinks.db`)
+
+**可选: 使用云端数据库 (TiDB/MySQL)**
+
+编辑 `docker-compose.yaml`,取消注释并配置 `DATABASE_URL`:
+
+```yaml
+environment:
+  - BASE_URL=https://your-domain.com
+  - DATABASE_URL=mysql+pymysql://user:pass@host:4000/db?ssl=true
+```
+
+这样 Docker 部署也可以连接云端数据库,实现数据共享。
+
+#### 2. 配置 API 密钥
+
+**选项 A: Web API 管理 (推荐,兼容所有环境)**
+
+1. 在 `docker-compose.yaml` 中设置 `ADMIN_KEY`:
+   ```yaml
+   environment:
+     - ADMIN_KEY=your-super-secret-admin-key
+     - INITIAL_API_KEY=your-first-api-key:初始密钥  # 可选,首次启动自动创建
+   ```
+
+2. 启动服务后,使用 Web API 管理 Keys (同 Vercel 方式):
+   ```bash
+   # 创建 Key
+   curl -X POST http://localhost:18000/api/admin/keys/create \
+     -H "X-Admin-Key: your-super-secret-admin-key" \
+     -H "Content-Type: application/json" \
+     -d '{"name": "移动端APP", "expires_days": 90}'
+   
+   # 列出 Keys
+   curl http://localhost:18000/api/admin/keys/list \
+     -H "X-Admin-Key: your-super-secret-admin-key"
+   ```
+
+**选项 B: CLI 工具管理 (仅 Docker)**
 
 服务启动后，使用命令行工具管理 API Keys：
 
@@ -58,7 +228,7 @@ docker exec -it shortlink-app python manage_keys.py create --name "临时密钥"
 docker exec -it shortlink-app python manage_keys.py list
 ```
 
-**传统方式：使用环境变量（向后兼容）**
+**选项 C: 环境变量 (传统方式,向后兼容)**
 
 编辑 `docker-compose.yml`，设置 `API_KEY` 环境变量：
 

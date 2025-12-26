@@ -7,6 +7,12 @@ services:
     restart: unless-stopped
     environment:
       - BASE_URL=https://
+      # 数据库配置 (可选, 留空使用 SQLite)
+      # - DATABASE_URL=mysql+pymysql://user:pass@host:4000/db?ssl=true
+      # 管理员密钥 (推荐配置)
+      # - ADMIN_KEY=your-super-secret-admin-key
+      # 首次启动自动创建的 API Key (可选)
+      # - INITIAL_API_KEY=your-first-api-key:初始密钥
     ports:
       - "18000:8000"
     volumes:

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短链服务 - 管理后台</title>
+    <link rel="icon" type="image/png" href="/static/shortlink.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Mode - Compatible with index.html */
+            --bg-color: #ffffff;
+            --surface-color: #ffffff;
+            --secondary-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --dot-color: #cbd5e1;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #020617;
+            --surface-color: #0f172a;
+            --secondary-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-light: rgba(59, 130, 246, 0.1);
+            --dot-color: #1e293b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+            background-size: 24px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { color: var(--text-secondary); }
+
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        
+        input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: var(--surface-color);
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        .btn-danger { background-color: var(--error); }
+        .btn-danger:hover { background-color: #dc2626; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--secondary-bg);
+            padding: 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th { color: var(--text-secondary); font-weight: 600; }
+        td { font-family: 'JetBrains Mono', monospace; }
+
+        .tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tag-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .tag-expired { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+
+        .hidden { display: none; }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .new-key-result {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--secondary-bg);
+            border-radius: var(--radius);
+            word-break: break-all;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 登录界面 -->
+    <div id="loginSection" class="container login-box card">
+        <div class="header">
+            <h1>🛡️ 管理后台</h1>
+            <p>请输入 Admin Key 进入管理面板</p>
+        </div>
+        <div class="input-group">
+            <label>Admin Key</label>
+            <input type="password" id="adminKeyInput" placeholder="输入超级管理员密钥...">
+        </div>
+        <button class="btn" onclick="login()">进入管理后台</button>
+    </div>
+
+    <!-- 管理面板 -->
+    <div id="dashboardSection" class="container hidden">
+        <div class="header" style="justify-content: space-between; display: flex; align-items: center;">
+            <div>
+                <h1>🔑 API Keys 管理</h1>
+                <p>管理所有短链服务的访问密钥</p>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="logout()" style="width: auto; background: transparent; border: 1px solid var(--border-color); color: var(--text-main);">
+                退出登录
+            </button>
+        </div>
+
+        <!-- 统计概览 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalKeys">0</div>
+                <div class="stat-label">总 API Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeKeys">0</div>
+                <div class="stat-label">活跃中的 Keys</div>
+            </div>
+        </div>
+
+        <!-- 创建 Key -->
+        <div class="card">
+            <h3 style="margin-bottom: 20px;">🪄 创建新 API Key</h3>
+            <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 2; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">Key 名称/备注</label>
+                    <input type="text" id="newKeyName" placeholder="例如：Vercel Prod">
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">过期天数 (0=永久)</label>
+                    <input type="number" id="newKeyExpires" value="0" min="0">
+                </div>
+                <div style="flex: 0 0 auto;">
+                    <button class="btn" onclick="createKey()" style="margin-bottom: 1px;">创建 Key</button>
+                </div>
+            </div>
+            
+            <div id="newKeyDisplay" class="new-key-result">
+                <div style="font-weight: bold; margin-bottom: 5px;">✅ 创建成功！请立即复制保存：</div>
+                <div id="newKeyText" style="font-family: monospace; font-size: 1.1rem; user-select: all;"></div>
+            </div>
+        </div>
+
+        <!-- Key 列表 -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <h3>📜 API Keys 列表</h3>
+                <button class="btn btn-sm" onclick="loadKeys()" style="width: auto;">刷新列表</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="keysTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>Key 前缀</th>
+                            <th>创建时间</th>
+                            <th>过期时间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">消息提示</div>
+
+    <script>
+        let adminKey = localStorage.getItem('shortlink_admin_key') || '';
+        const BASE_URL = window.location.origin;
+
+        // 初始化
+        if (adminKey) {
+            verifyLogin();
+        }
+
+        async function verifyLogin() {
+            try {
+                // 验证 Key 是否有效（通过请求列表接口）
+                await fetchKeys();
+                showDashboard();
+            } catch (e) {
+                // Key 无效，保持在登录页
+            }
+        }
+
+        function login() {
+            const input = document.getElementById('adminKeyInput').value.trim();
+            if (!input) return showToast('请输入 Admin Key', 'error');
+            
+            adminKey = input;
+            localStorage.setItem('shortlink_admin_key', adminKey);
+            verifyLogin();
+        }
+
+        function logout() {
+            localStorage.removeItem('shortlink_admin_key');
+            location.reload();
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            loadKeys();
+        }
+
+        async function fetchKeys() {
+            const res = await fetch(`${BASE_URL}/api/admin/keys/list`, {
+                headers: { 'X-Admin-Key': adminKey }
+            });
+            if (res.status === 403) throw new Error('无效的 Key');
+            if (!res.ok) throw new Error('请求失败');
+            return await res.json();
+        }
+
+        async function loadKeys() {
+            try {
+                const data = await fetchKeys();
+                renderKeys(data.keys || []);
+                updateStats(data.keys || []);
+            } catch (e) {
+                if (e.message === '无效的 Key') {
+                    showToast('Admin Key 无效或过期，请重新登录', 'error');
+                    logout();
+                } else {
+                    showToast('加载列表失败', 'error');
+                }
+            }
+        }
+
+        function renderKeys(keys) {
+            const tbody = document.querySelector('#keysTable tbody');
+            tbody.innerHTML = '';
+
+            keys.forEach(key => {
+                const tr = document.createElement('tr');
+                const isExpired = key.is_expired;
+                const statusHtml = isExpired 
+                    ? '<span class="tag tag-expired">已过期</span>' 
+                    : '<span class="tag tag-active">活跃</span>';
+                
+                tr.innerHTML = `
+                    <td>${key.id}</td>
+                    <td><strong>${key.name}</strong></td>
+                    <td><code>${key.key_prefix}</code></td>
+                    <td>${new Date(key.created_at).toLocaleString()}</td>
+                    <td>${key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永不过期'}</td>
+                    <td>${statusHtml}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="revokeKey(${key.id}, '${key.name}')">
+                            撤销
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats(keys) {
+            document.getElementById('totalKeys').textContent = keys.length;
+            const active = keys.filter(k => !k.is_expired).length;
+            document.getElementById('activeKeys').textContent = active;
+        }
+
+        async function createKey() {
+            const name = document.getElementById('newKeyName').value.trim();
+            const expires = parseInt(document.getElementById('newKeyExpires').value) || 0;
+
+            if (!name) return showToast('请输入 Key 名称', 'error');
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/keys/create?name=${encodeURIComponent(name)}&expires_days=${expires}`, {
+                    method: 'POST',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                if (!res.ok) throw new Error('创建失败');
+                
+                const data = await res.json();
+                
+                // 显示新 Key
+                document.getElementById('newKeyDisplay').style.display = 'block';
+                document.getElementById('newKeyText').textContent = data.key;
+                
+                // 清空输入
+                document.getElementById('newKeyName').value = '';
+                
+                showToast('API Key 创建成功！', 'success');
+                loadKeys();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function revokeKey(id, name) {
+            if (!confirm(`确定要撤销 "${name}" 吗？此操作不可逆！`)) return;
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/keys/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                if (!res.ok) throw new Error('操作失败');
+                
+                showToast('撤销成功', 'success');
+                loadKeys();
+            } catch (e) {
+                showToast('撤销失败', 'error');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 自动检测主题
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</body>
+</html>
