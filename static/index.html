@@ -1177,6 +1177,22 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* API Key Info Fade In Animation */
+        .key-info-fade-in {
+            animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* Batch List */
         .batch-list {
             max-height: 240px;
@@ -1762,7 +1778,17 @@
                 document.getElementById('apiKey').value = savedKey;
             }
             
-            // 加载 Key 信息
+            // 显示骨架屏占位
+            const keyInfoDiv = document.getElementById('keyInfo');
+            keyInfoDiv.innerHTML = `
+                <div class="loading-skeleton" style="height: 24px; width: 60%; margin-bottom: 12px; border-radius: 4px;"></div>
+                <div class="loading-skeleton" style="height: 20px; width: 40%; margin-bottom: 8px; border-radius: 4px;"></div>
+                <div class="loading-skeleton" style="height: 20px; width: 50%; border-radius: 4px;"></div>
+            `;
+            keyInfoDiv.style.display = 'block';
+            keyInfoDiv.style.opacity = '1';
+            
+            // 异步加载 Key 信息
             loadKeyInfo();
         }
 
@@ -2296,11 +2322,8 @@
                     return;
                 }
                 
-                // 显示 Key 信息
-                document.getElementById('keyName').textContent = data.name;
-                document.getElementById('keyUsage').textContent = data.usage_count || 0;
-                
                 // 格式化有效期
+                let expiresHtml = '';
                 if (data.expires_at) {
                     const expiresDate = parseApiDate(data.expires_at);
                     const dateStr = expiresDate.toLocaleString('zh-CN', {
@@ -2311,18 +2334,34 @@
                         minute: '2-digit'
                     });
                     
-                    const expiresSpan = document.getElementById('keyExpires');
                     if (data.is_expired) {
-                        expiresSpan.innerHTML = `${dateStr} <span style="color: var(--error); font-weight: 600;">(已过期)</span>`;
+                        expiresHtml = `${dateStr} <span style="color: var(--error); font-weight: 600;">(已过期)</span>`;
                     } else {
-                        expiresSpan.textContent = dateStr;
-                        expiresSpan.style.color = 'var(--text-main)';
+                        expiresHtml = `<span style="color: var(--text-main);">${dateStr}</span>`;
                     }
                 } else {
-                    const expiresSpan = document.getElementById('keyExpires');
-                    expiresSpan.textContent = '永不过期';
-                    expiresSpan.style.color = 'var(--success)';
+                    expiresHtml = '<span style="color: var(--success);">永不过期</span>';
                 }
+                
+                // 重新构建 HTML 结构并添加淡入动画
+                keyInfoDiv.innerHTML = `
+                    <div style="padding: 16px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 20px;">
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            <strong style="color: var(--text-main);">Key 名称:</strong> ${data.name}
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
+                            <strong style="color: var(--text-main);">使用次数:</strong> ${data.usage_count || 0}
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            <strong style="color: var(--text-main);">有效期:</strong> ${expiresHtml}
+                        </div>
+                    </div>
+                `;
+                
+                // 添加淡入动画类
+                keyInfoDiv.classList.remove('key-info-fade-in'); //  先移除以重置动画
+                void keyInfoDiv.offsetHeight; // 强制浏览器重排，确保动画生效
+                keyInfoDiv.classList.add('key-info-fade-in');
                 
                 keyInfoDiv.style.display = 'block';
                 
