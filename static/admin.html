@@ -310,16 +310,42 @@
         }
 
         /* Toast */
-        .toast {
-            position: fixed; top: 24px; right: 24px; padding: 16px 24px;
-            background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 12px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); z-index: 1000;
-            transform: translateX(120%); transition: var(--transition);
-            display: flex; align-items: center; gap: 12px; font-weight: 600;
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            bottom: 32px;
+            right: 32px;
         }
-        .toast.show { transform: translateX(0); }
-        .toast.success { border-left: 4px solid var(--success); }
-        .toast.error { border-left: 4px solid var(--error); }
+
+        .toast {
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 14px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 360px;
+        }
+
+        .toast i { font-size: 1.1rem; }
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--error); }
+        .toast.info i { color: var(--primary); }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
 
         @media (max-width: 768px) {
             .top-nav { padding: 0 20px; }
@@ -445,9 +471,7 @@
         </main>
     </div>
 
-    <div id="toast" class="toast">
-        <span id="toastMsg">通知内容</span>
-    </div>
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- 自定义确认对话框 -->
     <div class="confirm-modal" id="confirmModal" onclick="closeConfirm(event)">
@@ -464,7 +488,7 @@
     </div>
 
     <script>
-        let adminKey = localStorage.getItem('shortlink_admin_key') || '';
+        let adminKey = sessionStorage.getItem('shortlink_admin_key') || '';
         const BASE_URL = window.location.origin;
 
         // Theme Management
@@ -509,12 +533,12 @@
             const input = document.getElementById('adminKeyInput').value.trim();
             if (!input) return showToast('请输入 Admin Key', 'error');
             adminKey = input;
-            localStorage.setItem('shortlink_admin_key', adminKey);
+            sessionStorage.setItem('shortlink_admin_key', adminKey);
             verifyLogin();
         }
 
         function logout() {
-            localStorage.removeItem('shortlink_admin_key');
+            sessionStorage.removeItem('shortlink_admin_key');
             location.reload();
         }
 
@@ -749,10 +773,18 @@
         }
 
         function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMsg').textContent = msg;
-            toast.className = `toast show ${type}`;
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            // Adapt types to index.html style
+            const iconType = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${iconType}"></i>
+                <span>${msg}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
 
     </script>
