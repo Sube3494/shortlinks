@@ -789,7 +789,7 @@
         .action-btn.delete:hover {
             color: var(--error);
             border-color: var(--error);
-            background: #fffbfa;
+            background: var(--secondary-bg);
         }
         
         .action-btn:active {
@@ -836,27 +836,61 @@
 
         .confirm-header {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .confirm-header i {
-            font-size: 1.5rem;
+        .confirm-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .confirm-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .confirm-icon i {
+            font-size: 1.75rem;
             color: var(--warning);
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .confirm-header h3 {
-            font-size: 1.15rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: var(--text-main);
+            margin: 0;
         }
 
         .confirm-message {
             color: var(--text-secondary);
             font-size: 0.95rem;
-            margin-bottom: 24px;
-            line-height: 1.6;
+            margin-bottom: 28px;
+            line-height: 1.7;
+            text-align: center;
         }
 
         .confirm-actions {
@@ -1145,6 +1179,21 @@
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, 
+                var(--secondary-bg) 25%, 
+                var(--border-color) 37%, 
+                var(--secondary-bg) 63%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+            border: none !important;
         }
 
         @keyframes slideDownTop {
@@ -1505,7 +1554,9 @@
     <div class="confirm-modal" id="confirmModal" onclick="closeConfirm(event)">
         <div class="confirm-content">
             <div class="confirm-header">
-                <i class="fas fa-exclamation-triangle"></i>
+                <div class="confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
                 <h3>确认操作</h3>
             </div>
             <div class="confirm-message" id="confirmMessage"></div>
@@ -2043,17 +2094,33 @@
         }
 
         async function showStats(code, originalUrl) {
+            const modal = document.getElementById('statsModal');
+            const statsGrid = document.getElementById('statsGrid');
+            
+            // 1. 立即显示弹窗框架并呈现加载状态（骨架屏/Loading）
+            modal.style.display = 'flex';
+            modal.offsetHeight; // 触发回流以确保动画生效
+            modal.classList.add('show');
+            
+            statsGrid.innerHTML = `
+                <div class="stats-item loading-skeleton" style="height: 72px;"></div>
+                <div class="stats-item loading-skeleton" style="height: 72px;"></div>
+                <div class="stats-item loading-skeleton" style="height: 72px;"></div>
+                <div class="stats-item loading-skeleton" style="height: 72px;"></div>
+                <div class="stats-item loading-skeleton" style="height: 72px;"></div>
+            `;
+
             try {
+                // 2. 异步获取数据
                 const res = await fetch(`${API_BASE}/api/stats/${code}`, { headers: getHeaders() });
+                if (!res.ok) throw new Error('数据获取失败');
                 const data = await res.json();
                 
-                const statsGrid = document.getElementById('statsGrid');
+                // 3. 渲染真实数据
                 const encodedOriginalUrl = encodeURI(data.original_url);
                 statsGrid.innerHTML = `
                     <div class="stats-item with-copy">
-                        <div class="stats-icon">
-                            <i class="fas fa-link"></i>
-                        </div>
+                        <div class="stats-icon"><i class="fas fa-link"></i></div>
                         <div class="stats-info">
                             <div class="stats-label">原始链接</div>
                             <div class="stats-value" style="font-size: 0.85rem;" title="${encodedOriginalUrl}">${encodedOriginalUrl}</div>
@@ -2063,61 +2130,41 @@
                         </button>
                     </div>
                     <div class="stats-item">
-                        <div class="stats-icon">
-                            <i class="fas fa-tag"></i>
-                        </div>
+                        <div class="stats-icon"><i class="fas fa-tag"></i></div>
                         <div class="stats-info">
                             <div class="stats-label">短码</div>
                             <div class="stats-value mono">${data.short_code}</div>
                         </div>
                     </div>
                     <div class="stats-item">
-                        <div class="stats-icon">
-                            <i class="fas fa-mouse-pointer"></i>
-                        </div>
+                        <div class="stats-icon"><i class="fas fa-mouse-pointer"></i></div>
                         <div class="stats-info">
                             <div class="stats-label">点击次数</div>
                             <div class="stats-value">${data.click_count}</div>
                         </div>
                     </div>
                     <div class="stats-item">
-                        <div class="stats-icon">
-                            <i class="far fa-clock"></i>
-                        </div>
+                        <div class="stats-icon"><i class="far fa-clock"></i></div>
                         <div class="stats-info">
                             <div class="stats-label">创建时间</div>
                             <div class="stats-value">${parseApiDate(data.created_at).toLocaleString('zh-CN', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
+                                year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
                             })}</div>
                         </div>
                     </div>
                     <div class="stats-item">
-                        <div class="stats-icon">
-                            <i class="fas fa-history"></i>
-                        </div>
+                        <div class="stats-icon"><i class="fas fa-history"></i></div>
                         <div class="stats-info">
                             <div class="stats-label">最后访问</div>
                             <div class="stats-value">${data.last_accessed ? parseApiDate(data.last_accessed).toLocaleString('zh-CN', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
+                                year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
                             }) : '从未访问'}</div>
                         </div>
                     </div>
                 `;
-                
-                const modal = document.getElementById('statsModal');
-                modal.style.display = 'flex';
-                modal.offsetHeight;
-                modal.classList.add('show');
             } catch (err) {
                 showToast('获取统计失败', 'error');
+                closeStatsModal(); // 出错则关闭
             }
         }
 
@@ -2228,4 +2275,3 @@
     </script>
 </body>
 </html>
-```
