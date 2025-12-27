@@ -797,6 +797,7 @@ async def admin_list_api_keys(
                 "expires_at": key.expires_at.isoformat() if key.expires_at else None,
                 "is_expired": key.expires_at and datetime.now() > key.expires_at if key.expires_at else False,
                 "usage_count": key.usage_count,
+                "is_active": key.is_active,
                 "last_used_at": key.last_used_at.isoformat() if key.last_used_at else None
             }
             for key in keys
