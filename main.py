@@ -363,6 +363,31 @@ async def admin_page(request: Request):
     return RedirectResponse(url="/static/admin.html")
 
 
+# ==================== 站长验证文件 ====================
+@app.get("/{verification_filename}")
+async def verification_file(verification_filename: str):
+    """
+    站长验证文件 (微信/百度/Google等)
+    通过环境变量配置 VERIFICATION_FILENAME 和 VERIFICATION_CONTENT
+    """
+    from fastapi.responses import PlainTextResponse
+    
+    # 只处理 .txt 文件
+    if not verification_filename.endswith('.txt'):
+        raise HTTPException(status_code=404, detail="未找到该资源")
+    
+    # 从环境变量读取验证文件配置
+    verify_filename = os.getenv("VERIFICATION_FILENAME")
+    verify_content = os.getenv("VERIFICATION_CONTENT")
+    
+    # 检查是否匹配配置的验证文件
+    if verify_filename and verify_content and verification_filename == verify_filename:
+        return PlainTextResponse(verify_content)
+    
+    # 不匹配则返回404
+    raise HTTPException(status_code=404, detail="未找到该资源")
+
+
 @app.get("/api/key/info")
 async def get_current_key_info(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
