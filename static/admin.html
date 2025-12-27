@@ -262,20 +262,85 @@
         /* Confirm Modal */
         .confirm-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; z-index: 2000;
-            opacity: 0; transition: opacity 0.25s ease;
+            background: rgba(0,0,0,0.5); z-index: 1500;
+            display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.25s ease; backdrop-filter: blur(4px);
+        }
+        .confirm-modal.show { opacity: 1; }
+        
+        /* Input With Unit Style (Ported from index.html) */
+        .input-with-unit {
+            display: flex;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: visible;
+            height: 42px; /* Slight adjustment for admin panel */
+            transition: all 0.2s;
+        }
+        
+        .input-with-unit:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .confirm-modal.show { opacity: 1; }
+        .input-with-unit .input-wrapper {
+            flex: 1; display: flex; position: relative;
+        }
 
+        .input-with-unit input {
+            width: 100%; height: 100% !important; border: none !important;
+            border-radius: 0 !important; background: transparent !important;
+            padding: 0 16px !important; margin: 0; box-shadow: none !important;
+        }
+
+        /* Custom Select Styling */
+        .custom-select {
+            position: relative; min-width: 90px; cursor: pointer; user-select: none;
+            border-left: 1px solid var(--border); display: flex; align-items: center;
+            padding: 0 12px; background: transparent; transition: var(--transition);
+        }
+        .custom-select:hover { background-color: var(--card-bg); }
+        
+        .selected-value {
+            flex: 1; font-size: 0.9rem; color: var(--text-main);
+            white-space: nowrap; margin-right: 8px;
+        }
+        
+        .select-icon {
+            font-size: 0.75rem; color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+        .custom-select.active .select-icon { transform: rotate(180deg); }
+
+        .options-menu {
+            position: absolute; top: calc(100% + 4px); right: 0;
+            min-width: 100px; background: var(--card-bg);
+            border: 1px solid var(--border); border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1001;
+            overflow: hidden;
+        }
+        .custom-select.active .options-menu {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+
+        .option-item {
+            padding: 8px 12px; font-size: 0.9rem; color: var(--text-main);
+            transition: var(--transition); display: flex; align-items: center; gap: 8px;
+        }
+        .option-item:hover { background: var(--hover-bg); color: var(--primary); }
+        .option-item.selected { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+
+        /* Confirm Content (Ensure styles are correct) */
         .confirm-content {
             background: var(--card-bg); width: 100%; max-width: 360px;
             padding: 32px; border-radius: 20px; border: 1px solid var(--border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
+        
         .confirm-modal.show .confirm-content { transform: scale(1); }
 
         .confirm-header {
@@ -425,9 +490,23 @@
                             <label>持有者名称 / 备注</label>
                             <input type="text" id="newKeyName" placeholder="例如：GitHub Actions">
                         </div>
-                        <div class="form-group" style="flex: 0 0 200px;">
-                            <label>过期天数 (0=永久)</label>
-                            <input type="number" id="newKeyExpires" value="0" min="0">
+                        <div class="form-group" style="flex: 0 0 240px;">
+                            <label>有效期 (0=永久)</label>
+                            <div class="input-with-unit">
+                                <div class="input-wrapper">
+                                    <input type="number" id="newKeyExpires" value="0" min="0" placeholder="0">
+                                </div>
+                                <div class="custom-select" id="customSelect-expires" onclick="toggleCustomSelect(event)">
+                                    <div class="selected-value" id="selected-expires">天</div>
+                                    <i class="fas fa-chevron-down select-icon"></i>
+                                    <input type="hidden" id="expiresUnit" value="days">
+                                    <div class="options-menu">
+                                        <div class="option-item selected" onclick="selectOption('days', '天', event)">天</div>
+                                        <div class="option-item" onclick="selectOption('hours', '小时', event)">小时</div>
+                                        <div class="option-item" onclick="selectOption('minutes', '分钟', event)">分钟</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <button class="btn" onclick="createKey()">
                             <i class="fas fa-check"></i> 立即生成
@@ -520,6 +599,37 @@
             document.getElementById('time-display').textContent = `数据更新于: ${new Date().toLocaleTimeString()}`;
         }, 1000);
 
+        // Dropdown Logic
+        function toggleCustomSelect(e) {
+            e.stopPropagation();
+            const select = document.getElementById('customSelect-expires');
+            select.classList.toggle('active');
+        }
+
+        function selectOption(value, text, e) {
+            e.stopPropagation();
+            const select = document.getElementById('customSelect-expires');
+            const input = document.getElementById('expiresUnit');
+            const display = document.getElementById('selected-expires');
+            
+            input.value = value;
+            display.textContent = text;
+            select.classList.remove('active');
+            
+            // Update selected style
+            select.querySelectorAll('.option-item').forEach(item => {
+                if (item.textContent.trim() === text) item.classList.add('selected');
+                else item.classList.remove('selected');
+            });
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+             const select = document.getElementById('customSelect-expires');
+             if (select) select.classList.remove('active');
+        });
+
+        // Login Logic
         async function verifyLogin() {
             try {
                 await fetchKeys();
@@ -624,15 +734,29 @@
 
         async function createKey() {
             const name = document.getElementById('newKeyName').value.trim();
-            const expires = parseInt(document.getElementById('newKeyExpires').value) || 0;
+            const expiresVal = document.getElementById('newKeyExpires').value;
+            const expiresUnit = document.getElementById('expiresUnit').value;
+            const expires = parseInt(expiresVal) || 0;
+            
             const btn = document.querySelector('button[onclick="createKey()"]');
             
             if (!name) return showToast('请输入备注', 'error');
 
             setBtnLoading(btn, true, '生成中...');
             
+            // 构建查询参数
+            let queryParams = `name=${encodeURIComponent(name)}`;
+            
+            if (expires > 0) {
+                if (expiresUnit === 'days') queryParams += `&expires_days=${expires}`;
+                else if (expiresUnit === 'hours') queryParams += `&expires_in_hours=${expires}`;
+                else if (expiresUnit === 'minutes') queryParams += `&expires_in_minutes=${expires}`;
+            } else {
+                 queryParams += `&expires_days=0`; // 显式传递 0 表示永久
+            }
+            
             try {
-                const res = await fetch(`${BASE_URL}/api/admin/keys/create?name=${encodeURIComponent(name)}&expires_days=${expires}`, {
+                const res = await fetch(`${BASE_URL}/api/admin/keys/create?${queryParams}`, {
                     method: 'POST',
                     headers: { 'X-Admin-Key': adminKey }
                 });

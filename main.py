@@ -736,22 +736,27 @@ async def delete_short_link(
 async def admin_create_api_key(
     name: str,
     expires_days: Optional[int] = None,
+    expires_in_minutes: Optional[int] = None,
+    expires_in_hours: Optional[int] = None,
     db: Session = Depends(get_db),
     _: None = Depends(verify_admin_key)
 ):
     """
     创建新的 API Key (需要管理员权限)
-    
-    - **name**: Key 名称/备注
-    - **expires_days**: 过期天数 (可选, 0 表示永不过期)
+    支持多种过期时间单位 (优先级: days > hours > minutes > expires_days(legacy))
     """
     # 生成随机密钥
     new_key = ''.join(random.choices(string.ascii_letters + string.digits, k=48))
     
     # 计算过期时间
     expires_at = None
+    
     if expires_days and expires_days > 0:
         expires_at = datetime.now() + timedelta(days=expires_days)
+    elif expires_in_minutes and expires_in_minutes > 0:
+        expires_at = datetime.now() + timedelta(minutes=expires_in_minutes)
+    elif expires_in_hours and expires_in_hours > 0:
+        expires_at = datetime.now() + timedelta(hours=expires_in_hours)
     
     # 创建记录
     api_key = APIKey(
