@@ -9,37 +9,33 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Light Mode - Compatible with index.html */
-            --bg-color: #ffffff;
-            --surface-color: #ffffff;
-            --secondary-bg: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-main: #0f172a;
+            /* Light Mode */
+            --bg-color: #f0f4f8;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #1e293b;
             --text-secondary: #64748b;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --primary-light: #eff6ff;
             --success: #10b981;
             --error: #ef4444;
-            --warning: #f59e0b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --radius: 8px;
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 10px -2px rgba(0, 0, 0, 0.02);
+            --radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --dot-color: #cbd5e1;
+            --backdrop: blur(16px);
         }
 
         [data-theme="dark"] {
-            --bg-color: #020617;
-            --surface-color: #0f172a;
-            --secondary-bg: #1e293b;
-            --border-color: #334155;
-            --text-main: #f8fafc;
+            --bg-color: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f1f5f9;
             --text-secondary: #94a3b8;
-            --primary: #3b82f6;
-            --primary-hover: #60a5fa;
-            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
             --dot-color: #1e293b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.3);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,18 +60,29 @@
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 48px;
         }
 
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { color: var(--text-secondary); }
+        .header h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 12px; 
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .header p { 
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
 
         .card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
+            background: var(--glass-bg);
+            backdrop-filter: var(--backdrop);
+            -webkit-backdrop-filter: var(--backdrop);
+            border: 1px solid var(--glass-border);
             border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 24px;
+            padding: 32px;
+            margin-bottom: 32px;
             box-shadow: var(--shadow);
         }
 
@@ -84,30 +91,45 @@
             margin: 100px auto;
         }
 
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        .input-group { margin-bottom: 24px; }
+        .input-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
         
         input {
             width: 100%;
-            padding: 10px 14px;
-            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border: 1px solid var(--glass-border);
             border-radius: var(--radius);
-            background: var(--surface-color);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-main);
             font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .btn {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: var(--radius);
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
             transition: var(--transition);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
         }
 
         .btn:hover { background-color: var(--primary-hover); }
@@ -129,14 +151,18 @@
         }
 
         .stat-card {
-            background: var(--secondary-bg);
-            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
             border-radius: var(--radius);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
-        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-        .stat-label { font-size: 0.85rem; color: var(--text-secondary); }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+        .stat-label { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
 
         table {
             width: 100%;
@@ -154,13 +180,16 @@
         td { font-family: 'JetBrains Mono', monospace; }
 
         .tag {
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .tag-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-        .tag-expired { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+        .tag-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .tag-expired { background: rgba(239, 68, 68, 0.15); color: var(--error); }
 
         .hidden { display: none; }
         
@@ -210,7 +239,7 @@
     <!-- 登录界面 -->
     <div id="loginSection" class="container login-box card">
         <div class="header">
-            <h1>🛡️ 管理后台</h1>
+            <h1><i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 12px;"></i>管理后台</h1>
             <p>请输入 Admin Key 进入管理面板</p>
         </div>
         <div class="input-group">
@@ -224,7 +253,8 @@
     <div id="dashboardSection" class="container hidden">
         <div class="header" style="justify-content: space-between; display: flex; align-items: center;">
             <div>
-                <h1>🔑 API Keys 管理</h1>
+            <div>
+                <h1><i class="fa-solid fa-key" style="margin-right: 12px; color: var(--primary);"></i>API Keys 管理</h1>
                 <p>管理所有短链服务的访问密钥</p>
             </div>
             <button class="btn btn-sm btn-outline" onclick="logout()" style="width: auto; background: transparent; border: 1px solid var(--border-color); color: var(--text-main);">
@@ -246,7 +276,7 @@
 
         <!-- 创建 Key -->
         <div class="card">
-            <h3 style="margin-bottom: 20px;">🪄 创建新 API Key</h3>
+            <h3 style="margin-bottom: 24px; font-size: 1.25rem;"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 10px; color: var(--primary);"></i>创建新 API Key</h3>
             <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                 <div style="flex: 2; min-width: 200px;">
                     <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600;">Key 名称/备注</label>
@@ -262,15 +292,17 @@
             </div>
             
             <div id="newKeyDisplay" class="new-key-result">
-                <div style="font-weight: bold; margin-bottom: 5px;">✅ 创建成功！请立即复制保存：</div>
+                <div style="font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-check"></i> 创建成功！请立即复制保存：
+                </div>
                 <div id="newKeyText" style="font-family: monospace; font-size: 1.1rem; user-select: all;"></div>
             </div>
         </div>
 
         <!-- Key 列表 -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                <h3>📜 API Keys 列表</h3>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 24px; align-items: center;">
+                <h3 style="font-size: 1.25rem;"><i class="fa-solid fa-list" style="margin-right: 10px; color: var(--primary);"></i>API Keys 列表</h3>
                 <button class="btn btn-sm" onclick="loadKeys()" style="width: auto;">刷新列表</button>
             </div>
             <div style="overflow-x: auto;">

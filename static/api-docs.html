@@ -230,10 +230,12 @@
         .method.get { background: #dcfce7; color: #166534; }
         .method.post { background: #dbeafe; color: #1e40af; }
         .method.delete { background: #fee2e2; color: #991b1b; }
+        .method.put { background: #fef9c3; color: #854d0e; }
 
         [data-theme="dark"] .method.get { background: #14532d; color: #86efac; }
         [data-theme="dark"] .method.post { background: #1e3a8a; color: #93c5fd; }
         [data-theme="dark"] .method.delete { background: #7f1d1d; color: #fca5a5; }
+        [data-theme="dark"] .method.put { background: #713f12; color: #fde047; }
 
         .endpoint-path {
             font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
@@ -349,6 +351,47 @@
                 width: 100%;
                 justify-content: space-between;
             }
+        }
+        
+        /* Collapsible Section Styles */
+        details.section {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        details.section[open] {
+            cursor: default;
+        }
+
+        summary.admin-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none;
+            padding-right: 10px;
+        }
+        
+        summary.admin-summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        summary.admin-summary h2 {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        
+        .chevron {
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+        
+        details[open] .chevron {
+            transform: rotate(180deg);
+        }
+        
+        .admin-content {
+            margin-top: 16px;
+            cursor: default;
         }
     </style>
 </head>
@@ -519,6 +562,94 @@
                 <p class="endpoint-desc">访问短链,自动重定向到原始URL(无需API密钥)</p>
             </div>
         </div>
+
+        <!-- 管理员 API (可折叠) -->
+        <details class="section admin-section">
+            <summary class="admin-summary">
+                <h2><i class="fas fa-user-shield"></i> 管理员 API</h2>
+                <i class="fas fa-chevron-down chevron"></i>
+            </summary>
+            
+            <div class="admin-content">
+                <p style="color: var(--text-secondary); margin-bottom: 12px;">
+                    管理 API Keys 的专用接口。需要使用 <code style="background: var(--secondary-bg); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', 'Cascadia Code', monospace;">X-Admin-Key</code> Header 进行认证。
+                </p>
+                <div class="code-label">HTTP Header</div>
+                <div class="code-block">
+                    <pre>X-Admin-Key: your-admin-key-here</pre>
+                </div>
+
+                <!-- 创建 Key -->
+                <div class="endpoint" style="margin-top: 32px;">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/api/admin/keys/create</span>
+                    </div>
+                    <p class="endpoint-desc">创建一个新的 API Key</p>
+                    
+                    <div class="params">
+                        <div class="param-item">
+                            <span class="param-name">name</span>
+                            <span class="badge required">必需</span>
+                            <div class="param-desc">Key 名称/备注</div>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">expires_days</span>
+                            <span class="badge optional">可选</span>
+                            <div class="param-desc">过期天数 (0 表示永不过期)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 列出 Keys -->
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/api/admin/keys/list</span>
+                    </div>
+                    <p class="endpoint-desc">列出所有 API Keys</p>
+                </div>
+
+                <!-- 获取 Key 详情 -->
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/api/admin/keys/{key_id}</span>
+                    </div>
+                    <p class="endpoint-desc">获取指定 API Key 的详情</p>
+                </div>
+
+                <!-- 更新 Key -->
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post" style="background: #fbfb8d; color: #854d0e;">PUT</span>
+                        <span class="endpoint-path">/api/admin/keys/{key_id}</span>
+                    </div>
+                    <p class="endpoint-desc">更新 API Key 信息</p>
+                    <div class="params">
+                        <div class="param-item">
+                            <span class="param-name">name</span>
+                            <span class="badge optional">可选</span>
+                            <div class="param-desc">新名称</div>
+                        </div>
+                        <div class="param-item">
+                            <span class="param-name">expires_days</span>
+                            <span class="badge optional">可选</span>
+                            <div class="param-desc">新过期天数 (0=永久)</div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- 撤销 Key -->
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method delete">DELETE</span>
+                        <span class="endpoint-path">/api/admin/keys/{key_id}</span>
+                    </div>
+                    <p class="endpoint-desc">撤销 API Key (软删除)</p>
+                </div>
+            </div>
+        </details>
 
         <!-- 更多资源 -->
         <div class="section">

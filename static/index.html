@@ -139,6 +139,157 @@
             box-shadow: var(--shadow-sm); /* Subtle depth */
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
+        /* Input with Unit Group */
+        .input-with-unit {
+            display: flex;
+            align-items: stretch;
+            position: relative;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            overflow: visible; /* 改为 visible 以允许下拉菜单溢出 */
+            transition: border-color 0.2s, box-shadow 0.2s;
+            height: 45px;
+        }
+
+        .input-with-unit .input-wrapper {
+            flex: 1;
+            display: flex;
+            position: relative;
+        }
+
+        .input-with-unit input {
+            width: 100%;
+            height: 100% !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            padding: 10px 16px 10px 40px !important; /* 留出图标位置 */
+            margin: 0;
+            box-shadow: none !important;
+        }
+
+        .input-with-unit .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            pointer-events: none;
+            transition: color 0.2s;
+            z-index: 2;
+        }
+
+        /* Custom Select Styling */
+        .custom-select {
+            position: relative;
+            min-width: 100px;
+            cursor: pointer;
+            user-select: none;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            background: transparent;
+            transition: var(--transition);
+        }
+
+        .custom-select:hover {
+            background-color: var(--secondary-bg);
+        }
+
+        .selected-value {
+            flex: 1;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            margin-right: 8px;
+        }
+
+        .select-icon {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            transition: transform 0.3s ease;
+        }
+
+        .custom-select.active .select-icon {
+            transform: rotate(180deg);
+        }
+
+        .options-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 120px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1001;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+
+        [data-theme="dark"] .options-menu {
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .custom-select.active .options-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .option-item {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .option-item:hover {
+            background-color: var(--secondary-bg);
+            color: var(--primary);
+        }
+
+        .option-item.selected {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .option-item.selected::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.75rem;
+        }
+
+        /* Unified Focus State */
+        .input-with-unit:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+            z-index: 10;
+        }
+        
+        /* Remove Spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
         
         /* Micro-interaction: Card Lift */
         .card:hover {
@@ -1246,10 +1397,23 @@
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>有效期 (小时)</label>
-                        <div class="input-wrapper">
-                            <i class="fas fa-hourglass-half"></i>
-                            <input type="number" id="expiresInHours" placeholder="留空永久有效" min="1" inputmode="numeric">
+                        <label>有效期</label>
+                        <div class="input-with-unit">
+                            <div class="input-wrapper">
+                                <i class="fas fa-hourglass-half"></i>
+                                <input type="number" id="expiresValue" placeholder="留空永久有效" min="1" inputmode="numeric">
+                            </div>
+                            <!-- 自定义下拉框 -->
+                            <div class="custom-select" id="customSelect-single" onclick="toggleCustomSelect('single')">
+                                <span class="selected-value" id="selected-single">分钟</span>
+                                <i class="fas fa-chevron-down select-icon"></i>
+                                <input type="hidden" id="expiresUnit" value="minutes">
+                                <div class="options-menu">
+                                    <div class="option-item selected" onclick="selectOption('single', 'minutes', '分钟', event)">分钟</div>
+                                    <div class="option-item" onclick="selectOption('single', 'hours', '小时', event)">小时</div>
+                                    <div class="option-item" onclick="selectOption('single', 'days', '天', event)">天</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1284,10 +1448,23 @@
                 </div>
 
                 <div class="input-group">
-                    <label>有效期 (小时) - 应用于所有链接</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-hourglass-half"></i>
-                        <input type="number" id="batchExpiresInHours" placeholder="留空永久有效" min="1" inputmode="numeric">
+                    <label>有效期 - 应用于所有链接</label>
+                    <div class="input-with-unit">
+                        <div class="input-wrapper">
+                            <i class="fas fa-hourglass-half"></i>
+                            <input type="number" id="batchExpiresValue" placeholder="留空永久有效" min="1" inputmode="numeric">
+                        </div>
+                        <!-- 自定义下拉框 -->
+                        <div class="custom-select" id="customSelect-batch" onclick="toggleCustomSelect('batch')">
+                            <span class="selected-value" id="selected-batch">分钟</span>
+                            <i class="fas fa-chevron-down select-icon"></i>
+                            <input type="hidden" id="batchExpiresUnit" value="minutes">
+                            <div class="options-menu">
+                                <div class="option-item selected" onclick="selectOption('batch', 'minutes', '分钟', event)">分钟</div>
+                                <div class="option-item" onclick="selectOption('batch', 'hours', '小时', event)">小时</div>
+                                <div class="option-item" onclick="selectOption('batch', 'days', '天', event)">天</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1370,7 +1547,47 @@
             initTheme();
             
             loadLinks();
+
+            // 点击外部关闭下拉框
+            document.addEventListener('click', (e) => {
+                const selects = document.querySelectorAll('.custom-select');
+                selects.forEach(select => {
+                    if (!select.contains(e.target)) {
+                        select.classList.remove('active');
+                    }
+                });
+            });
         };
+
+        // 自定义下拉框逻辑
+        function toggleCustomSelect(type) {
+            const select = document.getElementById(`customSelect-${type}`);
+            // 关闭其他下拉框
+            document.querySelectorAll('.custom-select').forEach(s => {
+                if (s !== select) s.classList.remove('active');
+            });
+            select.classList.toggle('active');
+        }
+
+        function selectOption(type, value, text, e) {
+            e.stopPropagation();
+            const select = document.getElementById(`customSelect-${type}`);
+            const input = document.getElementById(type === 'single' ? 'expiresUnit' : 'batchExpiresUnit');
+            const display = document.getElementById(`selected-${type}`);
+            
+            input.value = value;
+            display.textContent = text;
+            select.classList.remove('active');
+            
+            // 更新选中状态样式
+            select.querySelectorAll('.option-item').forEach(item => {
+                if (item.textContent === text) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
 
         // 主题相关
         function initTheme() {
@@ -1536,10 +1753,20 @@
             try {
                 const data = { url: longUrl };
                 const code = document.getElementById('customCode').value.trim();
-                const hours = document.getElementById('expiresInHours').value.trim();
+                const expiresValue = document.getElementById('expiresValue').value.trim();
+                const expiresUnit = document.getElementById('expiresUnit').value;
                 
                 if (code) data.custom_code = code;
-                if (hours) data.expires_in_hours = parseInt(hours);
+                if (expiresValue) {
+                    const val = parseInt(expiresValue);
+                    if (expiresUnit === 'days') {
+                        data.expires_in_days = val;
+                    } else if (expiresUnit === 'minutes') {
+                        data.expires_in_minutes = val;
+                    } else {
+                        data.expires_in_hours = val;
+                    }
+                }
 
                 const res = await fetch(`${API_BASE}/api/shorten`, {
                     method: 'POST',
@@ -1563,7 +1790,8 @@
                     document.getElementById('singleResult').style.display = 'block';
                     document.getElementById('longUrl').value = '';
                     document.getElementById('customCode').value = '';
-                    document.getElementById('expiresInHours').value = '';
+                    document.getElementById('expiresValue').value = '';
+                    document.getElementById('expiresUnit').value = 'hours'; // Reset unit
                     loadLinks(1);  // 重置到第一页
                     showToast('创建成功', 'success');
                 } else {
@@ -1598,9 +1826,18 @@
 
             try {
                 const data = { urls };
-                const hours = document.getElementById('batchExpiresInHours').value.trim();
-                if (hours) {
-                    data.expires_in_hours = parseInt(hours);
+                const expiresValue = document.getElementById('batchExpiresValue').value.trim();
+                const expiresUnit = document.getElementById('batchExpiresUnit').value;
+                
+                if (expiresValue) {
+                    const val = parseInt(expiresValue);
+                    if (expiresUnit === 'days') {
+                        data.expires_in_days = val;
+                    } else if (expiresUnit === 'minutes') {
+                        data.expires_in_minutes = val;
+                    } else {
+                        data.expires_in_hours = val;
+                    }
                 }
 
                 const res = await fetch(`${API_BASE}/api/shorten/batch`, {
@@ -1628,7 +1865,8 @@
                     document.getElementById('batchList').innerHTML = html;
                     document.getElementById('batchResult').style.display = 'block';
                     document.getElementById('batchUrls').value = '';
-                    document.getElementById('batchExpiresInHours').value = '';
+                    document.getElementById('batchExpiresValue').value = '';
+                    document.getElementById('batchExpiresUnit').value = 'hours';
                     loadLinks(1);  // 重置到第一页
                     showToast(`批量创建成功 ${result.length} 个`, 'success');
                 } else {

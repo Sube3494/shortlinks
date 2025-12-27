@@ -449,9 +449,11 @@ async def create_short_link(
     else:
         short_code = get_unique_short_code()
     
-    # 计算过期时间（优先使用分钟，其次小时）
+    # 计算过期时间（优先使用天、分钟、小时）
     expires_at = None
-    if request.expires_in_minutes and request.expires_in_minutes > 0:
+    if request.expires_in_days and request.expires_in_days > 0:
+        expires_at = datetime.now() + timedelta(days=request.expires_in_days)
+    elif request.expires_in_minutes and request.expires_in_minutes > 0:
         expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
     elif request.expires_in_hours and request.expires_in_hours > 0:
         expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
@@ -529,9 +531,11 @@ async def create_batch_short_links(
             # 生成短码
             short_code = get_unique_short_code()
             
-            # 计算过期时间（优先使用分钟，其次小时）
+            # 计算过期时间（优先使用天、分钟、小时）
             expires_at = None
-            if request.expires_in_minutes and request.expires_in_minutes > 0:
+            if request.expires_in_days and request.expires_in_days > 0:
+                expires_at = datetime.now() + timedelta(days=request.expires_in_days)
+            elif request.expires_in_minutes and request.expires_in_minutes > 0:
                 expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
             elif request.expires_in_hours and request.expires_in_hours > 0:
                 expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
@@ -579,11 +583,13 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     ).first()
     
     if not short_link:
-        raise HTTPException(status_code=404, detail="短链不存在")
+        # 链接不存在
+        return RedirectResponse(url="/static/error.html?type=not_found")
     
     # 检查是否过期
     if short_link.expires_at and datetime.now() > short_link.expires_at:
-        raise HTTPException(status_code=410, detail="短链已过期")
+        # 链接已过期
+        return RedirectResponse(url="/static/error.html?type=expired")
     
     # 更新访问统计
     short_link.click_count += 1

@@ -1,3 +1,10 @@
+'''
+Date: 2025-11-21 22:43:02
+Author: Sube
+FilePath: models.py
+LastEditTime: 2025-12-27 13:42:21
+Description: 
+'''
 from pydantic import BaseModel, HttpUrl
 from datetime import datetime
 from typing import Optional, List
@@ -9,6 +16,7 @@ class ShortLinkCreate(BaseModel):
     custom_code: Optional[str] = None  # 自定义短码（可选）
     expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选）
     expires_in_minutes: Optional[int] = None  # 过期时间（分钟数，可选，优先级高于 hours）
+    expires_in_days: Optional[int] = None  # 过期时间（天数，可选，优先级最高）
 
 
 class BatchShortLinkCreate(BaseModel):
@@ -16,6 +24,7 @@ class BatchShortLinkCreate(BaseModel):
     urls: List[str]  # URL列表
     expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选，应用于所有URL）
     expires_in_minutes: Optional[int] = None  # 过期时间（分钟数，可选，优先级高于 hours）
+    expires_in_days: Optional[int] = None  # 过期时间（天数，可选，优先级最高）
 
 
 class ShortLinkResponse(BaseModel):
