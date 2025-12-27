@@ -607,9 +607,7 @@
 
         if (adminKey) { verifyLogin(); }
         
-        setInterval(() => {
-            document.getElementById('time-display').textContent = `数据更新于: ${new Date().toLocaleTimeString()}`;
-        }, 1000);
+        if (adminKey) { verifyLogin(); }
 
         // Dropdown Logic
         function toggleCustomSelect(e) {
@@ -730,6 +728,7 @@
                 const data = await fetchKeys();
                 renderKeys(data.keys || []);
                 updateStats(data.keys || []);
+                document.getElementById('time-display').textContent = `数据更新于: ${new Date().toLocaleTimeString()}`;
             } catch (e) {
                 showToast(e.message === '无效的 Key' ? 'Admin Key 无效' : '同步失败', 'error');
                 if (e.message === '无效的 Key') logout();
