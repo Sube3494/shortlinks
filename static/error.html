@@ -8,14 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* Light Mode */
             --bg-color: #ffffff;
             --surface-color: #ffffff;
             --text-main: #0f172a;
             --text-secondary: #64748b;
             --primary: #2563eb;
             --border-color: #e2e8f0;
-            --radius: 12px;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --dot-color: #cbd5e1;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="dark"] {
@@ -24,6 +27,7 @@
             --text-main: #f8fafc;
             --text-secondary: #94a3b8;
             --border-color: #334155;
+            --dot-color: #1e293b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,6 +41,12 @@
             align-items: center;
             justify-content: center;
             transition: background-color 0.3s;
+
+            /* Dot Matrix Background */
+            background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+            background-size: 24px 24px;
+            background-position: 0 0;
+            position: relative;
         }
 
         .error-card {
@@ -49,6 +59,8 @@
             text-align: center;
             box-shadow: var(--shadow);
             animation: fadeIn 0.5s ease-out;
+            position: relative;
+            z-index: 1;
         }
 
         @keyframes fadeIn {
@@ -84,7 +96,8 @@
 
     <script>
         // 初始化主题
-        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedTheme = localStorage.getItem('theme') || 
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', savedTheme);
 
         // 解析 URL 参数
