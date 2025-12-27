@@ -2345,15 +2345,18 @@
                 
                 // 重新构建 HTML 结构并添加淡入动画
                 keyInfoDiv.innerHTML = `
-                    <div style="padding: 16px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 20px;">
-                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
-                            <strong style="color: var(--text-main);">Key 名称:</strong> ${data.name}
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.8;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <i class="fas fa-tag" style="color: var(--primary); font-size: 0.8rem; width: 14px;"></i>
+                            <span><strong style="color: var(--text-main);">${data.name}</strong></span>
                         </div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">
-                            <strong style="color: var(--text-main);">使用次数:</strong> ${data.usage_count || 0}
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                            <i class="fas fa-chart-line" style="color: var(--primary); font-size: 0.8rem; width: 14px;"></i>
+                            <span>使用 <strong style="color: var(--text-main);">${data.usage_count || 0}</strong> 次</span>
                         </div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                            <strong style="color: var(--text-main);">有效期:</strong> ${expiresHtml}
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-clock" style="color: var(--primary); font-size: 0.8rem; width: 14px;"></i>
+                            <span>${expiresHtml}</span>
                         </div>
                     </div>
                 `;
