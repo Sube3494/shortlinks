@@ -784,7 +784,7 @@ async def admin_list_api_keys(
     """
     列出所有 API Keys (需要管理员权限)
     """
-    keys = db.query(APIKey).filter(APIKey.is_active == True).all()
+    keys = db.query(APIKey).all()
     
     return {
         "total": len(keys),
@@ -885,17 +885,41 @@ async def admin_revoke_api_key(
     _: None = Depends(verify_admin_key)
 ):
     """
-    撤销 API Key (软删除, 需要管理员权限)
+    彻底删除 API Key (需要管理员权限)
     """
     key = db.query(APIKey).filter(APIKey.id == key_id).first()
     
     if not key:
         raise HTTPException(status_code=404, detail="Key 不存在")
     
-    key.is_active = False
+    db.delete(key)
     db.commit()
     
-    return {"message": f"Key '{key.name}' 已撤销"}
+    return {"message": f"Key '{key.name}' 已删除"}
+
+@app.patch("/api/admin/keys/{key_id}/toggle")
+async def admin_toggle_api_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """
+    切换 API Key 的激活状态 (需要管理员权限)
+    """
+    key = db.query(APIKey).filter(APIKey.id == key_id).first()
+    
+    if not key:
+        raise HTTPException(status_code=404, detail="Key 不存在")
+    
+    key.is_active = not key.is_active
+    db.commit()
+    db.refresh(key)
+    
+    return {
+        "id": key.id,
+        "is_active": key.is_active,
+        "message": f"Key '{key.name}' 已{'启用' if key.is_active else '禁用'}"
+    }
 
 
 if __name__ == "__main__":

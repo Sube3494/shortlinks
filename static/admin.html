@@ -194,14 +194,15 @@
         /* Table Optimization */
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { background: var(--bg-body); padding: 14px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
-        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
+        th { background: var(--bg-body); padding: 14px 16px; text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; text-align: center; }
         
-        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; }
+        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; text-align: center; }
         .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--bg-body); padding: 4px 10px; border-radius: 6px; font-size: 0.875rem; color: var(--primary); font-weight: 500; }
         
         .status-pill { padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .status-active { background: #dcfce7; color: #15803d; }
+        .status-disabled { background: #f1f5f9; color: #64748b; }
         .status-expired { background: #fee2e2; color: #b91c1c; }
 
         /* Result Area */
@@ -331,7 +332,7 @@
 
                 <!-- 列表模块 -->
                 <div class="card">
-                    <h3 class="card-title"><i class="fas fa-list-ul"></i> API Key 权限清单</h3>
+                    <h3 class="card-title"><i class="fas fa-list-ul"></i> API Key 列表</h3>
                     <div class="table-container">
                         <table id="keysTable">
                             <thead>
@@ -342,7 +343,7 @@
                                     <th>颁发日期</th>
                                     <th>过期状态</th>
                                     <th>当前状态</th>
-                                    <th style="text-align: right;">管理</th>
+                                    <th style="text-align: center;">管理</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -455,9 +456,16 @@
             keys.forEach(key => {
                 const tr = document.createElement('tr');
                 const isExpired = key.is_expired;
-                const statusHtml = isExpired 
-                    ? '<span class="status-pill status-expired">已失效</span>' 
-                    : '<span class="status-pill status-active">活跃中</span>';
+                const isActive = key.is_active;
+                
+                let statusHtml;
+                if (isExpired) {
+                    statusHtml = '<span class="status-pill status-expired"><i class="fas fa-clock"></i> 已过期</span>';
+                } else if (!isActive) {
+                    statusHtml = '<span class="status-pill status-disabled"><i class="fas fa-ban"></i> 已禁用</span>';
+                } else {
+                    statusHtml = '<span class="status-pill status-active"><i class="fas fa-check-circle"></i> 活跃中</span>';
+                }
                 
                 tr.innerHTML = `
                     <td class="id-cell">${key.id}</td>
@@ -466,10 +474,15 @@
                     <td>${new Date(key.created_at).toLocaleDateString()}</td>
                     <td>${key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永久'}</td>
                     <td>${statusHtml}</td>
-                    <td style="text-align: right;">
-                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
-                            撤销
-                        </button>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <button class="btn ${isActive ? 'btn-outline' : 'btn'}" style="padding: 6px 12px; font-size: 0.75rem; min-width: 64px;" onclick="toggleKey(${key.id}, ${isActive})">
+                                ${isActive ? '禁用' : '启用'}
+                            </button>
+                            <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
+                                删除
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -501,15 +514,28 @@
             } catch (e) { showToast(e.message, 'error'); }
         }
 
+        async function toggleKey(id, currentStatus) {
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/keys/${id}/toggle`, {
+                    method: 'PATCH',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+                if (!res.ok) throw new Error('操作失败');
+                const data = await res.json();
+                showToast(data.message);
+                loadKeys();
+            } catch (e) { showToast(e.message, 'error'); }
+        }
+
         async function revokeKey(id, name) {
-            if (!confirm(`确定撤销 ${name}？`)) return;
+            if (!confirm(`确定彻底删除 ${name} 调用凭证吗？该操作不可恢复。`)) return;
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/${id}`, {
                     method: 'DELETE',
                     headers: { 'X-Admin-Key': adminKey }
                 });
                 if (!res.ok) throw new Error('操作失败');
-                showToast('已撤销', 'success');
+                showToast('已彻底删除');
                 loadKeys();
             } catch (e) { showToast(e.message, 'error'); }
         }
