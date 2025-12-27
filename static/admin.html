@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>短链服务 - 专业管理终端</title>
+    <title>短链服务 - 管理控制台</title>
     <link rel="icon" type="image/png" href="/static/shortlink.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* SaaS Professional Palette */
             --bg-body: #f8fafc;
-            --sidebar-width: 260px;
             --primary: #2563eb;
             --primary-light: #eff6ff;
             --primary-dark: #1e4ed8;
-            --sidebar-bg: #ffffff;
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
@@ -29,7 +26,6 @@
 
         [data-theme="dark"] {
             --bg-body: #020617;
-            --sidebar-bg: #0f172a;
             --card-bg: #0f172a;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -45,60 +41,35 @@
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
-            overflow-x: hidden;
-        }
-
-        /* Sidebar System */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border);
-            height: 100vh;
-            position: fixed;
-            left: 0; top: 0;
-            display: flex;
             flex-direction: column;
-            padding: 32px 16px;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
             z-index: 100;
-            transition: transform 0.3s ease;
         }
 
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 12px 40px;
-        }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area img { width: 32px; height: 32px; }
+        .logo-area h2 { font-size: 1.125rem; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; }
 
-        .logo-area img { width: 36px; height: 36px; border-radius: 8px; }
-        .logo-area h2 { font-size: 1.25rem; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; }
+        .nav-actions { display: flex; align-items: center; gap: 16px; }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-            margin-bottom: 4px;
-            cursor: pointer;
-        }
-
-        .nav-item:hover { background: var(--bg-body); color: var(--text-main); }
-        .nav-item.active { background: var(--primary-light); color: var(--primary); }
-        .nav-item i { font-size: 1.1rem; width: 24px; text-align: center; }
-
-        .sidebar-footer { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border); }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
+        /* Main Workspace */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 40px;
-            width: calc(100% - var(--sidebar-width));
         }
 
         .page-header {
@@ -111,10 +82,10 @@
         .page-header h1 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 4px; }
         .page-header p { color: var(--text-muted); font-size: 1rem; }
 
-        /* Dashboard Components */
+        /* Stats Layer */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 24px;
             margin-bottom: 32px;
         }
@@ -125,41 +96,43 @@
             border-radius: var(--radius);
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
         }
 
-        .stat-label { font-size: 0.875rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--text-main); line-height: 1; }
-        .stat-trend { margin-top: 12px; font-size: 0.8125rem; display: flex; align-items: center; gap: 4px; }
-        .trend-up { color: var(--success); }
+        .stat-label { font-size: 0.8125rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+        .stat-trend { margin-top: 12px; font-size: 0.8125rem; display: flex; align-items: center; gap: 6px; color: var(--success); }
 
-        /* Control Card */
-        .control-section {
+        /* Content Sections */
+        .workspace-grid {
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 24px;
-            align-items: start;
+            grid-template-columns: 1fr;
+            gap: 32px;
         }
 
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 28px;
+            padding: 32px;
             box-shadow: var(--shadow);
         }
 
         .card-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
         .card-title i { color: var(--primary); }
 
-        /* Form Controls */
-        .form-group { margin-bottom: 20px; }
+        /* Form Layout */
+        .form-row {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            margin-bottom: 0;
+        }
+        .form-group { flex: 1; margin-bottom: 0; }
         .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
         
         input {
             width: 100%;
-            padding: 10px 14px;
+            padding: 11px 14px;
             border: 1px solid var(--border);
             border-radius: 8px;
             background: var(--bg-body);
@@ -174,7 +147,7 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 11px 20px;
+            padding: 11px 24px;
             border-radius: 8px;
             font-size: 0.95rem;
             font-weight: 600;
@@ -184,6 +157,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            white-space: nowrap;
         }
 
         .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
@@ -193,193 +167,163 @@
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
         .btn-danger:hover { background: var(--error); color: white; }
 
-        /* Table Pro */
-        .table-container { overflow-x: auto; margin-top: -8px; }
+        /* Table Optimization */
+        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { background: var(--bg-body); padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg-body); padding: 14px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
         td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
         
-        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 50px; }
-        .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--bg-body); padding: 4px 8px; border-radius: 4px; font-size: 0.8125rem; }
+        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; }
+        .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--bg-body); padding: 4px 10px; border-radius: 6px; font-size: 0.875rem; color: var(--primary); font-weight: 500; }
         
-        .status-pill { padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .status-pill { padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .status-active { background: #dcfce7; color: #15803d; }
         .status-expired { background: #fee2e2; color: #b91c1c; }
-
-        /* Login Layout Override */
-        .login-layout {
-            height: 100vh; width: 100vw;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, var(--bg-body), #e2e8f0);
-            padding: 20px;
-        }
-        [data-theme="dark"] .login-layout { background: radial-gradient(circle at top right, #1e293b, #020617); }
-
-        .login-card { width: 100%; max-width: 420px; padding: 40px; }
-
-        /* Animations */
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-up { animation: slideUp 0.4s ease-out; }
 
         /* Result Area */
         .new-key-result {
             margin-top: 24px; padding: 20px; background: var(--primary-light);
             border: 1px dashed var(--primary); border-radius: var(--radius);
             color: var(--primary-dark); display: none; word-break: break-all;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 1024px) {
-            .control-section { grid-template-columns: 1fr; }
-            .sidebar { transform: translateX(-100%); width: 100%; }
-            .main-content { margin-left: 0; width: 100%; padding: 24px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Login Override */
+        .login-layout {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--bg-body), #e2e8f0);
+            padding: 20px;
         }
 
         /* Toast */
         .toast {
             position: fixed; top: 24px; right: 24px; padding: 16px 24px;
             background: var(--card-bg); border: 1px solid var(--border);
-            border-radius: 12px; box-shadow: var(--shadow); z-index: 1000;
+            border-radius: 12px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); z-index: 1000;
             transform: translateX(120%); transition: var(--transition);
             display: flex; align-items: center; gap: 12px; font-weight: 600;
         }
         .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+
+        @media (max-width: 768px) {
+            .top-nav { padding: 0 20px; }
+            .container { padding: 20px; }
+            .form-row { flex-direction: column; align-items: stretch; }
+            .btn { width: 100%; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- 登录容器 (初始显示) -->
+    <!-- 登录界面 -->
     <div id="loginSection" class="login-layout">
-        <div class="card login-card animate-up">
-            <div class="logo-area" style="padding-bottom: 24px; justify-content: center;">
+        <div class="card" style="width: 100%; max-width: 400px; padding: 40px;">
+            <div class="logo-area" style="justify-content: center; margin-bottom: 32px;">
                 <img src="/static/shortlink.png" alt="Logo">
                 <h2>管理终端</h2>
             </div>
-            <div class="form-group">
-                <label>Admin Key</label>
-                <input type="password" id="adminKeyInput" placeholder="输入超级管理员密钥..." autocomplete="off">
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label>请输入 Admin Key</label>
+                <input type="password" id="adminKeyInput" placeholder="超级管理员密钥..." autocomplete="off">
             </div>
             <button class="btn" style="width: 100%;" onclick="login()">
-                认证并点击进入
+                验证并登录
             </button>
         </div>
     </div>
 
-    <!-- 管理员控制台 (登录后显示) -->
-    <div id="dashboardSection" class="hidden" style="display: none; width: 100%;">
-        <!-- Side Navigation -->
-        <nav class="sidebar" id="sidebar">
+    <!-- 管理员控制台 -->
+    <div id="dashboardSection" style="display: none; flex-direction: column;">
+        <nav class="top-nav">
             <div class="logo-area">
                 <img src="/static/shortlink.png" alt="Logo">
-                <h2>ShortLink</h2>
+                <h2>ShortLink Admin</h2>
             </div>
-            <div class="nav-item active">
-                <i class="fas fa-chart-pie"></i> 仪表盘
-            </div>
-            <div class="nav-item" onclick="loadKeys()">
-                <i class="fas fa-key"></i> API Keys
-            </div>
-            <div class="nav-item">
-                <i class="fas fa-history"></i> 操作审计
-            </div>
-            
-            <div class="sidebar-footer">
-                <div class="nav-item" onclick="logout()" style="color: var(--error);">
-                    <i class="fas fa-sign-out-alt"></i> 退出登录
-                </div>
-            </div>
-        </nav>
-
-        <!-- Main Surface -->
-        <main class="main-content">
-            <header class="page-header">
-                <div>
-                    <h1>总控制台</h1>
-                    <p id="time-display">数据最后更新于: 正在获取...</p>
-                </div>
+            <div class="nav-actions">
                 <button class="btn btn-outline" onclick="loadKeys()">
                     <i class="fas fa-sync-alt"></i> 刷新数据
                 </button>
+                <button class="btn btn-danger" onclick="logout()" style="background: transparent;">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            </div>
+        </nav>
+
+        <main class="container">
+            <header class="page-header">
+                <div>
+                    <h1>总控制面板</h1>
+                    <p id="time-display">数据更新于: --:--:--</p>
+                </div>
             </header>
 
-            <!-- Stats Layer -->
             <section class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-label">总 API Keys</span>
-                    <span class="stat-value" id="totalKeys">0</span>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-database"></i> 数据库已连接
-                    </div>
+                    <div class="stat-label">总秘钥持有者</div>
+                    <div class="stat-value" id="totalKeys">0</div>
+                    <div class="stat-trend"><i class="fas fa-database"></i> 数据库连接正常</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">活跃 Keys</span>
-                    <span class="stat-value" id="activeKeys">0</span>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-check-circle"></i> 服务状态正常
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-label">管理负载</span>
-                    <span class="stat-value">均衡</span>
-                    <div class="stat-trend trend-up">
-                        <i class="fas fa-server"></i> 缓存运行中
-                    </div>
+                    <div class="stat-label">有效活跃秘钥</div>
+                    <div class="stat-value" id="activeKeys">0</div>
+                    <div class="stat-trend"><i class="fas fa-shield-alt"></i> 安全策略已生效</div>
                 </div>
             </section>
 
-            <!-- Workspace Layer -->
-            <section class="control-section">
-                <!-- Left: Create Form -->
+            <div class="workspace-grid">
+                <!-- 颁发模块 -->
                 <div class="card">
-                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> 颁发新密钥</h3>
-                    <div class="form-group">
-                        <label>Key 名称/备注</label>
-                        <input type="text" id="newKeyName" placeholder="例如：内测组 API">
+                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> 颁发新 API Key</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>持有者名称 / 备注</label>
+                            <input type="text" id="newKeyName" placeholder="例如：GitHub Actions">
+                        </div>
+                        <div class="form-group" style="flex: 0 0 200px;">
+                            <label>过期天数 (0=永久)</label>
+                            <input type="number" id="newKeyExpires" value="0" min="0">
+                        </div>
+                        <button class="btn" onclick="createKey()">
+                            <i class="fas fa-check"></i> 立即生成
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label>过期天数 (0=永久有效)</label>
-                        <input type="number" id="newKeyExpires" value="0" min="0">
-                    </div>
-                    <button class="btn" style="width: 100%;" onclick="createKey()">
-                        生成并颁发
-                    </button>
 
                     <div id="newKeyDisplay" class="new-key-result">
-                        <div style="font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-shield-alt"></i> 已生成！请复制保存：
-                        </div>
-                        <div id="newKeyText" style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; user-select: all; line-height: 1.4;"></div>
+                        <div style="font-weight: 700; margin-bottom: 12px;">✅ 密钥已生成（请复制并妥善保管）：</div>
+                        <div id="newKeyText" style="font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; user-select: all; letter-spacing: 0.5px;"></div>
                     </div>
                 </div>
 
-                <!-- Right: List Table -->
+                <!-- 列表模块 -->
                 <div class="card">
-                    <h3 class="card-title"><i class="fas fa-list-ul"></i> API Key 持有者列表</h3>
+                    <h3 class="card-title"><i class="fas fa-list-ul"></i> API Key 权限清单</h3>
                     <div class="table-container">
                         <table id="keysTable">
                             <thead>
                                 <tr>
-                                    <th class="id-cell">#</th>
-                                    <th>持有者名称</th>
+                                    <th class="id-cell">ID</th>
+                                    <th>持有者信息</th>
                                     <th>密钥前缀</th>
-                                    <th>创建/过期日期</th>
+                                    <th>颁发日期</th>
+                                    <th>过期状态</th>
                                     <th>当前状态</th>
-                                    <th style="text-align: right;">管理操作</th>
+                                    <th style="text-align: right;">管理</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <!-- JS Injection -->
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
-    <!-- Notification Toast -->
     <div id="toast" class="toast">
-        <i class="fas fa-info-circle"></i>
         <span id="toastMsg">通知内容</span>
     </div>
 
@@ -387,13 +331,10 @@
         let adminKey = localStorage.getItem('shortlink_admin_key') || '';
         const BASE_URL = window.location.origin;
 
-        // Initialize Theme & Session
         if (adminKey) { verifyLogin(); }
         
-        // Auto-refresh Time
         setInterval(() => {
-            const now = new Date();
-            document.getElementById('time-display').textContent = `数据最后更新于: ${now.toLocaleTimeString()}`;
+            document.getElementById('time-display').textContent = `数据更新于: ${new Date().toLocaleTimeString()}`;
         }, 1000);
 
         async function verifyLogin() {
@@ -401,14 +342,13 @@
                 await fetchKeys();
                 showDashboard();
             } catch (e) {
-                if (adminKey) logout(); // Key in storage is invalid
+                if (adminKey) logout();
             }
         }
 
         function login() {
             const input = document.getElementById('adminKeyInput').value.trim();
             if (!input) return showToast('请输入 Admin Key', 'error');
-            
             adminKey = input;
             localStorage.setItem('shortlink_admin_key', adminKey);
             verifyLogin();
@@ -440,40 +380,31 @@
                 renderKeys(data.keys || []);
                 updateStats(data.keys || []);
             } catch (e) {
-                if (e.message === '无效的 Key') {
-                    showToast('Admin Key 无效或过期', 'error');
-                    logout();
-                } else {
-                    showToast('同步服务器数据失败', 'error');
-                }
+                showToast(e.message === '无效的 Key' ? 'Admin Key 无效' : '同步失败', 'error');
+                if (e.message === '无效的 Key') logout();
             }
         }
 
         function renderKeys(keys) {
             const tbody = document.querySelector('#keysTable tbody');
             tbody.innerHTML = '';
-
             keys.forEach(key => {
                 const tr = document.createElement('tr');
                 const isExpired = key.is_expired;
                 const statusHtml = isExpired 
-                    ? '<span class="status-pill status-expired"><i class="fas fa-times-circle"></i>已失效</span>' 
-                    : '<span class="status-pill status-active"><i class="fas fa-check-circle"></i>有效期内</span>';
+                    ? '<span class="status-pill status-expired">已失效</span>' 
+                    : '<span class="status-pill status-active">活跃中</span>';
                 
-                const createdDate = new Date(key.created_at).toLocaleDateString();
-                const expireDate = key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永久';
-
                 tr.innerHTML = `
                     <td class="id-cell">${key.id}</td>
                     <td><strong>${key.name}</strong></td>
                     <td><span class="prefix-cell">${key.key_prefix}</span></td>
-                    <td style="color: var(--text-muted); font-size: 0.8125rem;">
-                        ${createdDate} / ${expireDate}
-                    </td>
+                    <td>${new Date(key.created_at).toLocaleDateString()}</td>
+                    <td>${key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永久'}</td>
                     <td>${statusHtml}</td>
                     <td style="text-align: right;">
                         <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
-                            <i class="fas fa-trash-alt"></i> 撤销
+                            撤销
                         </button>
                     </td>
                 `;
@@ -483,63 +414,50 @@
 
         function updateStats(keys) {
             document.getElementById('totalKeys').textContent = keys.length;
-            const active = keys.filter(k => !k.is_expired).length;
-            document.getElementById('activeKeys').textContent = active;
+            document.getElementById('activeKeys').textContent = keys.filter(k => !k.is_expired).length;
         }
 
         async function createKey() {
             const name = document.getElementById('newKeyName').value.trim();
             const expires = parseInt(document.getElementById('newKeyExpires').value) || 0;
-
-            if (!name) return showToast('请指定持有者名称', 'error');
+            if (!name) return showToast('请输入备注', 'error');
 
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/create?name=${encodeURIComponent(name)}&expires_days=${expires}`, {
                     method: 'POST',
                     headers: { 'X-Admin-Key': adminKey }
                 });
-
-                if (!res.ok) throw new Error('接口响应异常');
-                
+                if (!res.ok) throw new Error('颁发失败');
                 const data = await res.json();
                 document.getElementById('newKeyDisplay').style.display = 'block';
                 document.getElementById('newKeyText').textContent = data.key;
                 document.getElementById('newKeyName').value = '';
-                
-                showToast('API Key 颁发成功', 'success');
+                showToast('颁发成功', 'success');
                 loadKeys();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
+            } catch (e) { showToast(e.message, 'error'); }
         }
 
         async function revokeKey(id, name) {
-            if (!confirm(`警告：撤销 "${name}" 将导致相关服务无法使用。确认继续？`)) return;
-
+            if (!confirm(`确定撤销 ${name}？`)) return;
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/${id}`, {
                     method: 'DELETE',
                     headers: { 'X-Admin-Key': adminKey }
                 });
-
-                if (!res.ok) throw new Error('撤销请求被服务器拒绝');
-                showToast('已撤销该密钥', 'success');
+                if (!res.ok) throw new Error('操作失败');
+                showToast('已撤销', 'success');
                 loadKeys();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
+            } catch (e) { showToast(e.message, 'error'); }
         }
 
         function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
-            const msgSpan = document.getElementById('toastMsg');
-            msgSpan.textContent = msg;
+            document.getElementById('toastMsg').textContent = msg;
             toast.className = `toast show ${type}`;
-            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // System Theme Sync
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
     </script>
