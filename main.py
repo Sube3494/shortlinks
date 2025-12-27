@@ -741,7 +741,7 @@ async def list_short_links(
 async def delete_short_link(
     short_code: str,
     db: Session = Depends(get_db),
-    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
+    key_id: Optional[int] = Depends(verify_api_key_no_stats)  # 获取当前 Key ID (不统计次数)
 ):
     """
     删除短链
