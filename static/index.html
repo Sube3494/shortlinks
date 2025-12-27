@@ -1850,17 +1850,20 @@
 
                 if (res.ok) {
                     currentBatchResults = result;
-                    const html = result.map(link => `
-                        <div class="batch-item">
-                            <div style="overflow: hidden; margin-right: 10px;">
-                                <div style="color: var(--primary); font-weight: 600;">${link.short_url}</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${link.original_url}</div>
+                    const html = result.map(link => {
+                        const encodedOriginalUrl = encodeURI(link.original_url);
+                        return `
+                            <div class="batch-item">
+                                <div style="overflow: hidden; margin-right: 10px;">
+                                    <div style="color: var(--primary); font-weight: 600;">${link.short_url}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${encodedOriginalUrl}</div>
+                                </div>
+                                <button class="icon-btn" onclick="copyText('${link.short_url}')">
+                                    <i class="far fa-copy"></i>
+                                </button>
                             </div>
-                            <button class="icon-btn" onclick="copyText('${link.short_url}')">
-                                <i class="far fa-copy"></i>
-                            </button>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
 
                     document.getElementById('batchList').innerHTML = html;
                     document.getElementById('batchResult').style.display = 'block';
@@ -2041,6 +2044,7 @@
                 const data = await res.json();
                 
                 const statsGrid = document.getElementById('statsGrid');
+                const encodedOriginalUrl = encodeURI(data.original_url);
                 statsGrid.innerHTML = `
                     <div class="stats-item with-copy">
                         <div class="stats-icon">
@@ -2048,9 +2052,9 @@
                         </div>
                         <div class="stats-info">
                             <div class="stats-label">原始链接</div>
-                            <div class="stats-value" style="font-size: 0.85rem;" title="${data.original_url}">${data.original_url}</div>
+                            <div class="stats-value" style="font-size: 0.85rem;" title="${encodedOriginalUrl}">${encodedOriginalUrl}</div>
                         </div>
-                        <button class="stats-copy-btn" onclick="copyText('${data.original_url.replace(/'/g, "\\'")}')">
+                        <button class="stats-copy-btn" onclick="copyText('${encodedOriginalUrl.replace(/'/g, "\\'")}')">
                             <i class="far fa-copy"></i>
                         </button>
                     </div>
