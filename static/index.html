@@ -2374,8 +2374,9 @@
                 }
                 
                 // 重新构建 HTML 结构并添加淡入动画
+                // 去除外层背景和边框，使用透明背景，内容紧凑排列
                 keyInfoDiv.innerHTML = `
-                    <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 12px 16px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 20px; font-size: 0.85rem; color: var(--text-secondary); align-items: center;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-secondary); align-items: center; padding: 4px 2px;">
                         <div style="display: flex; align-items: center; gap: 6px; margin-right: auto;">
                             <i class="fas fa-tag" style="color: var(--primary); font-size: 0.8rem;"></i>
                             <span style="color: var(--text-main); font-weight: 600;">${data.name}</span>
