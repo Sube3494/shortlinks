@@ -593,10 +593,10 @@
         }
 
         .theme-toggle {
-            position: fixed;
-            top: 24px;
-            left: 24px;
-            z-index: 100;
+            /* Removed fixed positioning */
+             width: 40px;
+             height: 40px;
+             /* Other styles inherited from shared selector */
         }
 
         /* Modal */
@@ -1197,8 +1197,25 @@
 
         .batch-item:last-child { border-bottom: none; }
 
+        /* Top Left Container for API Docs */
+        .top-left-container {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Form Grid Row for Responsive Layout */
+        .form-grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
         /* Mobile Optimization */
-        @media (max-width: 640px) {
+        @media screen and (max-width: 768px) {
             .container {
                 /* Increased top padding to clear fixed buttons (16px top + 40px button + spacing) */
                 padding: 80px 20px 40px; 
@@ -1263,10 +1280,16 @@
                 right: 16px;
                 gap: 8px;
             }
-            .theme-toggle {
+            .top-left-container {
                 top: 16px;
                 left: 16px;
             }
+            .form-grid-row {
+                grid-template-columns: 1fr !important;
+                gap: 0 !important;
+            }
+
+
             
             /* Toast Position for Mobile: Top Center (Safe Layout) */
             .toast-container {
@@ -1312,14 +1335,85 @@
                 justify-content: center;
                 white-space: nowrap;
             }
+            
+            /* Admin Panel Mobile Optimization */
+            .stats-grid {
+                 grid-template-columns: 1fr; 
+                 gap: 16px;
+            }
+            
+            .input-group, .form-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group .input-wrapper, 
+            .form-row .form-group,
+            .form-row button,
+            .form-row .input-with-unit {
+                width: 100% !important;
+                flex: none !important;
+            }
+            
+            /* Modal Mobile Fullscreen/Bottom Sheet */
+            .modal-content, .stats-modal-content, .confirm-content {
+                width: 90% !important;
+                max-width: none !important;
+                max-height: 85vh;
+                margin: 20px auto;
+                padding: 24px;
+            }
+            
+            /* Adjust spacing for key generator */
+            .form-group label {
+                margin-top: 8px; 
+            }
+            .form-group:first-child label {
+                margin-top: 0;
+            }
+            
+            .header-logo {
+                width: 48px;
+                height: 48px;
+            }
+             
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .settings-btn-container {
+                right: 16px; 
+                top: 16px;
+                gap: 8px;
+            }
+
+            /* 针对 input-with-unit 在窄屏下的最后优化（确保优先级） */
+            .input-with-unit {
+                width: 100% !important;
+                display: flex !important;
+                overflow: visible !important;
+            }
+            
+            .input-with-unit .input-wrapper {
+                min-width: 0 !important;
+                flex: 1 !important;
+            }
+            
+            .custom-select {
+                min-width: 70px !important;
+                flex-shrink: 0 !important;
+                padding: 0 8px !important;
+                width: auto !important;
+            }
+
+            .selected-value {
+                font-size: 0.85rem !important;
+                margin-right: 4px !important;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 主题切换按钮 -->
-    <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
-        <i class="fas fa-sun"></i>
-    </div>
 
     <!-- 设置模态框 -->
     <div class="settings-modal" id="settingsModal" onclick="closeSettings(event)">
@@ -1358,13 +1452,20 @@
     </div>
 
     <div class="container">
-        <!-- 设置按钮和GitHub链接 -->
-        <div class="settings-btn-container">
-            <a href="https://github.com/Sube3494/shortlinks" target="_blank" rel="noopener noreferrer" class="github-btn" title="GitHub">
-                <i class="fab fa-github"></i>
-            </a>
+        <!-- 左上角 API 文档 -->
+        <div class="top-left-container">
             <a href="/static/api-docs.html" class="github-btn" title="API 文档">
                 <i class="fas fa-book"></i>
+            </a>
+        </div>
+
+        <!-- 设置按钮和GitHub链接 -->
+        <div class="settings-btn-container">
+            <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+                <i class="fas fa-moon"></i>
+            </div>
+            <a href="https://github.com/Sube3494/shortlinks" target="_blank" rel="noopener noreferrer" class="github-btn" title="GitHub">
+                <i class="fab fa-github"></i>
             </a>
             <div class="settings-btn" onclick="openSettings()" title="设置">
                 <i class="fas fa-cog"></i>
@@ -1399,7 +1500,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-grid-row">
                     <div class="input-group">
                         <label>自定义短码 (可选)</label>
                         <div class="input-wrapper">

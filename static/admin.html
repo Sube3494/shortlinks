@@ -425,11 +425,22 @@
         }
 
         @media (max-width: 768px) {
-            .top-nav { padding: 0 20px; }
-            .container { padding: 20px; }
-            .form-row { flex-direction: column; align-items: stretch; }
-            .btn { width: 100%; }
-            .stats-grid { grid-template-columns: 1fr; }
+            .top-nav { padding: 0 16px; }
+            .container { padding: 16px; }
+            .form-row { flex-direction: column; align-items: stretch; gap: 12px; }
+            .btn { width: 100%; height: 44px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+            .nav-actions { gap: 8px; }
+            .nav-actions .btn span { display: none; } /* On mobile, hide text in nav buttons */
+            .nav-actions .btn { width: 44px; padding: 0; }
+            
+            .card { padding: 16px; }
+            .table-container { margin: 0 -16px; padding: 0 16px; }
+            th, td { padding: 12px 8px; font-size: 0.8rem; }
+            .id-cell { display: none; }
+            
+            .confirm-content { width: 92%; padding: 24px; }
+            .page-header h1 { font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -464,10 +475,10 @@
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
                 <button class="btn btn-outline" onclick="loadWithFeedback()">
-                    <i class="fas fa-sync-alt" id="refreshIcon"></i> 刷新数据
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i> <span></span>刷新数据</span>
                 </button>
                 <button class="btn btn-danger" onclick="logout()" style="background: transparent;">
-                    <i class="fas fa-sign-out-alt"></i> 退出
+                    <i class="fas fa-sign-out-alt"></i> <span>退出</span>
                 </button>
             </div>
         </nav>
