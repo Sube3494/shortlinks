@@ -259,15 +259,6 @@
 
         .switch-disabled { opacity: 0.5; pointer-events: none; }
 
-        /* Row Animation */
-        tr { transition: all 0.3s ease; }
-        tr.fade-out {
-            opacity: 0;
-            transform: translateX(30px) scale(0.98);
-            background-color: rgba(239, 68, 68, 0.1);
-            pointer-events: none;
-        }
-
         /* Confirm Modal */
         .confirm-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -610,8 +601,12 @@
         async function createKey() {
             const name = document.getElementById('newKeyName').value.trim();
             const expires = parseInt(document.getElementById('newKeyExpires').value) || 0;
+            const btn = document.querySelector('button[onclick="createKey()"]');
+            
             if (!name) return showToast('请输入备注', 'error');
 
+            setBtnLoading(btn, true, '生成中...');
+            
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/create?name=${encodeURIComponent(name)}&expires_days=${expires}`, {
                     method: 'POST',
@@ -624,7 +619,11 @@
                 document.getElementById('newKeyName').value = '';
                 showToast('颁发成功', 'success');
                 loadKeys();
-            } catch (e) { showToast(e.message, 'error'); }
+            } catch (e) { 
+                showToast(e.message, 'error'); 
+            } finally {
+                setBtnLoading(btn, false, '<i class="fas fa-check"></i> 立即生成');
+            }
         }
 
         async function toggleKey(id, el) {
@@ -675,9 +674,23 @@
             modal.offsetHeight;
             modal.classList.add('show');
             
-            document.getElementById('confirmBtn').onclick = () => {
-                closeConfirmModal();
-                if (confirmCallback) confirmCallback();
+            // 重置按钮状态
+            const confirmBtn = document.getElementById('confirmBtn');
+            setBtnLoading(confirmBtn, false, '彻底删除');
+            
+            confirmBtn.onclick = async () => {
+                if (confirmCallback) {
+                    setBtnLoading(confirmBtn, true, '<i class="fas fa-circle-notch fa-spin"></i> 删除中...');
+                    try {
+                        await confirmCallback();
+                        closeConfirmModal();
+                    } catch (e) {
+                         // 失败时恢复按钮，保持模态框打开以便重试或查看错误（虽然 Toast 会提示）
+                        setBtnLoading(confirmBtn, false, '彻底删除');
+                    }
+                } else {
+                    closeConfirmModal();
+                }
             };
         }
 
@@ -691,6 +704,10 @@
         }
 
         function closeConfirm(event) {
+            // 如果正在 Loading，禁止点击背景关闭
+            const confirmBtn = document.getElementById('confirmBtn');
+            if (confirmBtn.disabled) return;
+            
             if (event.target === document.getElementById('confirmModal')) {
                 closeConfirmModal();
             }
@@ -707,20 +724,28 @@
                     if (!res.ok) throw new Error('操作失败');
                     
                     const data = await res.json();
-                    showToast(data.message); // 使用更详细的后端返回消息
+                    showToast(data.message);
+                    await loadKeys(); // 等待列表刷新完成
                     
-                    // 执行删除动画
-                    const btn = document.querySelector(`button[onclick*="revokeKey(${id}"]`);
-                    if (btn) {
-                        const row = btn.closest('tr');
-                        row.classList.add('fade-out');
-                        // 等待动画完成后再刷新列表
-                        setTimeout(() => loadKeys(), 350);
-                    } else {
-                        loadKeys();
-                    }
-                } catch (e) { showToast(e.message, 'error'); }
+                } catch (e) { 
+                    showToast(e.message, 'error'); 
+                    throw e; // 抛出异常以阻止模态框关闭
+                }
             });
+        }
+
+        function setBtnLoading(btn, isLoading, content) {
+            if (isLoading) {
+                btn.disabled = true;
+                btn.innerHTML = content;
+                btn.style.opacity = '0.7';
+                btn.style.cursor = 'not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = content;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
         }
 
         function showToast(msg, type = 'success') {
