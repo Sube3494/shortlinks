@@ -245,13 +245,25 @@ def verify_api_key_no_stats(
 
 
 def verify_admin_key(
+    request: Request,
     x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
     admin_key: Optional[str] = Query(None)
 ) -> None:
     """
     验证超级管理员密钥
-    用于保护 /api/admin/* 端点
+    用于保护 /api/admin/* 端点 (包含防暴力破解机制)
     """
+    # 1. 检查 IP 封禁状态
+    client_ip = get_client_ip(request)
+    if is_ip_banned(client_ip):
+         # 计算剩余封禁时间
+        ban_until = ip_failures[client_ip].get('ban_until', 0)
+        wait_seconds = int(ban_until - time.time())
+        raise HTTPException(
+            status_code=429,
+            detail=f"尝试次数过多，IP 已被封禁。请在 {wait_seconds} 秒后重试。"
+        )
+
     provided_key = x_admin_key or admin_key
     admin_key_env = os.getenv("ADMIN_KEY")
     
@@ -261,7 +273,18 @@ def verify_admin_key(
             detail="管理功能未启用: 请设置 ADMIN_KEY 环境变量"
         )
     
+    # 2. 验证 Key
     if not provided_key or provided_key != admin_key_env:
+        # 记录失败并检查是否需要封禁
+        record_auth_failure(client_ip)
+        
+        # 再次检查是否刚刚触发了封禁
+        if is_ip_banned(client_ip):
+            raise HTTPException(
+                status_code=429,
+                detail="尝试次数过多，IP 已被封禁"
+            )
+            
         raise HTTPException(
             status_code=403,
             detail="无效的管理员密钥"

@@ -271,7 +271,7 @@
         /* Input With Unit Style (Ported from index.html) */
         .input-with-unit {
             display: flex;
-            background: var(--input-bg);
+            background: var(--bg-body);
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: visible;
@@ -279,6 +279,18 @@
             transition: all 0.2s;
         }
         
+        
+        /* Remove Spin Buttons for Input Number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         .input-with-unit:focus-within {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
@@ -632,24 +644,59 @@
         // Login Logic
         async function verifyLogin() {
             try {
+                // 仅验证，不进行UI交互（页面加载时的静默验证）
                 await fetchKeys();
                 showDashboard();
             } catch (e) {
-                if (adminKey) logout();
+                // 如果本地存储的 Key 无效，则清除它并显示登录页
+                if (adminKey) logout(false); // false = don't reload, just reset UI
             }
         }
 
-        function login() {
+        async function login() {
             const input = document.getElementById('adminKeyInput').value.trim();
+            const btn = document.querySelector('button[onclick="login()"]');
+            
             if (!input) return showToast('请输入 Admin Key', 'error');
-            adminKey = input;
-            sessionStorage.setItem('shortlink_admin_key', adminKey);
-            verifyLogin();
+            
+            // 临时设置 Key 用于验证，但不保存
+            const tempKey = input;
+            
+            setBtnLoading(btn, true, '正在验证...');
+            
+            try {
+                // 尝试获取列表以验证 Key
+                const res = await fetch(`${BASE_URL}/api/admin/keys/list`, {
+                    headers: { 'X-Admin-Key': tempKey }
+                });
+                
+                if (res.status === 429) throw new Error('尝试次数过多，IP 已被封禁');
+                if (res.status === 403) throw new Error('无效的管理员密钥');
+                if (!res.ok) throw new Error('验证服务暂时不可用');
+                
+                // 验证成功：保存 Key 并进入
+                adminKey = tempKey;
+                sessionStorage.setItem('shortlink_admin_key', adminKey);
+                
+                showToast('验证通过，正在进入...', 'success');
+                showDashboard();
+                
+            } catch (e) {
+                showToast(e.message || '登录失败', 'error');
+                // 失败不保存 Key，不刷新页面
+            } finally {
+                setBtnLoading(btn, false, '验证并登录');
+            }
         }
 
-        function logout() {
+        function logout(reload = true) {
             sessionStorage.removeItem('shortlink_admin_key');
-            location.reload();
+            adminKey = '';
+            if (reload) location.reload();
+            else {
+                 document.getElementById('loginSection').style.display = 'flex';
+                 document.getElementById('dashboardSection').style.display = 'none';
+            }
         }
 
         function showDashboard() {
