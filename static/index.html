@@ -131,6 +131,7 @@
 
         /* Card/Section */
         .card {
+            position: relative; /* Fix for absolute positioning inside */
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
@@ -858,6 +859,11 @@
             display: flex;
             gap: 12px;
             justify-content: flex-end;
+            align-items: center; /* 防止按钮被拉伸 */
+        }
+
+        .confirm-header h3 {
+            text-align: center;
         }
 
         .confirm-btn {
@@ -1099,13 +1105,65 @@
 
         /* Footer */
         .footer {
-            text-align: center;
-            padding: 60px 0 40px;
+            margin-top: 60px;
+            padding: 32px 24px;
+            /* border-top: 1px solid var(--border-color); Removed */
+            background: linear-gradient(180deg, transparent 0%, var(--surface-color) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* .footer::before removed to clear the line */
+
+        .copyright {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            border-top: 1px dashed var(--border-color); /* Dashed border for footer */
-            margin-top: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             opacity: 0.8;
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 1.1rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            padding: 10px;
+            border-radius: 50%;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
         }
         
         /* Toast */
@@ -1446,7 +1504,7 @@
                     <input type="password" id="apiKey" placeholder="如果服务启用了认证，请输入密钥" autocomplete="off">
                 </div>
                 <small style="color: var(--text-secondary); margin-top: 8px; display: block; font-size: 0.85rem;">
-                    如果服务未启用认证，请留空。
+                    仅在系统处于免认证模式（无任何 Key）时可留空。
                 </small>
                 <!-- Key 信息显示区域 -->
                 <div id="keyInfo" style="display: none; margin-top: 10px;">
@@ -1468,23 +1526,17 @@
     </div>
 
     <div class="container">
-        <!-- 左上角 API 文档 -->
+        <!-- 左上角 API 设置 -->
         <div class="top-left-container">
-            <a href="/static/api-docs.html" class="github-btn" title="API 文档">
-                <i class="fas fa-book"></i>
-            </a>
+            <div class="settings-btn" onclick="openSettings()" title="设置">
+                <i class="fas fa-cog"></i>
+            </div>
         </div>
 
         <!-- 设置按钮和GitHub链接 -->
         <div class="settings-btn-container">
             <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
                 <i class="fas fa-moon"></i>
-            </div>
-            <a href="https://github.com/Sube3494/shortlinks" target="_blank" rel="noopener noreferrer" class="github-btn" title="GitHub">
-                <i class="fab fa-github"></i>
-            </a>
-            <div class="settings-btn" onclick="openSettings()" title="设置">
-                <i class="fas fa-cog"></i>
             </div>
         </div>
 
@@ -1623,8 +1675,19 @@
             <div id="linksContainer"></div>
         </div>
 
-        <div class="footer">
-            <p>&copy; 2025 Sube. All rights reserved.</p>
+    </div>
+
+    <div class="footer">
+        <div class="footer-links">
+            <a href="https://github.com/Sube3494/shortlinks" target="_blank" class="footer-link" title="GitHub">
+                <i class="fab fa-github"></i>
+            </a>
+            <a href="/static/api-docs.html" class="footer-link" title="API 文档">
+                <i class="fas fa-book"></i>
+            </a>
+        </div>
+        <div class="copyright">
+            Designed & Built by <a href="https://sube.top" target="_blank" class="brand-text" style="margin-left: 4px; text-decoration: none;">Sube</a>
         </div>
     </div>
 
@@ -2047,7 +2110,7 @@
                     const title = isInvalidKey ? 'API 密钥无效' : '此服务需要 API 密钥';
                     const message = isInvalidKey 
                         ? '您保存的密钥无效或已过期，请检查后重新设置' 
-                        : '请点击右上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用';
+                        : '请点击左上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用';
                     
                     container.innerHTML = `
                         <div style="text-align: center; padding: 60px 20px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color);">
