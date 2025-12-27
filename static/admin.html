@@ -190,6 +190,7 @@
         .btn-outline:hover { background: var(--secondary-bg); border-color: var(--text-muted); }
         .btn-danger { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
         .btn-danger:hover { background: var(--secondary-bg); color: var(--error); border-color: var(--error); }
+        .btn-icon-only { padding: 11px; width: 44px; height: 44px; flex-shrink: 0; }
 
         /* Table Optimization */
         .table-container { overflow-x: auto; }
@@ -204,6 +205,59 @@
         .status-active { background: #dcfce7; color: #15803d; }
         .status-disabled { background: #f1f5f9; color: #64748b; }
         .status-expired { background: #fee2e2; color: #b91c1c; }
+
+        /* Switch Component */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .switch-disabled { opacity: 0.5; pointer-events: none; }
 
         /* Result Area */
         .new-key-result {
@@ -271,7 +325,7 @@
                 <h2>ShortLink Admin</h2>
             </div>
             <div class="nav-actions">
-                <button class="btn btn-outline" onclick="toggleTheme()" title="切换主题">
+                <button class="btn btn-outline btn-icon-only" onclick="toggleTheme()" title="切换主题">
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
                 <button class="btn btn-outline" onclick="loadWithFeedback()">
@@ -458,13 +512,17 @@
                 const isExpired = key.is_expired;
                 const isActive = key.is_active;
                 
+                // 状态显示逻辑：过期则显示文字，否则显示开关
                 let statusHtml;
                 if (isExpired) {
                     statusHtml = '<span class="status-pill status-expired"><i class="fas fa-clock"></i> 已过期</span>';
-                } else if (!isActive) {
-                    statusHtml = '<span class="status-pill status-disabled"><i class="fas fa-ban"></i> 已禁用</span>';
                 } else {
-                    statusHtml = '<span class="status-pill status-active"><i class="fas fa-check-circle"></i> 活跃中</span>';
+                    statusHtml = `
+                        <label class="switch">
+                            <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleKey(${key.id}, this)">
+                            <span class="slider"></span>
+                        </label>
+                    `;
                 }
                 
                 tr.innerHTML = `
@@ -475,14 +533,9 @@
                     <td>${key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永久'}</td>
                     <td>${statusHtml}</td>
                     <td style="text-align: center;">
-                        <div style="display: flex; gap: 8px; justify-content: center;">
-                            <button class="btn ${isActive ? 'btn-outline' : 'btn'}" style="padding: 6px 12px; font-size: 0.75rem; min-width: 64px;" onclick="toggleKey(${key.id}, ${isActive})">
-                                ${isActive ? '禁用' : '启用'}
-                            </button>
-                            <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
-                                删除
-                            </button>
-                        </div>
+                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
+                            删除
+                        </button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -514,17 +567,29 @@
             } catch (e) { showToast(e.message, 'error'); }
         }
 
-        async function toggleKey(id, currentStatus) {
+        async function toggleKey(id, el) {
+            const parent = el.closest('.switch');
+            parent.classList.add('switch-disabled');
+            
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/${id}/toggle`, {
                     method: 'PATCH',
                     headers: { 'X-Admin-Key': adminKey }
                 });
+                
                 if (!res.ok) throw new Error('操作失败');
+                
                 const data = await res.json();
                 showToast(data.message);
+                // 成功后重新加载数据以确保同步
                 loadKeys();
-            } catch (e) { showToast(e.message, 'error'); }
+            } catch (e) {
+                showToast(e.message, 'error');
+                // 出错时回滚 UI 状态
+                el.checked = !el.checked;
+            } finally {
+                parent.classList.remove('switch-disabled');
+            }
         }
 
         async function revokeKey(id, name) {
