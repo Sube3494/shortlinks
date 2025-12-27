@@ -259,6 +259,38 @@
 
         .switch-disabled { opacity: 0.5; pointer-events: none; }
 
+        /* Confirm Modal */
+        .confirm-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+
+        .confirm-modal.show { opacity: 1; }
+
+        .confirm-content {
+            background: var(--card-bg); width: 100%; max-width: 360px;
+            padding: 32px; border-radius: 20px; border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .confirm-modal.show .confirm-content { transform: scale(1); }
+
+        .confirm-header {
+            text-align: center; margin-bottom: 24px;
+        }
+
+        .confirm-header h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 12px 0; }
+        .confirm-message { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 28px; line-height: 1.6; text-align: center; }
+        .confirm-actions { display: flex; gap: 12px; }
+        .confirm-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; border: none; font-size: 0.9rem; }
+        .confirm-btn.cancel { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); }
+        .confirm-btn.cancel:hover { background: var(--secondary-bg); }
+        .confirm-btn.confirm { background: #ef4444; color: white; }
+        .confirm-btn.confirm:hover { background: #dc2626; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2); }
+
         /* Result Area */
         .new-key-result {
             margin-top: 24px; padding: 20px; background: var(--primary-light);
@@ -410,6 +442,20 @@
 
     <div id="toast" class="toast">
         <span id="toastMsg">通知内容</span>
+    </div>
+
+    <!-- 自定义确认对话框 -->
+    <div class="confirm-modal" id="confirmModal" onclick="closeConfirm(event)">
+        <div class="confirm-content">
+            <div class="confirm-header">
+                <h3>确认删除</h3>
+                <div class="confirm-message" id="confirmMessage" style="margin-top: 12px; margin-bottom: 0;">确定要删除此 API Key 吗？</div>
+            </div>
+            <div class="confirm-actions">
+                <button class="confirm-btn cancel" onclick="closeConfirmModal()">取消</button>
+                <button class="confirm-btn confirm" id="confirmBtn">彻底删除</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -570,6 +616,7 @@
         async function toggleKey(id, el) {
             const parent = el.closest('.switch');
             parent.classList.add('switch-disabled');
+            const targetStatus = el.checked;
             
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/${id}/toggle`, {
@@ -581,28 +628,61 @@
                 
                 const data = await res.json();
                 showToast(data.message);
-                // 成功后重新加载数据以确保同步
-                loadKeys();
+                
+                // 确保状态正确
+                el.checked = data.is_active;
             } catch (e) {
                 showToast(e.message, 'error');
                 // 出错时回滚 UI 状态
-                el.checked = !el.checked;
+                el.checked = !targetStatus;
             } finally {
                 parent.classList.remove('switch-disabled');
             }
         }
 
+        let confirmCallback = null;
+
+        function showConfirm(message, onConfirm) {
+            confirmCallback = onConfirm;
+            document.getElementById('confirmMessage').textContent = message;
+            const modal = document.getElementById('confirmModal');
+            modal.style.display = 'flex';
+            modal.offsetHeight;
+            modal.classList.add('show');
+            
+            document.getElementById('confirmBtn').onclick = () => {
+                closeConfirmModal();
+                if (confirmCallback) confirmCallback();
+            };
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                confirmCallback = null;
+            }, 250);
+        }
+
+        function closeConfirm(event) {
+            if (event.target === document.getElementById('confirmModal')) {
+                closeConfirmModal();
+            }
+        }
+
         async function revokeKey(id, name) {
-            if (!confirm(`确定彻底删除 ${name} 调用凭证吗？该操作不可恢复。`)) return;
-            try {
-                const res = await fetch(`${BASE_URL}/api/admin/keys/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'X-Admin-Key': adminKey }
-                });
-                if (!res.ok) throw new Error('操作失败');
-                showToast('已彻底删除');
-                loadKeys();
-            } catch (e) { showToast(e.message, 'error'); }
+            showConfirm(`确定彻底删除 ${name} 调用凭证吗？该操作不可恢复。`, async () => {
+                try {
+                    const res = await fetch(`${BASE_URL}/api/admin/keys/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'X-Admin-Key': adminKey }
+                    });
+                    if (!res.ok) throw new Error('操作失败');
+                    showToast('已彻底删除');
+                    loadKeys();
+                } catch (e) { showToast(e.message, 'error'); }
+            });
         }
 
         function showToast(msg, type = 'success') {
