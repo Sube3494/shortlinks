@@ -189,58 +189,71 @@ environment:
 
 这样 Docker 部署也可以连接云端数据库,实现数据共享。
 
-#### 2. 配置 API 密钥
+#### 2. 配置环境变量
 
-**选项 A: Web API 管理 (推荐,兼容所有环境)**
-
-1. 在 `docker-compose.yaml` 中设置 `ADMIN_KEY`:
-   ```yaml
-   environment:
-     - ADMIN_KEY=your-super-secret-admin-key
-     - INITIAL_API_KEY=your-first-api-key:初始密钥  # 可选,首次启动自动创建
-   ```
-
-2. 启动服务后,使用 Web API 管理 Keys (同 Vercel 方式):
-   ```bash
-   # 创建 Key
-   curl -X POST http://localhost:18000/api/admin/keys/create \
-     -H "X-Admin-Key: your-super-secret-admin-key" \
-     -H "Content-Type: application/json" \
-     -d '{"name": "移动端APP", "expires_days": 90}'
-   
-   # 列出 Keys
-   curl http://localhost:18000/api/admin/keys/list \
-     -H "X-Admin-Key: your-super-secret-admin-key"
-   ```
-
-**选项 B: CLI 工具管理 (仅 Docker)**
-
-服务启动后，使用命令行工具管理 API Keys：
-
-```bash
-# 创建第一个 Key
-docker exec -it shortlink-app python manage_keys.py create --name "主密钥"
-
-# 创建带过期时间的 Key
-docker exec -it shortlink-app python manage_keys.py create --name "临时密钥" --expires-days 30
-
-# 查看所有 Key
-docker exec -it shortlink-app python manage_keys.py list
-```
-
-**选项 C: 环境变量 (传统方式,向后兼容)**
-
-编辑 `docker-compose.yml`，设置 `API_KEY` 环境变量：
+编辑 `docker-compose.yaml`,根据需要配置以下环境变量:
 
 ```yaml
 environment:
-  - BASE_URL=https://XXXX
-  - API_KEY=your-secret-api-key-here  # 设置你的API密钥
+  # ==================== 必需配置 ====================
+  - BASE_URL=http://localhost:18000  # 短链服务基础 URL,生产环境改为你的域名
+  
+  # ==================== 管理员配置 (推荐) ====================
+  - ADMIN_KEY=your-super-secret-admin-key  # 管理员密钥,用于访问 /api/admin/* 端点
+  - ADMIN_PATH=/admin  # 可选,自定义管理后台路径,默认 /admin
+  
+  # ==================== API Key 配置 ====================
+  # 方式1: 首次启动自动创建 (推荐)
+  - INITIAL_API_KEY=your-first-api-key:初始密钥  # 格式: API_KEY:名称
+  
+  # 方式2: 传统单一密钥 (向后兼容,不推荐)
+  # - API_KEY=your-api-key-here
+  
+  # ==================== 数据库配置 (可选) ====================
+  # 默认使用 SQLite,数据保存在 ./data/shortlinks.db
+  # 如需使用云端数据库,配置以下任一方式:
+  
+  # 方式1: 直接使用连接字符串
+  # - DATABASE_URL=mysql+pymysql://user:pass@host:4000/db?ssl=true
+  
+  # 方式2: 使用独立变量 (TiDB Cloud 推荐)
+  # - DB_HOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
+  # - DB_PORT=4000
+  # - DB_USERNAME=your-username
+  # - DB_PASSWORD=your-password
+  # - DB_DATABASE=test
+  
+  # ==================== 站长验证 (可选) ====================
+  # 微信/其他站长工具的验证文件
+  # - VERIFICATION_FILENAME=09bbc06848f6945e58f841b48ee3de71.txt
+  # - VERIFICATION_CONTENT=27a1dbf4cbff06d0829d3f5af88e8f2139b9f41c
 ```
 
-**注意：** 
-- 如果数据库中没有任何 Key 且未设置环境变量，则不启用认证，任何人都可以调用API
-- 多 Key 管理优先于环境变量，推荐使用多 Key 方式
+**配置说明**:
+
+| 变量 | 必需 | 说明 |
+|------|------|------|
+| `BASE_URL` | ✅ | 短链服务的基础 URL,用于生成完整短链 |
+| `ADMIN_KEY` | 推荐 | 管理员密钥,用于保护管理接口 |
+| `ADMIN_PATH` | 可选 | 自定义管理后台路径,默认 `/admin` |
+| `INITIAL_API_KEY` | 推荐 | 首次启动自动创建的 API Key |
+| `API_KEY` | 可选 | 传统单一密钥模式(向后兼容) |
+| `DATABASE_URL` | 可选 | 数据库连接字符串,留空使用 SQLite |
+| `DB_HOST` 等 | 可选 | TiDB/MySQL 独立配置变量 |
+| `VERIFICATION_*` | 可选 | 站长验证文件配置 |
+
+**推荐配置示例**:
+
+```yaml
+environment:
+  - BASE_URL=https://short.example.com
+  - ADMIN_KEY=your-super-secret-admin-key-at-least-32-chars
+  - INITIAL_API_KEY=your-first-api-key:初始密钥
+```
+
+**注意**: 
+- 如果数据库中没有任何 Key 且未设置 `API_KEY`,则不启用认证,任何人都可以调用 API
+- 推荐使用 `ADMIN_KEY` + `INITIAL_API_KEY` 方式,通过网页后台管理多个 API Key
 
 #### 2. 启动短链服务
 
@@ -267,87 +280,6 @@ docker-compose logs -f
 docker-compose down
 ```
 
-## API Key 管理
-
-### 命令行工具
-
-服务支持多 API Key 管理,每个 Key 可以独立设置名称、过期时间并追踪使用统计。
-
-#### 创建 API Key
-
-```bash
-# 创建永久有效的 Key
-docker exec -it shortlink-app python manage_keys.py create --name "移动端APP"
-
-# 创建带过期时间的 Key (90天后过期)
-docker exec -it shortlink-app python manage_keys.py create --name "临时密钥" --expires-days 90
-```
-
-**输出示例：**
-```
-✅ API Key 创建成功!
-
-ID: 1
-名称: 移动端APP
-密钥: AbCdEf123456...xyz  (请妥善保存,仅显示一次!)
-创建时间: 2025-12-24 15:30:00
-过期时间: 永不过期
-```
-
-#### 列出所有 Key
-
-```bash
-docker exec -it shortlink-app python manage_keys.py list
-```
-
-**输出示例：**
-```
-🔑 共有 2 个活跃的 API Keys:
-
-ID    名称                密钥前缀         过期时间         最后使用              使用次数    
----------------------------------------------------------------------------------------------
-1     移动端APP           AbCdEf123...    Never           2小时前               234         
-2     CI/CD流水线         XyZ789Abc...    2025-03-20      5分钟前               45          
-```
-
-#### 查看 Key 详情
-
-```bash
-docker exec -it shortlink-app python manage_keys.py info 1
-```
-
-#### 更新 Key
-
-```bash
-# 修改名称
-docker exec -it shortlink-app python manage_keys.py update 1 --name "移动端APP-v2"
-
-# 延长有效期
-docker exec -it shortlink-app python manage_keys.py update 1 --expires-days 180
-
-# 设置为永不过期
-docker exec -it shortlink-app python manage_keys.py update 1 --expires-days 0
-```
-
-#### 撤销 Key
-
-```bash
-# 软删除,Key 立即失效但保留记录
-docker exec -it shortlink-app python manage_keys.py revoke 1
-```
-
-#### 删除 Key
-
-```bash
-# 永久删除,需要 --confirm 确认
-docker exec -it shortlink-app python manage_keys.py delete 1 --confirm
-```
-
-### 向后兼容说明
-
-- **优先级**: 数据库中的 Key > 环境变量 `API_KEY`
-- **建议**: 新项目使用多 Key 管理,旧项目可继续使用环境变量
-- **迁移**: 可同时保留环境变量作为紧急后备密钥
 
 ## API 使用
 
