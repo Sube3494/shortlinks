@@ -1327,7 +1327,7 @@
         async function saveCleanupSchedule() {
             const hour = parseInt(document.getElementById('cleanupHour').value);
             const minute = parseInt(document.getElementById('cleanupMinute').value);
-            const btn = event.target;
+            const btn = event.target.closest('button');
             
             if (isNaN(hour) || hour < 0 || hour > 23) {
                 return showToast('小时必须在 0-23 之间', 'error');
