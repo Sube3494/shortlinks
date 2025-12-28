@@ -1046,7 +1046,7 @@
                 tr.innerHTML = `
                     <td class="id-cell" data-label="ID">#${key.id}</td>
                     <td data-label="持有者信息">${escapeHtml(key.name || '未命名')}</td>
-                    <td class="prefix-cell" data-label="API Key">${key.prefix}</td>
+                    <td class="prefix-cell" data-label="API Key">${key.key_prefix}</td>
                     <td data-label="生成日期">${formatTime(key.created_at).split(' ')[0]}</td>
                     <td data-label="过期时间">${formatTime(key.expires_at)}</td>
                     <td data-label="状态" class="status-cell">${statusHtml}</td>
