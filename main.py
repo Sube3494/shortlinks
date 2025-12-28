@@ -177,9 +177,11 @@ def verify_api_key(
     # 检查 IP 是否被封禁
     if is_ip_banned(client_ip):
         remaining = get_remaining_ban_time(client_ip)
+        minutes = remaining // 60
+        seconds = remaining % 60
         raise HTTPException(
             status_code=429,
-            detail=f"访问受限，请在 {remaining//60} 分钟后重试"
+            detail=f"由于多次认证失败,您的 IP 已被临时封禁。请在 {minutes} 分 {seconds} 秒后重试"
         )
     
     # 获取提供的密钥
@@ -257,11 +259,12 @@ def verify_admin_key(
     client_ip = get_client_ip(request)
     if is_ip_banned(client_ip):
          # 计算剩余封禁时间
-        ban_until = ip_failures[client_ip].get('ban_until', 0)
-        wait_seconds = int(ban_until - time.time())
+        remaining = get_remaining_ban_time(client_ip)
+        minutes = remaining // 60
+        seconds = remaining % 60
         raise HTTPException(
             status_code=429,
-            detail=f"尝试次数过多，IP 已被封禁。请在 {wait_seconds} 秒后重试。"
+            detail=f"由于多次认证失败,您的 IP 已被临时封禁。请在 {minutes} 分 {seconds} 秒后重试"
         )
 
     provided_key = x_admin_key or admin_key
