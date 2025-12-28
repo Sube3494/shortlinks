@@ -196,13 +196,34 @@
         /* Table Optimization */
         .table-container { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { background: var(--secondary-bg); padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        
+        /* Center alignment for all headers and cells */
+        th { 
+            background: var(--secondary-bg); 
+            padding: 12px 16px; 
+            text-align: center; /* Centered */
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em; 
+            border-bottom: 1px solid var(--border); 
+        }
+        
+        td { 
+            padding: 16px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 0.875rem; 
+            vertical-align: middle; 
+            text-align: center; /* Centered */
+        }
+        
         th:first-child { border-top-left-radius: 8px; }
         th:last-child { border-top-right-radius: 8px; }
-        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
         
         .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; }
-        .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--secondary-bg); padding: 4px 8px; border-radius: 6px; font-size: 0.8125rem; color: var(--text-main); border: 1px solid var(--border); }
+        /* Removed custom styling from prefix-cell per user request */
+        .prefix-cell { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--text-main); }
         
         .status-pill { padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .status-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
@@ -385,119 +406,248 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+            /* Cleanup Section Layout - Single Row Compressed */
+            .cleanup-layout {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+                background: var(--bg-body);
+                padding: 16px 24px;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+            }
+
+            .cleanup-group {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .cleanup-label {
+                font-weight: 600;
+                color: var(--text-main);
+                white-space: nowrap;
+            }
+
+            /* Time Inputs Compact */
+            .time-compact {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: var(--card-bg);
+                padding: 4px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+            }
+
+            .time-compact input {
+                width: 48px;
+                height: 32px;
+                border: none;
+                text-align: center;
+                background: transparent;
+                padding: 0;
+            }
+            .time-compact input:focus { box-shadow: none; }
+            
+            .time-sep { font-weight: bold; color: var(--text-muted); }
+
+            /* Mobile Overrides */
+            @media (max-width: 768px) {
+                .cleanup-layout {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 16px;
+                    padding: 16px;
+                }
+                
+                .cleanup-group {
+                    justify-content: space-between;
+                    width: 100%;
+                }
+                
+                /* Center the time config on mobile */
+                .cleanup-group.time-group {
+                    justify-content: center;
+                    background: var(--secondary-bg);
+                    padding: 12px;
+                    border-radius: 8px;
+                }
+                
+                .time-compact {
+                    flex: 1;
+                    justify-content: center;
+                    border: none;
+                    background: transparent;
+                }
+                
+                .time-compact input {
+                    width: 60px;
+                    font-size: 1.1rem;
+                    border-bottom: 1px solid var(--border);
+                    border-radius: 0;
+                }
+            }
         /* Mobile Optimization */
         @media (max-width: 768px) {
-            /* 1. Header & Navigation */
+            /* 1. Reset & Global */
+            .container { padding: 16px; width: 100vw; overflow-x: hidden; }
+            .card { padding: 20px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+            
+            /* 2. Header & Navigation */
             .top-nav {
+                height: 64px;
                 padding: 0 16px;
-                height: 60px;
+                position: sticky;
+                top: 0;
             }
-            .logo-area h2 { display: none; } /* Hide text logo on mobile */
             .logo-area img { width: 28px; height: 28px; }
+            .logo-area h2 { display: none; }
             .nav-actions { gap: 8px; }
-            .nav-actions .btn { width: 36px; height: 36px; padding: 0; }
-            .nav-actions .btn span { display: none; } /* Hide button text */
+            .nav-actions .btn {
+                width: 36px; height: 36px; padding: 0;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .nav-actions .btn span { display: none; }
             
-            /* 2. Layout & Spacing */
-            .container { padding: 16px; }
-            .page-header { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 24px; }
-            .page-header h1 { font-size: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
-            .card { padding: 20px; }
-            .card-title { font-size: 1rem; margin-bottom: 16px; }
-            .workspace-grid { gap: 20px; }
+            /* 3. Page Header & Stats */
+            .page-header {
+                flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 20px;
+            }
+            .page-header h1 { font-size: 1.5rem; line-height: 1.2; }
+            .stats-grid { 
+                grid-template-columns: 1fr 1fr; 
+                gap: 12px; 
+                margin-bottom: 24px; 
+            }
+            .stat-card { padding: 16px; }
 
-            /* 3. Forms */
-            .form-row { flex-direction: column; align-items: stretch; gap: 16px; }
-            .form-group { margin-bottom: 0; }
-            .btn { width: 100%; }
-
-            /* 4. Complex Sections (Cleanup) */
-            .card > div[style*="display: flex"] {
-                flex-direction: column !important;
-                gap: 20px !important;
+            /* 4. Form Components */
+            .form-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+                margin-bottom: 0;
             }
-            .card > div[style*="border-left"] {
-                border-left: none !important;
-                border-top: 1px solid var(--border) !important;
-                padding-left: 0 !important;
-                padding-top: 20px !important;
-            }
+            /* Critical Fix: Reset flex-basis (height in column mode) */
+            .form-group, .expiry-group { margin-bottom: 0; width: 100%; flex: 0 0 auto; }
+            .btn { width: 100%; height: 44px; display: flex; justify-content: center; }
             
-            /* 前缀单元格 */
-            .prefix-cell {
-                font-size: 0.75rem;
-                padding: 3px 8px;
-            }
-            
-            /* 状态标签 */
-            .status-pill {
-                font-size: 0.7rem;
-                padding: 3px 10px;
-            }
-            
-            /* 确认对话框 */
-            .confirm-content { 
-                width: 92%; 
-                max-width: 340px;
-                padding: 24px; 
-            }
-            
-            .confirm-header h3 {
-                font-size: 1.1rem;
-            }
-            
-            .confirm-message {
-                font-size: 0.875rem;
-            }
-            
-            .confirm-btn {
-                min-height: 44px;
-                font-size: 0.875rem;
-            }
-            
-            /* Toast 移动端位置 */
-            .toast-container {
-                bottom: 16px;
-                right: 16px;
-                left: 16px;
-            }
-            
-            .toast {
-                max-width: 100%;
-                font-size: 0.875rem;
-                padding: 12px 16px;
-            }
-            
-            /* 新密钥显示区域 */
-            .new-key-result {
-                padding: 16px;
-                margin-top: 20px;
-            }
-            
-            #newKeyText {
-                font-size: 0.95rem !important;
-            }
-            
-            /* 输入框 */
-            input {
-                font-size: 0.875rem;
-                padding: 10px 12px;
-            }
-            
-            /* 单位选择器 */
-            .input-with-unit {
+            /* Inputs */
+            input, .input-with-unit, .custom-select {
                 height: 44px;
+                font-size: 16px; /* Prevent iOS zoom */
             }
             
-            .custom-select {
-                min-width: 75px;
-                padding: 0 10px;
+            /* 5. Cleanup Section Fixes (New Structure) */
+            .cleanup-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
             }
             
-            .selected-value {
-                font-size: 0.875rem;
-                margin-right: 6px;
+            .cleanup-header-actions {
+                width: 100%;
+                justify-content: space-between;
+                flex-direction: row-reverse; /* Put button on right */
+            }
+
+            .time-config {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+                padding-top: 16px;
+            }
+            
+            .time-inputs { width: 100%; }
+            .time-inputs input { width: 100%; }
+
+            /* 6. TABLE TO CARD TRANSFORMATION (Critical Fix) */
+            /* Hide the actual table header */
+            .table-container table thead { display: none; }
+            
+            /* Make rows blocks with spacing */
+            .table-container table tbody tr {
+                display: block;
+                background: var(--secondary-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                margin-bottom: 16px;
+                padding: 16px;
+                position: relative;
+            }
+            
+            /* Cells become full-width rows */
+            .table-container table tbody td {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border: none;
+                width: 100%;
+                text-align: right;
+                font-size: 0.9rem;
+            }
+            
+            /* Labels for each cell */
+            .table-container table tbody td:before {
+                content: attr(data-label); /* Requires JS to add data-label */
+                font-weight: 600;
+                color: var(--text-muted);
+                text-align: left;
+                margin-right: 12px;
+                font-size: 0.85rem;
+            }
+            
+            /* Special handling for specific columns */
+            /* ID Column - Hide */
+            .table-container td:nth-child(1) { display: none; } 
+            
+            /* Holder Name - Prominent at top */
+            .table-container td:nth-child(2) {
+                order: -1;
+                font-weight: 700;
+                font-size: 1.05rem;
+                padding-bottom: 12px;
+                border-bottom: 1px dashed var(--border);
+                margin-bottom: 8px;
+                color: var(--text-main);
+                display: block;
+                text-align: left;
+                padding-right: 40px; /* Prevent overlap with delete button */
+            }
+            .table-container td:nth-child(2):before { display: none; }
+            
+            /* Actions Row - Moved to Top Right */
+            .table-container td:last-child {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                width: auto;
+                padding: 0;
+                border: none;
+                margin: 0;
+                display: block;
+            }
+            /* Hide the "Manage" label */
+            .table-container td:last-child:before { display: none; }
+            
+            .table-container td:last-child button {
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                background: transparent;
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                border-radius: 8px;
+            }
+            
+            /* Status Badge adjustment if needed */
+            .status-pill { font-size: 0.75rem; }
+            .status-pill {
+                float: right;
             }
         }
     </style>
@@ -564,44 +714,40 @@
 
             <div class="workspace-grid">
                 <!-- 定时清理管理 -->
+                <!-- 定时清理管理 -->
                 <div class="card">
                     <h3 class="card-title"><i class="fas fa-clock"></i> 定时清理过期短链</h3>
                     
-                    <div style="display: flex; gap: 24px; margin-bottom: 24px;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-                                <div>
-                                    <div style="font-weight: 600; margin-bottom: 4px;">启用自动清理</div>
-                                    <div style="font-size: 0.875rem; color: var(--text-muted);">每天自动删除过期的短链记录</div>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox" id="cleanupEnabled" onchange="updateCleanupEnabled(this)">
-                                    <span class="slider"></span>
-                                </label>
+                    <div class="cleanup-layout">
+                        <!-- Left: Switch -->
+                        <div class="cleanup-group">
+                            <div class="cleanup-label">自动清理</div>
+                            <label class="switch">
+                                <input type="checkbox" id="cleanupEnabled" onchange="updateCleanupEnabled(this)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- Mid: Time Config -->
+                        <div class="cleanup-group time-group">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">每天</span>
+                            <div class="time-compact">
+                                <input type="number" id="cleanupHour" min="0" max="23" placeholder="00">
+                                <span class="time-sep">:</span>
+                                <input type="number" id="cleanupMinute" min="0" max="59" placeholder="00">
                             </div>
-                            
-                            <div class="form-row" style="margin-bottom: 0;">
-                                <div class="form-group">
-                                    <label>清理时间</label>
-                                    <div style="display: flex; gap: 12px;">
-                                        <input type="number" id="cleanupHour" min="0" max="23" placeholder="小时" style="flex: 1;">
-                                        <span style="align-self: center; color: var(--text-muted);">:</span>
-                                        <input type="number" id="cleanupMinute" min="0" max="59" placeholder="分钟" style="flex: 1;">
-                                    </div>
-                                </div>
-                                <button class="btn" onclick="saveCleanupSchedule()">
-                                    <i class="fas fa-save"></i> 保存时间
-                                </button>
-                            </div>
+                            <button class="btn btn-outline btn-icon-only" onclick="saveCleanupSchedule()" title="保存时间" style="width: 32px; height: 32px; border: none;">
+                                <i class="fas fa-check" style="color: var(--success);"></i>
+                            </button>
                         </div>
                         
-                        <div style="border-left: 1px solid var(--border); padding-left: 24px; display: flex; flex-direction: column; justify-content: center; gap: 12px;">
-                            <button class="btn btn-outline" onclick="triggerCleanup()" style="white-space: nowrap;">
-                                <i class="fas fa-broom"></i> 立即清理
+                        <!-- Right: Actions -->
+                        <div class="cleanup-group" style="margin-left: auto;">
+                            <!-- Info removed per user request, will be populated by JS if needed -->
+                            <div id="lastCleanupInfo" class="last-run-info" style="font-size: 0.8rem; display: none;"></div>
+                            <button class="btn btn-outline" onclick="triggerCleanup()" style="height: 32px; padding: 0 12px; font-size: 0.85rem;">
+                                <i class="fas fa-broom"></i> 清理
                             </button>
-                            <div id="lastCleanupInfo" style="font-size: 0.8125rem; color: var(--text-muted); text-align: center;">
-                                等待加载...
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -614,7 +760,7 @@
                             <label>持有者名称 / 备注</label>
                             <input type="text" id="newKeyName" placeholder="例如：GitHub Actions">
                         </div>
-                        <div class="form-group" style="flex: 0 0 240px;">
+                        <div class="form-group expiry-group">
                             <label>有效期 (0=永久)</label>
                             <div class="input-with-unit">
                                 <div class="input-wrapper">
@@ -659,7 +805,7 @@
                                 <tr>
                                     <th class="id-cell">ID</th>
                                     <th>持有者信息</th>
-                                    <th>密钥前缀</th>
+                                    <th>API Key</th>
                                     <th>生成日期</th>
                                     <th>过期状态</th>
                                     <th>当前状态</th>
@@ -769,6 +915,16 @@
             
             if (!input) return showToast('请输入 Admin Key', 'error');
             
+            // --- UI 调试专用后门 ---
+            if (input === 'demo') {
+                adminKey = 'demo';
+                sessionStorage.setItem('shortlink_admin_key', 'demo');
+                showToast('已开启 UI 演示模式', 'success');
+                showDashboard();
+                return;
+            }
+            // -----------------------
+            
             // 临时设置 Key 用于验证，但不保存
             const tempKey = input;
             
@@ -816,6 +972,15 @@
         }
 
         async function fetchKeys() {
+            if (adminKey === 'demo') {
+                return {
+                    keys: [
+                        { id: 1, name: '演示账户 (UI测试)', prefix: 'demo', created_at: new Date().toISOString(), expires_at: null, is_active: true },
+                        { id: 2, name: '已过期示例', prefix: 'expired', created_at: '2024-01-01T12:00:00Z', expires_at: '2024-02-01T12:00:00Z', is_active: false }
+                    ]
+                };
+            }
+
             const res = await fetch(`${BASE_URL}/api/admin/keys/list`, {
                 headers: { 'X-Admin-Key': adminKey }
             });
@@ -853,34 +1018,41 @@
         function renderKeys(keys) {
             const tbody = document.querySelector('#keysTable tbody');
             tbody.innerHTML = '';
+            
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-muted);">暂无 API Key 数据</td></tr>';
+                return;
+            }
+
             keys.forEach(key => {
                 const tr = document.createElement('tr');
-                const isExpired = key.is_expired;
-                const isActive = key.is_active;
+                const isExpired = key.expires_at && new Date(key.expires_at) < new Date();
                 
-                // 状态显示逻辑：过期则显示文字，否则显示开关
+                // 状态栏显示逻辑：过期显示标签，未过期显示开关
                 let statusHtml;
                 if (isExpired) {
-                    statusHtml = '<span class="status-pill status-expired"><i class="fas fa-clock"></i> 已过期</span>';
+                    statusHtml = '<span class="status-pill status-expired">已过期</span>';
                 } else {
                     statusHtml = `
                         <label class="switch">
-                            <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleKey(${key.id}, this)">
+                            <input type="checkbox" ${key.is_active ? 'checked' : ''} onchange="toggleKey(${key.id}, this)">
                             <span class="slider"></span>
                         </label>
                     `;
                 }
-                
+
+                const formatTime = (t) => t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '永久有效';
+
                 tr.innerHTML = `
-                    <td class="id-cell">${key.id}</td>
-                    <td><strong>${key.name}</strong></td>
-                    <td><span class="prefix-cell">${key.key_prefix}</span></td>
-                    <td>${new Date(key.created_at).toLocaleDateString()}</td>
-                    <td>${key.expires_at ? new Date(key.expires_at).toLocaleDateString() : '永久'}</td>
-                    <td>${statusHtml}</td>
-                    <td style="text-align: center;">
-                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.75rem;" onclick="revokeKey(${key.id}, '${key.name}')">
-                            删除
+                    <td class="id-cell" data-label="ID">#${key.id}</td>
+                    <td data-label="持有者信息">${escapeHtml(key.name || '未命名')}</td>
+                    <td class="prefix-cell" data-label="API Key">${key.prefix}</td>
+                    <td data-label="生成日期">${formatTime(key.created_at).split(' ')[0]}</td>
+                    <td data-label="过期时间">${formatTime(key.expires_at)}</td>
+                    <td data-label="状态" class="status-cell">${statusHtml}</td>
+                    <td data-label="操作" style="text-align: center;">
+                        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${key.id})" title="删除">
+                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
                 `;
@@ -895,9 +1067,8 @@
 
         async function createKey() {
             const name = document.getElementById('newKeyName').value.trim();
-            const expiresVal = document.getElementById('newKeyExpires').value;
-            const expiresUnit = document.getElementById('expiresUnit').value;
-            const expires = parseInt(expiresVal) || 0;
+            const expires = parseInt(document.getElementById('newKeyExpires').value) || 0;
+            const unit = document.getElementById('expiresUnit').value;
             
             const btn = document.querySelector('button[onclick="createKey()"]');
             
@@ -905,31 +1076,46 @@
 
             setBtnLoading(btn, true, '生成中...');
             
-            // 构建查询参数
-            let queryParams = `name=${encodeURIComponent(name)}`;
-            
+            // Calculate minutes
+            let durationMinutes = 0;
             if (expires > 0) {
-                if (expiresUnit === 'days') queryParams += `&expires_days=${expires}`;
-                else if (expiresUnit === 'hours') queryParams += `&expires_in_hours=${expires}`;
-                else if (expiresUnit === 'minutes') queryParams += `&expires_in_minutes=${expires}`;
-            } else {
-                 queryParams += `&expires_days=0`; // 显式传递 0 表示永久
+                if (unit === 'days') durationMinutes = expires * 24 * 60;
+                else if (unit === 'hours') durationMinutes = expires * 60;
+                else durationMinutes = expires;
             }
             
             try {
-                const res = await fetch(`${BASE_URL}/api/admin/keys/create?${queryParams}`, {
+                // Demo Mode
+                if (adminKey === 'demo') {
+                    // Simulate network delay
+                    await new Promise(r => setTimeout(r, 500));
+                    document.getElementById('newKeyText').textContent = 'sk_demo_' + Math.random().toString(36).substr(2, 10);
+                    document.getElementById('newKeyDisplay').style.display = 'block';
+                    document.getElementById('newKeyName').value = '';
+                    showToast('Key 生成成功 (演示)', 'success');
+                    return;
+                }
+                
+                // Real API Call
+                const res = await fetch(`${BASE_URL}/api/admin/keys/create`, {
                     method: 'POST',
-                    headers: { 'X-Admin-Key': adminKey }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': adminKey 
+                    },
+                    body: JSON.stringify({ name, expires_in_minutes: durationMinutes })
                 });
-                if (!res.ok) throw new Error('颁发失败');
+                
+                if (!res.ok) throw new Error('创建失败');
                 const data = await res.json();
-                document.getElementById('newKeyDisplay').style.display = 'block';
+                
                 document.getElementById('newKeyText').textContent = data.key;
-                document.getElementById('newKeyName').value = '';
-                showToast('颁发成功', 'success');
-                loadKeys();
-            } catch (e) { 
-                showToast(e.message, 'error'); 
+                document.getElementById('newKeyDisplay').style.display = 'block';
+                document.getElementById('newKeyName').value = ''; 
+                showToast('Key 生成成功', 'success');
+                loadKeys(); 
+            } catch (e) {
+                showToast(e.message, 'error');
             } finally {
                 setBtnLoading(btn, false, '<i class="fas fa-check"></i> 立即生成');
             }
@@ -940,6 +1126,15 @@
             parent.classList.add('switch-disabled');
             const targetStatus = el.checked;
             
+            // Demo Mode
+            if (adminKey === 'demo') {
+                setTimeout(() => {
+                    parent.classList.remove('switch-disabled');
+                    showToast(`Key #${id} 已${targetStatus ? '启用' : '禁用'} (演示)`, 'success');
+                }, 300);
+                return;
+            }
+
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/keys/${id}/toggle`, {
                     method: 'PATCH',
@@ -963,11 +1158,22 @@
         }
 
         function copyNewKey() {
-            const keyText = document.getElementById('newKeyText').textContent;
-            if (!keyText) return;
+            const el = document.getElementById('newKeyText');
+            // Support both textContent and innerText for compatibility
+            const text = el.textContent || el.innerText;
             
-            navigator.clipboard.writeText(keyText).then(() => {
-                showToast('已复制到剪贴板');
+            if (!text) return;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板', 'success');
+            }).catch(() => {
+                showToast('复制失败，请手动复制', 'error');
+            });
+        }
+        
+        function copyKey(text) {
+             navigator.clipboard.writeText(text).then(() => {
+                showToast('前缀已复制', 'success');
             }).catch(() => {
                 showToast('复制失败，请手动复制', 'error');
             });
@@ -1010,6 +1216,16 @@
                 modal.style.display = 'none';
                 confirmCallback = null;
             }, 250);
+        }
+
+        // Escape HTML helper
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
         }
 
         function closeConfirm(event) {
@@ -1162,7 +1378,7 @@
             } catch (e) {
                 showToast(e.message || '清理失败', 'error');
             } finally {
-                setBtnLoading(btn, false, '<i class="fas fa-broom"></i> 立即清理');
+                setBtnLoading(btn, false, '<i class="fas fa-broom"></i> 清理');
             }
         }
 
