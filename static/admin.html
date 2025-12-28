@@ -425,22 +425,235 @@
         }
 
         @media (max-width: 768px) {
-            .top-nav { padding: 0 16px; }
-            .container { padding: 16px; }
-            .form-row { flex-direction: column; align-items: stretch; gap: 12px; }
-            .btn { width: 100%; height: 44px; }
-            .stats-grid { grid-template-columns: 1fr; gap: 12px; }
-            .nav-actions { gap: 8px; }
-            .nav-actions .btn span { display: none; } /* On mobile, hide text in nav buttons */
-            .nav-actions .btn { width: 44px; padding: 0; }
+            /* 顶部导航优化 */
+            .top-nav { 
+                padding: 0 16px; 
+                height: 60px;
+            }
             
-            .card { padding: 16px; }
-            .table-container { margin: 0 -16px; padding: 0 16px; }
-            th, td { padding: 12px 8px; font-size: 0.8rem; }
-            .id-cell { display: none; }
+            .logo-area h2 {
+                font-size: 1rem;
+            }
             
-            .confirm-content { width: 92%; padding: 24px; }
-            .page-header h1 { font-size: 1.5rem; }
+            .logo-area img {
+                width: 28px;
+                height: 28px;
+            }
+            
+            /* 容器和间距 */
+            .container { 
+                padding: 20px 16px; 
+            }
+            
+            .workspace-grid {
+                gap: 20px;
+            }
+            
+            /* 页面标题 */
+            .page-header {
+                margin-bottom: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .page-header h1 { 
+                font-size: 1.5rem; 
+            }
+            
+            .page-header p {
+                font-size: 0.875rem;
+            }
+            
+            /* 统计卡片 */
+            .stats-grid { 
+                grid-template-columns: 1fr; 
+                gap: 16px;
+                margin-bottom: 20px;
+            }
+            
+            .stat-card {
+                padding: 20px;
+            }
+            
+            .stat-label {
+                font-size: 0.75rem;
+            }
+            
+            .stat-value {
+                font-size: 1.75rem;
+            }
+            
+            .stat-trend {
+                font-size: 0.75rem;
+            }
+            
+            /* 卡片 */
+            .card { 
+                padding: 20px; 
+            }
+            
+            .card-title {
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+            
+            /* 表单布局 */
+            .form-row { 
+                flex-direction: column; 
+                align-items: stretch; 
+                gap: 12px; 
+            }
+            
+            .form-group {
+                margin-bottom: 16px;
+            }
+            
+            .form-group:last-child {
+                margin-bottom: 0;
+            }
+            
+            .form-group label {
+                font-size: 0.8125rem;
+            }
+            
+            /* 按钮优化 */
+            .btn { 
+                width: 100%; 
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+            
+            .btn-icon-only {
+                width: 44px;
+                min-height: 44px;
+                padding: 0;
+            }
+            
+            /* 导航操作 */
+            .nav-actions { 
+                gap: 8px; 
+            }
+            
+            .nav-actions .btn span { 
+                display: none; 
+            }
+            
+            .nav-actions .btn { 
+                width: 44px; 
+                min-height: 44px;
+                padding: 0; 
+            }
+            
+            /* 清理时间选择区域优化 */
+            .card > div[style*="display: flex"] {
+                flex-direction: column !important;
+                gap: 20px !important;
+            }
+            
+            .card > div[style*="border-left"] {
+                border-left: none !important;
+                border-top: 1px solid var(--border) !important;
+                padding-left: 0 !important;
+                padding-top: 20px !important;
+            }
+            
+            /* 表格优化 */
+            .table-container { 
+                margin: 0 -20px; 
+                padding: 0 20px; 
+            }
+            
+            th, td { 
+                padding: 12px 6px; 
+                font-size: 0.8125rem; 
+            }
+            
+            .id-cell { 
+                display: none; 
+            }
+            
+            /* 表格操作按钮紧凑显示 */
+            td .btn-danger,
+            td .switch {
+                transform: scale(0.9);
+            }
+            
+            /* 前缀单元格 */
+            .prefix-cell {
+                font-size: 0.75rem;
+                padding: 3px 8px;
+            }
+            
+            /* 状态标签 */
+            .status-pill {
+                font-size: 0.7rem;
+                padding: 3px 10px;
+            }
+            
+            /* 确认对话框 */
+            .confirm-content { 
+                width: 92%; 
+                max-width: 340px;
+                padding: 24px; 
+            }
+            
+            .confirm-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .confirm-message {
+                font-size: 0.875rem;
+            }
+            
+            .confirm-btn {
+                min-height: 44px;
+                font-size: 0.875rem;
+            }
+            
+            /* Toast 移动端位置 */
+            .toast-container {
+                bottom: 16px;
+                right: 16px;
+                left: 16px;
+            }
+            
+            .toast {
+                max-width: 100%;
+                font-size: 0.875rem;
+                padding: 12px 16px;
+            }
+            
+            /* 新密钥显示区域 */
+            .new-key-result {
+                padding: 16px;
+                margin-top: 20px;
+            }
+            
+            #newKeyText {
+                font-size: 0.95rem !important;
+            }
+            
+            /* 输入框 */
+            input {
+                font-size: 0.875rem;
+                padding: 10px 12px;
+            }
+            
+            /* 单位选择器 */
+            .input-with-unit {
+                height: 44px;
+            }
+            
+            .custom-select {
+                min-width: 75px;
+                padding: 0 10px;
+            }
+            
+            .selected-value {
+                font-size: 0.875rem;
+                margin-right: 6px;
+            }
         }
     </style>
 </head>
