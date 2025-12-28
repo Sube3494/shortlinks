@@ -27,6 +27,14 @@ class BatchShortLinkCreate(BaseModel):
     expires_in_days: Optional[int] = None  # 过期时间（天数，可选，优先级最高）
 
 
+class ShortLinkUpdate(BaseModel):
+    """更新短链请求模型"""
+    expires_in_hours: Optional[int] = None  # 过期时间（小时数，可选）
+    expires_in_minutes: Optional[int] = None  # 过期时间（分钟数，可选，优先级高于 hours）
+    expires_in_days: Optional[int] = None  # 过期时间（天数，可选，优先级最高）
+    # 注意: 如果所有字段都为 None，表示设置为永不过期
+
+
 class ShortLinkResponse(BaseModel):
     """短链响应模型"""
     short_code: str

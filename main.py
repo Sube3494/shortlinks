@@ -27,7 +27,7 @@ except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
 from database import get_db, init_db, ShortLink, APIKey, SessionLocal
-from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate
+from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate, ShortLinkUpdate
 from utils import get_unique_short_code, normalize_url, validate_url
 
 # 初始化数据库
@@ -743,6 +743,60 @@ async def list_short_links(
         )
         for link in short_links
     ]
+
+
+@app.patch("/api/{short_code}", response_model=ShortLinkResponse)
+async def update_short_link(
+    short_code: str,
+    request: ShortLinkUpdate,
+    db: Session = Depends(get_db),
+    key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
+):
+    """
+    更新短链的过期时间
+    只能更新自己创建的短链
+    
+    - **expires_in_days**: 过期天数（可选，优先级最高）
+    - **expires_in_hours**: 过期小时数（可选）
+    - **expires_in_minutes**: 过期分钟数（可选）
+    - 如果所有字段都为 None 或 0，则设置为永不过期
+    """
+    # 查询短链
+    short_link = db.query(ShortLink).filter(
+        ShortLink.short_code == short_code
+    ).first()
+    
+    if not short_link:
+        raise HTTPException(status_code=404, detail="短链不存在")
+    
+    # 权限检查: 只能更新自己创建的
+    if key_id is not None and short_link.created_by_key_id != key_id:
+        raise HTTPException(status_code=403, detail="无权修改此短链")
+    
+    # 计算新的过期时间（优先使用天、分钟、小时）
+    expires_at = None
+    if request.expires_in_days and request.expires_in_days > 0:
+        expires_at = datetime.now() + timedelta(days=request.expires_in_days)
+    elif request.expires_in_minutes and request.expires_in_minutes > 0:
+        expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
+    elif request.expires_in_hours and request.expires_in_hours > 0:
+        expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
+    # 如果所有字段都为 None 或 0，expires_at 保持为 None（永不过期）
+    
+    # 更新过期时间
+    short_link.expires_at = expires_at
+    db.commit()
+    db.refresh(short_link)
+    
+    return ShortLinkResponse(
+        short_code=short_link.short_code,
+        short_url=f"{BASE_URL}/{short_link.short_code}",
+        original_url=short_link.original_url,
+        created_at=short_link.created_at,
+        click_count=short_link.click_count,
+        last_accessed=short_link.last_accessed,
+        expires_at=short_link.expires_at
+    )
 
 
 @app.delete("/api/{short_code}")
