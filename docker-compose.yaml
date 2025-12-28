@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       # ==================== 必需配置 ====================
-      - BASE_URL=http://localhost:18000  # 短链服务基础 URL,生产环境改为你的域名
+      - BASE_URL=http://localhost  # 短链服务基础 URL,生产环境改为你的域名
       
       # ==================== 管理员配置 (推荐) ====================
       - ADMIN_KEY=your-super-secret-admin-key  # 管理员密钥,用于访问 /api/admin/* 端点
