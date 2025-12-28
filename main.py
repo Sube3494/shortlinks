@@ -533,23 +533,29 @@ async def create_batch_short_links(
             # 计算 URL MD5 哈希
             url_hash = hashlib.md5(original_url.encode('utf-8')).hexdigest()
             
-            # 检查是否已存在相同 URL 的短链（去重）
+            # 检查是否已存在相同 URL 的短链(去重)
             existing = db.query(ShortLink).filter(
                 ShortLink.url_hash == url_hash
             ).first()
             
-            if existing and not (existing.expires_at and datetime.now() > existing.expires_at):
-                # 存在且未过期，复用已有短链
-                results.append(ShortLinkResponse(
-                    short_code=existing.short_code,
-                    short_url=f"{BASE_URL}/{existing.short_code}",
-                    original_url=existing.original_url,
-                    created_at=existing.created_at,
-                    click_count=existing.click_count,
-                    last_accessed=existing.last_accessed,
-                    expires_at=existing.expires_at
-                ))
-                continue
+            if existing:
+                # 检查是否过期
+                if existing.expires_at and datetime.now() > existing.expires_at:
+                    # 已过期,删除旧记录,稍后创建新的
+                    db.delete(existing)
+                    db.commit()
+                else:
+                    # 未过期,直接复用已有短链
+                    results.append(ShortLinkResponse(
+                        short_code=existing.short_code,
+                        short_url=f"{BASE_URL}/{existing.short_code}",
+                        original_url=existing.original_url,
+                        created_at=existing.created_at,
+                        click_count=existing.click_count,
+                        last_accessed=existing.last_accessed,
+                        expires_at=existing.expires_at
+                    ))
+                    continue
             
             # 生成短码
             short_code = get_unique_short_code()
@@ -623,7 +629,9 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     
     # 检查是否过期
     if short_link.expires_at and datetime.now() > short_link.expires_at:
-        # 链接已过期
+        # 链接已过期,删除记录
+        db.delete(short_link)
+        db.commit()
         return RedirectResponse(url="/static/error.html?type=expired")
     
     # 更新访问统计
