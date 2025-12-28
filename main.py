@@ -26,9 +26,11 @@ try:
 except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
-from database import get_db, init_db, ShortLink, APIKey, SessionLocal
+from database import get_db, init_db, ShortLink, APIKey, SessionLocal, SystemConfig
 from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate, ShortLinkUpdate
 from utils import get_unique_short_code, normalize_url, validate_url
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # 初始化数据库
 init_db()
@@ -294,29 +296,113 @@ def verify_admin_key(
         )
 
 
+# ==================== 定时清理任务 ====================
+scheduler = None
+
+def cleanup_expired_shortlinks():
+    """清理过期短链的定时任务"""
+    db = SessionLocal()
+    try:
+        # 检查是否启用
+        config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_enabled'
+        ).first()
+        
+        if config and config.value == 'false':
+            print("⏸️  定时清理已禁用")
+            return
+        
+        now = datetime.now()
+        expired = db.query(ShortLink).filter(
+            ShortLink.expires_at != None,
+            ShortLink.expires_at < now
+        ).all()
+        
+        count = len(expired)
+        if count > 0:
+            for link in expired:
+                db.delete(link)
+            db.commit()
+            print(f"🗑️  已清理 {count} 条过期短链 ({now.strftime('%Y-%m-%d %H:%M:%S')})")
+        else:
+            print(f"✅ 无过期短链需要清理 ({now.strftime('%Y-%m-%d %H:%M:%S')})")
+    except Exception as e:
+        print(f"❌ 清理失败: {str(e)}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def get_cleanup_schedule():
+    """获取清理时间配置"""
+    db = SessionLocal()
+    try:
+        hour_config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_schedule_hour'
+        ).first()
+        minute_config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_schedule_minute'
+        ).first()
+        
+        hour = int(hour_config.value) if hour_config else 3
+        minute = int(minute_config.value) if minute_config else 0
+        
+        return hour, minute
+    finally:
+        db.close()
+
+
+def update_cleanup_schedule():
+    """更新定时任务时间"""
+    global scheduler
+    if scheduler:
+        hour, minute = get_cleanup_schedule()
+        scheduler.reschedule_job(
+            'cleanup_expired',
+            trigger=CronTrigger(hour=hour, minute=minute)
+        )
+        print(f"📅 定时清理时间已更新为 {hour:02d}:{minute:02d}")
+
+
+
 @app.on_event("startup")
 async def startup_event():
-    """应用启动事件: 初始化首次 API Key"""
-    initial_key = os.getenv("INITIAL_API_KEY")
-    if initial_key and ":" in initial_key:
-        key_value, key_name = initial_key.split(":", 1)
-        
-        # 检查是否已存在
-        db = SessionLocal()
-        try:
-            existing = db.query(APIKey).filter(APIKey.key == key_value).first()
-            if not existing:
-                api_key = APIKey(
-                    key=key_value,
-                    name=key_name.strip(),
-                    created_at=datetime.now(),
-                    is_active=True
-                )
-                db.add(api_key)
-                db.commit()
-                print(f"✅ 自动创建初始 API Key: {key_name}")
-        finally:
-            db.close()
+    """应用启动事件: 初始化定时清理任务"""
+    # 初始化定时清理配置
+    db = SessionLocal()
+    try:
+        if not db.query(SystemConfig).filter(SystemConfig.key == 'cleanup_enabled').first():
+            db.add(SystemConfig(key='cleanup_enabled', value='true', description='是否启用定时清理'))
+        if not db.query(SystemConfig).filter(SystemConfig.key == 'cleanup_schedule_hour').first():
+            db.add(SystemConfig(key='cleanup_schedule_hour', value='3', description='清理时间(小时)'))
+        if not db.query(SystemConfig).filter(SystemConfig.key == 'cleanup_schedule_minute').first():
+            db.add(SystemConfig(key='cleanup_schedule_minute', value='0', description='清理时间(分钟)'))
+        db.commit()
+    finally:
+        db.close()
+    
+    # 启动定时任务调度器
+    global scheduler
+    scheduler = BackgroundScheduler()
+    hour, minute = get_cleanup_schedule()
+    scheduler.add_job(
+        cleanup_expired_shortlinks,
+        CronTrigger(hour=hour, minute=minute),
+        id='cleanup_expired',
+        replace_existing=True
+    )
+    scheduler.start()
+    print(f"📅 定时清理任务已启动 (每天 {hour:02d}:{minute:02d})")
+
+
+@app.on_event("shutdown")
+async def shutdown_scheduler():
+    """关闭调度器"""
+    global scheduler
+    if scheduler:
+        scheduler.shutdown()
+        print("📅 定时清理任务已停止")
+
 
 @app.get("/")
 async def root(request: Request):
@@ -1025,6 +1111,110 @@ async def admin_toggle_api_key(
         "id": key.id,
         "is_active": key.is_active,
         "message": f"Key '{key.name}' 已{'启用' if key.is_active else '禁用'}"
+    }
+
+
+# ==================== 定时清理管理 API ====================
+
+@app.get("/api/admin/cleanup/config")
+async def get_cleanup_config(
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """获取清理配置 (需要管理员权限)"""
+    configs = db.query(SystemConfig).filter(
+        SystemConfig.key.in_([
+            'cleanup_enabled',
+            'cleanup_schedule_hour',
+            'cleanup_schedule_minute'
+        ])
+    ).all()
+    
+    config_dict = {c.key: c.value for c in configs}
+    
+    return {
+        "enabled": config_dict.get('cleanup_enabled', 'true') == 'true',
+        "hour": int(config_dict.get('cleanup_schedule_hour', 3)),
+        "minute": int(config_dict.get('cleanup_schedule_minute', 0))
+    }
+
+
+@app.put("/api/admin/cleanup/config")
+async def update_cleanup_config(
+    enabled: Optional[bool] = None,
+    hour: Optional[int] = None,
+    minute: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """更新清理配置 (需要管理员权限)"""
+    updated = []
+    
+    if enabled is not None:
+        config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_enabled'
+        ).first()
+        if config:
+            config.value = 'true' if enabled else 'false'
+            config.updated_at = datetime.now()
+            updated.append(f"启用状态: {'是' if enabled else '否'}")
+    
+    if hour is not None:
+        if not (0 <= hour <= 23):
+            raise HTTPException(status_code=400, detail="小时必须在 0-23 之间")
+        config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_schedule_hour'
+        ).first()
+        if config:
+            config.value = str(hour)
+            config.updated_at = datetime.now()
+            updated.append(f"小时: {hour}")
+    
+    if minute is not None:
+        if not (0 <= minute <= 59):
+            raise HTTPException(status_code=400, detail="分钟必须在 0-59 之间")
+        config = db.query(SystemConfig).filter(
+            SystemConfig.key == 'cleanup_schedule_minute'
+        ).first()
+        if config:
+            config.value = str(minute)
+            config.updated_at = datetime.now()
+            updated.append(f"分钟: {minute}")
+    
+    db.commit()
+    
+    # 更新定时任务
+    if hour is not None or minute is not None:
+        update_cleanup_schedule()
+    
+    return {
+        "message": "配置已更新",
+        "updated": updated
+    }
+
+
+@app.post("/api/admin/cleanup/trigger")
+async def trigger_cleanup(
+    db: Session = Depends(get_db),
+    _: None = Depends(verify_admin_key)
+):
+    """手动触发清理 (需要管理员权限)"""
+    now = datetime.now()
+    expired = db.query(ShortLink).filter(
+        ShortLink.expires_at != None,
+        ShortLink.expires_at < now
+    ).all()
+    
+    count = len(expired)
+    if count > 0:
+        for link in expired:
+            db.delete(link)
+        db.commit()
+    
+    return {
+        "message": "清理完成",
+        "deleted_count": count,
+        "cleaned_at": now.isoformat()
     }
 
 

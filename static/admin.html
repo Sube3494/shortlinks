@@ -505,9 +505,52 @@
             </section>
 
             <div class="workspace-grid">
-                <!-- 颁发模块 -->
+                <!-- 定时清理管理 -->
                 <div class="card">
-                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> 颁发新 API Key</h3>
+                    <h3 class="card-title"><i class="fas fa-clock"></i> 定时清理过期短链</h3>
+                    
+                    <div style="display: flex; gap: 24px; margin-bottom: 24px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">启用自动清理</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">每天自动删除过期的短链记录</div>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="cleanupEnabled" onchange="updateCleanupEnabled(this)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-row" style="margin-bottom: 0;">
+                                <div class="form-group">
+                                    <label>清理时间</label>
+                                    <div style="display: flex; gap: 12px;">
+                                        <input type="number" id="cleanupHour" min="0" max="23" placeholder="小时" style="flex: 1;">
+                                        <span style="align-self: center; color: var(--text-muted);">:</span>
+                                        <input type="number" id="cleanupMinute" min="0" max="59" placeholder="分钟" style="flex: 1;">
+                                    </div>
+                                </div>
+                                <button class="btn" onclick="saveCleanupSchedule()">
+                                    <i class="fas fa-save"></i> 保存时间
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="border-left: 1px solid var(--border); padding-left: 24px; display: flex; flex-direction: column; justify-content: center; gap: 12px;">
+                            <button class="btn btn-outline" onclick="triggerCleanup()" style="white-space: nowrap;">
+                                <i class="fas fa-broom"></i> 立即清理
+                            </button>
+                            <div id="lastCleanupInfo" style="font-size: 0.8125rem; color: var(--text-muted); text-align: center;">
+                                等待加载...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 生成模块 -->
+                <div class="card">
+                    <h3 class="card-title"><i class="fas fa-plus-circle"></i> 生成新 API Key</h3>
                     <div class="form-row">
                         <div class="form-group">
                             <label>持有者名称 / 备注</label>
@@ -559,7 +602,7 @@
                                     <th class="id-cell">ID</th>
                                     <th>持有者信息</th>
                                     <th>密钥前缀</th>
-                                    <th>颁发日期</th>
+                                    <th>生成日期</th>
                                     <th>过期状态</th>
                                     <th>当前状态</th>
                                     <th style="text-align: center;">管理</th>
@@ -740,6 +783,9 @@
                 renderKeys(data.keys || []);
                 updateStats(data.keys || []);
                 document.getElementById('time-display').textContent = `数据更新于: ${new Date().toLocaleTimeString()}`;
+                
+                // 加载清理配置
+                await loadCleanupConfig();
             } catch (e) {
                 showToast(e.message === '无效的 Key' ? 'Admin Key 无效' : '同步失败', 'error');
                 if (e.message === '无效的 Key') logout();
@@ -950,6 +996,115 @@
                 btn.innerHTML = content;
                 btn.style.opacity = '1';
                 btn.style.cursor = 'pointer';
+            }
+        }
+
+        // ==================== 定时清理管理 ====================
+        async function loadCleanupConfig() {
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/cleanup/config`, {
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+                
+                if (!res.ok) throw new Error('加载失败');
+                
+                const data = await res.json();
+                document.getElementById('cleanupEnabled').checked = data.enabled;
+                document.getElementById('cleanupHour').value = data.hour;
+                document.getElementById('cleanupMinute').value = data.minute;
+                
+                updateCleanupInfo(data);
+            } catch (e) {
+                console.error('加载清理配置失败:', e);
+            }
+        }
+
+        function updateCleanupInfo(config) {
+            const info = document.getElementById('lastCleanupInfo');
+            if (config.enabled) {
+                info.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success);"></i> 每天 ${String(config.hour).padStart(2, '0')}:${String(config.minute).padStart(2, '0')} 执行`;
+            } else {
+                info.innerHTML = `<i class="fas fa-pause-circle" style="color: var(--warning);"></i> 已禁用`;
+            }
+        }
+
+        async function updateCleanupEnabled(checkbox) {
+            const btn = checkbox.closest('.switch');
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/cleanup/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-Admin-Key': adminKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ enabled: checkbox.checked })
+                });
+                
+                if (!res.ok) throw new Error('更新失败');
+                
+                showToast(checkbox.checked ? '已启用自动清理' : '已禁用自动清理', 'success');
+                await loadCleanupConfig();
+            } catch (e) {
+                checkbox.checked = !checkbox.checked;
+                showToast(e.message || '操作失败', 'error');
+            }
+        }
+
+        async function saveCleanupSchedule() {
+            const hour = parseInt(document.getElementById('cleanupHour').value);
+            const minute = parseInt(document.getElementById('cleanupMinute').value);
+            const btn = event.target;
+            
+            if (isNaN(hour) || hour < 0 || hour > 23) {
+                return showToast('小时必须在 0-23 之间', 'error');
+            }
+            
+            if (isNaN(minute) || minute < 0 || minute > 59) {
+                return showToast('分钟必须在 0-59 之间', 'error');
+            }
+            
+            setBtnLoading(btn, true, '保存中...');
+            
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/cleanup/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-Admin-Key': adminKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ hour, minute })
+                });
+                
+                if (!res.ok) throw new Error('保存失败');
+                
+                showToast(`清理时间已更新为 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`, 'success');
+                await loadCleanupConfig();
+            } catch (e) {
+                showToast(e.message || '保存失败', 'error');
+            } finally {
+                setBtnLoading(btn, false, '<i class="fas fa-save"></i> 保存时间');
+            }
+        }
+
+        async function triggerCleanup() {
+            const btn = event.target.closest('button');
+            
+            setBtnLoading(btn, true, '清理中...');
+            
+            try {
+                const res = await fetch(`${BASE_URL}/api/admin/cleanup/trigger`, {
+                    method: 'POST',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+                
+                if (!res.ok) throw new Error('清理失败');
+                
+                const data = await res.json();
+                showToast(`清理完成,删除了 ${data.deleted_count} 条过期短链`, 'success');
+            } catch (e) {
+                showToast(e.message || '清理失败', 'error');
+            } finally {
+                setBtnLoading(btn, false, '<i class="fas fa-broom"></i> 立即清理');
             }
         }
 

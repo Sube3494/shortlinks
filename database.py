@@ -83,6 +83,18 @@ class APIKey(Base):
     shortlinks = relationship("ShortLink", back_populates="created_by")
 
 
+class SystemConfig(Base):
+    """系统配置表"""
+    __tablename__ = "system_config"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, index=True, nullable=False)
+    value = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+
 def init_db():
     """初始化数据库"""
     Base.metadata.create_all(bind=engine)

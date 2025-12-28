@@ -198,16 +198,9 @@ environment:
   # ==================== 必需配置 ====================
   - BASE_URL=http://localhost:18000  # 短链服务基础 URL,生产环境改为你的域名
   
-  # ==================== 管理员配置 (推荐) ====================
-  - ADMIN_KEY=your-super-secret-admin-key  # 管理员密钥,用于访问 /api/admin/* 端点
-  - ADMIN_PATH=/admin  # 可选,自定义管理后台路径,默认 /admin
-  
-  # ==================== API Key 配置 ====================
-  # 方式1: 首次启动自动创建 (推荐)
-  - INITIAL_API_KEY=your-first-api-key:初始密钥  # 格式: API_KEY:名称
-  
-  # 方式2: 传统单一密钥 (向后兼容,不推荐)
-  # - API_KEY=your-api-key-here
+  # ==================== 管理员配置 (必需) ====================
+  - ADMIN_KEY=your-super-secret-admin-key  # 管理员密钥,用于访问管理后台和创建 API Key
+  # - ADMIN_PATH=/admin  # 可选,自定义管理后台路径,默认 /admin
   
   # ==================== 数据库配置 (可选) ====================
   # 默认使用 SQLite,数据保存在 ./data/shortlinks.db
@@ -234,10 +227,8 @@ environment:
 | 变量 | 必需 | 说明 |
 |------|------|------|
 | `BASE_URL` | ✅ | 短链服务的基础 URL,用于生成完整短链 |
-| `ADMIN_KEY` | 推荐 | 管理员密钥,用于保护管理接口 |
+| `ADMIN_KEY` | ✅ | 管理员密钥,用于访问管理后台和创建 API Key |
 | `ADMIN_PATH` | 可选 | 自定义管理后台路径,默认 `/admin` |
-| `INITIAL_API_KEY` | 推荐 | 首次启动自动创建的 API Key |
-| `API_KEY` | 可选 | 传统单一密钥模式(向后兼容) |
 | `DATABASE_URL` | 可选 | 数据库连接字符串,留空使用 SQLite |
 | `DB_HOST` 等 | 可选 | TiDB/MySQL 独立配置变量 |
 | `VERIFICATION_*` | 可选 | 站长验证文件配置 |
@@ -248,12 +239,12 @@ environment:
 environment:
   - BASE_URL=https://short.example.com
   - ADMIN_KEY=your-super-secret-admin-key-at-least-32-chars
-  - INITIAL_API_KEY=your-first-api-key:初始密钥
 ```
 
 **注意**: 
-- 如果数据库中没有任何 Key 且未设置 `API_KEY`,则不启用认证,任何人都可以调用 API
-- 推荐使用 `ADMIN_KEY` + `INITIAL_API_KEY` 方式,通过网页后台管理多个 API Key
+- 必须配置 `ADMIN_KEY` 才能访问管理后台
+- 通过管理后台 (`/admin`) 创建 API Key
+- 如果数据库中没有任何 API Key,则不启用认证,任何人都可以调用 API
 
 #### 2. 启动短链服务
 
