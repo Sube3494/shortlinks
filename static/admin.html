@@ -1356,9 +1356,8 @@
             } catch (e) {
                 showToast(e.message || '保存失败', 'error');
             } finally {
-                setBtnLoading(btn, false, '<i class="fas fa-save"></i> 保存时间');
-            }
-        }
+        setBtnLoading(btn, false, '<i class="fas fa-check" style="color: var(--success);"></i>');
+    }        }
 
         async function triggerCleanup() {
             const btn = event.target.closest('button');

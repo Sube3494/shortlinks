@@ -27,7 +27,7 @@ except ImportError:
     pass  # 如果没有安装 python-dotenv，跳过
 
 from database import get_db, init_db, ShortLink, APIKey, SessionLocal, SystemConfig
-from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate, ShortLinkUpdate
+from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate, ShortLinkUpdate, CleanupConfigUpdate
 from utils import get_unique_short_code, normalize_url, validate_url
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -1141,14 +1141,16 @@ async def get_cleanup_config(
 
 @app.put("/api/admin/cleanup/config")
 async def update_cleanup_config(
-    enabled: Optional[bool] = None,
-    hour: Optional[int] = None,
-    minute: Optional[int] = None,
+    request: CleanupConfigUpdate,
     db: Session = Depends(get_db),
     _: None = Depends(verify_admin_key)
 ):
     """更新清理配置 (需要管理员权限)"""
     updated = []
+    
+    enabled = request.enabled
+    hour = request.hour
+    minute = request.minute
     
     if enabled is not None:
         config = db.query(SystemConfig).filter(

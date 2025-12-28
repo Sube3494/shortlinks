@@ -2,7 +2,7 @@
 Date: 2025-11-21 22:43:02
 Author: Sube
 FilePath: models.py
-LastEditTime: 2025-12-27 13:42:21
+LastEditTime: 2025-12-29 00:36:57
 Description: 
 '''
 from pydantic import BaseModel, HttpUrl
@@ -88,3 +88,9 @@ class APIKeyUpdate(BaseModel):
     expires_in_days: Optional[int] = None
     is_active: Optional[bool] = None
 
+
+class CleanupConfigUpdate(BaseModel):
+    """清理任务配置更新模型"""
+    enabled: Optional[bool] = None
+    hour: Optional[int] = None
+    minute: Optional[int] = None
