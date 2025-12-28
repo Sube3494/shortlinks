@@ -821,10 +821,10 @@
 
         .confirm-content {
             background: var(--surface-color);
-            padding: 32px;
-            border-radius: var(--radius);
+            padding: 28px;
+            border-radius: 12px;
             width: 90%;
-            max-width: 420px;
+            max-width: 400px;
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow-lg);
             transform: scale(0.9);
@@ -841,7 +841,7 @@
         }
 
         .confirm-header h3 {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--text-main);
             margin: 0 0 12px 0;
@@ -849,50 +849,45 @@
 
         .confirm-message {
             color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 28px;
-            line-height: 1.7;
+            font-size: 0.9rem;
+            line-height: 1.6;
             text-align: center;
+            margin: 0;
         }
 
         .confirm-actions {
             display: flex;
             gap: 12px;
-            justify-content: flex-end;
-            align-items: center; /* 防止按钮被拉伸 */
-        }
-
-        .confirm-header h3 {
-            text-align: center;
+            margin-top: 24px;
         }
 
         .confirm-btn {
-            padding: 10px 24px;
-            border-radius: var(--radius);
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 8px;
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             outline: none;
+            position: relative;
             /* 移动端样式优化 */
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
             user-select: none;
             -webkit-user-select: none;
-            /* 确保圆角在缩放时保持 */
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
+            min-height: 44px;
         }
 
         .confirm-btn.cancel {
             background: var(--secondary-bg);
             color: var(--text-main);
-            border-color: var(--border-color);
+            border: 1px solid var(--border-color);
         }
 
         .confirm-btn.cancel:hover {
@@ -900,12 +895,13 @@
         }
 
         .confirm-btn.cancel:active {
-            transform: scale(0.96);
+            transform: scale(0.98);
         }
 
         .confirm-btn.confirm {
             background: var(--error);
             color: #ffffff;
+            font-weight: 700;
         }
 
         .confirm-btn.confirm:hover {
@@ -914,8 +910,13 @@
         }
 
         .confirm-btn.confirm:active {
-            transform: scale(0.96);
-            box-shadow: none;
+            transform: scale(0.98);
+        }
+
+        .confirm-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
         }
 
         /* Stats Modal */
