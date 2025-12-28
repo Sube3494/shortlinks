@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>短链服务 - 管理控制台</title>
     <link rel="icon" type="image/png" href="/static/shortlink.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -28,7 +28,7 @@
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             
-            --radius: 8px; /* Standardize with landing page */
+            --radius: 12px;
             --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             
             /* Dot Pattern Color */
@@ -54,7 +54,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
             min-height: 100vh;
@@ -84,9 +84,9 @@
 
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-area img { width: 32px; height: 32px; }
-        .logo-area h2 { font-size: 1.125rem; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; }
+        .logo-area h2 { font-size: 1.125rem; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; margin: 0; }
 
-        .nav-actions { display: flex; align-items: center; gap: 16px; }
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
 
         /* Main Workspace */
         .container {
@@ -103,8 +103,8 @@
             align-items: flex-end;
         }
 
-        .page-header h1 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 4px; }
-        .page-header p { color: var(--text-muted); font-size: 1rem; }
+        .page-header h1 { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.025em; margin: 0 0 8px 0; line-height: 1.2; }
+        .page-header p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
 
         /* Stats Layer */
         .stats-grid {
@@ -119,12 +119,12 @@
             padding: 24px;
             border-radius: var(--radius);
             border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-sm);
         }
 
-        .stat-label { font-size: 0.8125rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .stat-value { font-size: 2rem; font-weight: 700; color: var(--text-main); }
-        .stat-trend { margin-top: 12px; font-size: 0.8125rem; display: flex; align-items: center; gap: 6px; color: var(--success); }
+        .stat-label { font-size: 0.8125rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+        .stat-value { font-size: 2.25rem; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 12px; }
+        .stat-trend { font-size: 0.875rem; display: flex; align-items: center; gap: 8px; color: var(--success); font-weight: 500; }
 
         /* Content Sections */
         .workspace-grid {
@@ -138,31 +138,31 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 32px;
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-sm);
         }
 
-        .card-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+        .card-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
         .card-title i { color: var(--primary); }
 
         /* Form Layout */
         .form-row {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             align-items: flex-end;
-            margin-bottom: 0;
         }
         .form-group { flex: 1; margin-bottom: 0; }
         .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
         
         input {
             width: 100%;
-            padding: 11px 14px;
+            padding: 10px 14px;
             border: 1px solid var(--border);
             border-radius: 8px;
             background: var(--bg-body);
             color: var(--text-main);
             font-size: 0.95rem;
             transition: var(--transition);
+            height: 44px; /* Fix height */
         }
 
         input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
@@ -171,7 +171,8 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 11px 24px;
+            padding: 0 20px;
+            height: 44px;
             border-radius: 8px;
             font-size: 0.95rem;
             font-weight: 600;
@@ -190,72 +191,32 @@
         .btn-outline:hover { background: var(--secondary-bg); border-color: var(--text-muted); }
         .btn-danger { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
         .btn-danger:hover { background: var(--secondary-bg); color: var(--error); border-color: var(--error); }
-        .btn-icon-only { padding: 11px; width: 44px; height: 44px; flex-shrink: 0; }
+        .btn-icon-only { width: 44px; padding: 0; flex-shrink: 0; }
 
         /* Table Optimization */
-        .table-container { overflow-x: auto; }
+        .table-container { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { background: var(--bg-body); padding: 14px 16px; text-align: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
-        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; text-align: center; }
+        th { background: var(--secondary-bg); padding: 12px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        th:first-child { border-top-left-radius: 8px; }
+        th:last-child { border-top-right-radius: 8px; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: middle; }
         
-        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; text-align: center; }
-        .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--bg-body); padding: 4px 10px; border-radius: 6px; font-size: 0.875rem; color: var(--primary); font-weight: 500; }
+        .id-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); width: 60px; }
+        .prefix-cell { font-family: 'JetBrains Mono', monospace; background: var(--secondary-bg); padding: 4px 8px; border-radius: 6px; font-size: 0.8125rem; color: var(--text-main); border: 1px solid var(--border); }
         
-        .status-pill { padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-        .status-active { background: #dcfce7; color: #15803d; }
-        .status-disabled { background: #f1f5f9; color: #64748b; }
-        .status-expired { background: #fee2e2; color: #b91c1c; }
+        .status-pill { padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .status-active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .status-disabled { background: var(--secondary-bg); color: var(--text-muted); }
+        .status-expired { background: rgba(239, 68, 68, 0.1); color: var(--error); }
 
         /* Switch Component */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--border);
-            transition: .3s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        input:checked + .slider {
-            background-color: var(--primary);
-        }
-
-        input:focus + .slider {
-            box-shadow: 0 0 1px var(--primary);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border); transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input:checked + .slider { background-color: var(--primary); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         .switch-disabled { opacity: 0.5; pointer-events: none; }
 
@@ -275,7 +236,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: visible;
-            height: 42px; /* Slight adjustment for admin panel */
+            height: 44px; /* Consistent height */
             transition: all 0.2s;
         }
         
@@ -424,159 +385,43 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        /* Mobile Optimization */
         @media (max-width: 768px) {
-            /* 顶部导航优化 */
-            .top-nav { 
-                padding: 0 16px; 
+            /* 1. Header & Navigation */
+            .top-nav {
+                padding: 0 16px;
                 height: 60px;
             }
+            .logo-area h2 { display: none; } /* Hide text logo on mobile */
+            .logo-area img { width: 28px; height: 28px; }
+            .nav-actions { gap: 8px; }
+            .nav-actions .btn { width: 36px; height: 36px; padding: 0; }
+            .nav-actions .btn span { display: none; } /* Hide button text */
             
-            .logo-area h2 {
-                font-size: 1rem;
-            }
-            
-            .logo-area img {
-                width: 28px;
-                height: 28px;
-            }
-            
-            /* 容器和间距 */
-            .container { 
-                padding: 20px 16px; 
-            }
-            
-            .workspace-grid {
-                gap: 20px;
-            }
-            
-            /* 页面标题 */
-            .page-header {
-                margin-bottom: 20px;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .page-header h1 { 
-                font-size: 1.5rem; 
-            }
-            
-            .page-header p {
-                font-size: 0.875rem;
-            }
-            
-            /* 统计卡片 */
-            .stats-grid { 
-                grid-template-columns: 1fr; 
-                gap: 16px;
-                margin-bottom: 20px;
-            }
-            
-            .stat-card {
-                padding: 20px;
-            }
-            
-            .stat-label {
-                font-size: 0.75rem;
-            }
-            
-            .stat-value {
-                font-size: 1.75rem;
-            }
-            
-            .stat-trend {
-                font-size: 0.75rem;
-            }
-            
-            /* 卡片 */
-            .card { 
-                padding: 20px; 
-            }
-            
-            .card-title {
-                font-size: 1rem;
-                margin-bottom: 20px;
-            }
-            
-            /* 表单布局 */
-            .form-row { 
-                flex-direction: column; 
-                align-items: stretch; 
-                gap: 12px; 
-            }
-            
-            .form-group {
-                margin-bottom: 16px;
-            }
-            
-            .form-group:last-child {
-                margin-bottom: 0;
-            }
-            
-            .form-group label {
-                font-size: 0.8125rem;
-            }
-            
-            /* 按钮优化 */
-            .btn { 
-                width: 100%; 
-                min-height: 44px;
-                padding: 12px 20px;
-            }
-            
-            .btn-icon-only {
-                width: 44px;
-                min-height: 44px;
-                padding: 0;
-            }
-            
-            /* 导航操作 */
-            .nav-actions { 
-                gap: 8px; 
-            }
-            
-            .nav-actions .btn span { 
-                display: none; 
-            }
-            
-            .nav-actions .btn { 
-                width: 44px; 
-                min-height: 44px;
-                padding: 0; 
-            }
-            
-            /* 清理时间选择区域优化 */
+            /* 2. Layout & Spacing */
+            .container { padding: 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 24px; }
+            .page-header h1 { font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px; }
+            .card { padding: 20px; }
+            .card-title { font-size: 1rem; margin-bottom: 16px; }
+            .workspace-grid { gap: 20px; }
+
+            /* 3. Forms */
+            .form-row { flex-direction: column; align-items: stretch; gap: 16px; }
+            .form-group { margin-bottom: 0; }
+            .btn { width: 100%; }
+
+            /* 4. Complex Sections (Cleanup) */
             .card > div[style*="display: flex"] {
                 flex-direction: column !important;
                 gap: 20px !important;
             }
-            
             .card > div[style*="border-left"] {
                 border-left: none !important;
                 border-top: 1px solid var(--border) !important;
                 padding-left: 0 !important;
                 padding-top: 20px !important;
-            }
-            
-            /* 表格优化 */
-            .table-container { 
-                margin: 0 -20px; 
-                padding: 0 20px; 
-            }
-            
-            th, td { 
-                padding: 12px 6px; 
-                font-size: 0.8125rem; 
-            }
-            
-            .id-cell { 
-                display: none; 
-            }
-            
-            /* 表格操作按钮紧凑显示 */
-            td .btn-danger,
-            td .switch {
-                transform: scale(0.9);
             }
             
             /* 前缀单元格 */
@@ -688,7 +533,7 @@
                     <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
                 <button class="btn btn-outline" onclick="loadWithFeedback()">
-                    <i class="fas fa-sync-alt" id="refreshIcon"></i> <span></span>刷新数据</span>
+                    <i class="fas fa-sync-alt" id="refreshIcon"></i> <span>刷新数据</span>
                 </button>
                 <button class="btn btn-danger" onclick="logout()" style="background: transparent;">
                     <i class="fas fa-sign-out-alt"></i> <span>退出</span>
