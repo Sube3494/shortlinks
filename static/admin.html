@@ -737,7 +737,7 @@
                                 <input type="number" id="cleanupMinute" min="0" max="59" placeholder="00">
                             </div>
                             <button class="btn btn-outline btn-icon-only" onclick="saveCleanupSchedule()" title="保存时间" style="width: 32px; height: 32px; border: none;">
-                                <i class="fas fa-check" style="color: var(--success);"></i>
+                                <i class="fas fa-save"></i>
                             </button>
                         </div>
                         
@@ -1337,7 +1337,7 @@
                 return showToast('分钟必须在 0-59 之间', 'error');
             }
             
-            setBtnLoading(btn, true, '保存中...');
+            setBtnLoading(btn, true, '<i class="fas fa-spinner fa-spin"></i>');
             
             try {
                 const res = await fetch(`${BASE_URL}/api/admin/cleanup/config`, {
@@ -1353,11 +1353,19 @@
                 
                 showToast(`清理时间已更新为 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`, 'success');
                 await loadCleanupConfig();
+                
+                // Show success check
+                setBtnLoading(btn, false, '<i class="fas fa-check" style="color: var(--success);"></i>');
+                
+                // Revert to save icon after 2 seconds
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-save"></i>';
+                }, 2000);
             } catch (e) {
                 showToast(e.message || '保存失败', 'error');
-            } finally {
-        setBtnLoading(btn, false, '<i class="fas fa-check" style="color: var(--success);"></i>');
-    }        }
+                setBtnLoading(btn, false, '<i class="fas fa-save"></i>');
+            }
+        }
 
         async function triggerCleanup() {
             const btn = event.target.closest('button');
