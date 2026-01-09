@@ -1,4 +1,4 @@
-﻿import string
+import string
 import random
 from database import SessionLocal, ShortLink
 

@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <img src="static/shortlink.png" alt="短链服务 Logo" width="200"/>
   
   <h1>短链服务</h1>

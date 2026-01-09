@@ -1,4 +1,4 @@
-﻿# Cloudflare Workers (Python) 部署参考指南 🚀
+# Cloudflare Workers (Python) 部署参考指南 🚀
 
 本项目采用 Cloudflare Workers (Python) + D1 数据库架构，支持通过 GitHub 自动部署。本指南供初次部署或迁移项目的技术人员参考。
 

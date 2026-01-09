@@ -1,4 +1,4 @@
-﻿#:schema node_modules/wrangler/config-schema.json
+#:schema node_modules/wrangler/config-schema.json
 name = "shortlinks"
 main = "main.py"
 compatibility_date = "2026-01-09"
