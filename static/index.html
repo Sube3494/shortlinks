@@ -1993,6 +1993,13 @@
 
         // 业务逻辑
         async function createShortLink() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showToast('请先在设置中填写 API 密钥', 'error');
+                openSettings();
+                return;
+            }
+
             const longUrl = document.getElementById('longUrl').value.trim();
             if (!longUrl) return showToast('请输入长链接', 'error');
 
@@ -2064,6 +2071,13 @@
         }
 
         async function createBatchShortLinks() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                showToast('请先在设置中填写 API 密钥', 'error');
+                openSettings();
+                return;
+            }
+
             const text = document.getElementById('batchUrls').value.trim();
             if (!text) return showToast('请输入链接', 'error');
 

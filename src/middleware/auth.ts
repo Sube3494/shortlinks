@@ -131,15 +131,13 @@ export async function verifyAPIKey(c: Context, next: Next) {
       }
       
       // 更新使用统计（异步，不等待）
-      if (c.get('updateStats') !== false) {
-        db.update(apiKeys)
-          .set({
-            lastUsedAt: new Date(),
-            usageCount: dbKey.usageCount + 1,
-          })
-          .where(eq(apiKeys.id, dbKey.id))
-          .run();
-      }
+      db.update(apiKeys)
+        .set({
+          lastUsedAt: new Date(),
+          usageCount: dbKey.usageCount + 1,
+        })
+        .where(eq(apiKeys.id, dbKey.id))
+        .run();
       
       // 将 Key ID 存储到上下文
       c.set('keyId', dbKey.id);
@@ -151,11 +149,8 @@ export async function verifyAPIKey(c: Context, next: Next) {
     }
   }
   
-  // 没有提供密钥，视为公开访问
-  // 如果需要强制开启认证，可以在这里添加环境变量控制
-  // 目前逻辑：有Key验证Key，无Key允许公开访问
-  c.set('keyId', null);
-  return next();
+  // 强制开启认证：未提供密钥则拒绝访问
+  return c.json({ error: '请提供有效的 API 密钥以使用服务' }, 401);
 }
 
 /**
