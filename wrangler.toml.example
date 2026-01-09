@@ -6,7 +6,7 @@ compatibility_date = "2026-01-09"
 [[d1_databases]]
 binding = "DB"
 database_name = "shortlinks-db"
-database_id = "2544c1e8-62bf-4746-a37b-1c32eaa6e3d4"
+database_id = "YOUR_DATABASE_ID_HERE" # 请替换为您自己的 Database ID
 
 [assets]
 directory = "./static"

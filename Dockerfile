@@ -1,23 +1,25 @@
-FROM python:3.11-slim
+FROM node:20-slim
 
 WORKDIR /app
 
-# 安装依赖
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# 安装 pnpm
+RUN npm install -g pnpm
 
-# 复制应用代码
+# 复制依赖文件
+COPY package.json pnpm-lock.yaml* ./
+
+# 安装依赖
+RUN pnpm install
+
+# 复制项目文件
 COPY . .
 
-# 确保 static 目录存在
-RUN mkdir -p static || true
+# 确保 static 和 data 目录存在
+RUN mkdir -p static data
 
 # 暴露端口
 EXPOSE 8000
 
-# 创建数据目录
-RUN mkdir -p /app/data && chmod 777 /app/data
-
 # 启动命令
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["pnpm", "run", "start:node"]
 

@@ -1,0 +1,38 @@
+{
+  "name": "shortlinks",
+  "version": "2.0.0",
+  "description": "短链服务 - TypeScript + Cloudflare Workers 版本",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "start:node": "tsx src/entry.node.ts",
+    "deploy": "wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "wrangler d1 execute shortlinks-db --remote --file=./drizzle/migrations/0000_tranquil_dakota_north.sql",
+    "db:studio": "drizzle-kit studio",
+    "dev:node": "tsx watch src/entry.node.ts"
+  },
+  "keywords": [
+    "shortlink",
+    "url-shortener",
+    "cloudflare-workers"
+  ],
+  "author": "Sube",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260109.0",
+    "@types/node": "^22.10.2",
+    "drizzle-kit": "^0.30.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.100.0"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.8",
+    "@libsql/client": "^0.14.0",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.39.0",
+    "hono": "^4.6.14",
+    "zod": "^3.24.1"
+  }
+}

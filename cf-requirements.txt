@@ -1,9 +1,0 @@
-fastapi
-sqlalchemy
-pydantic
-python-multipart
-requests
-greenlet
-pymysql
-cryptography
-sqlalchemy-cloudflare-d1

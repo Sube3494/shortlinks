@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>短链服务 - 简单、高效、可靠</title>
-    <link rel="icon" type="image/png" href="/static/shortlink.png">
+    <link rel="icon" type="image/png" href="/shortlink.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1542,7 +1542,7 @@
         </div>
 
         <div class="header">
-            <img src="/static/shortlink.png" alt="短链服务" class="header-logo">
+            <img src="/shortlink.png" alt="短链服务" class="header-logo">
             <h1>短链服务</h1>
             <p>快速生成、管理和追踪您的短链接，支持自定义短码和有效期控制</p>
         </div>
@@ -1683,7 +1683,7 @@
             <a href="https://github.com/Sube3494/shortlinks" target="_blank" class="footer-link" title="GitHub">
                 <i class="fab fa-github"></i>
             </a>
-            <a href="/static/api-docs.html" class="footer-link" title="API 文档">
+            <a href="/api-docs.html" class="footer-link" title="API 文档">
                 <i class="fas fa-book"></i>
             </a>
         </div>
@@ -1785,37 +1785,84 @@
 
         // 主题相关
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            setTheme(savedTheme);
+            let savedTheme = null;
+            try {
+                // 1. 优先读取本地存储 (包裹 try-catch 以防隐身模式报错)
+                savedTheme = localStorage.getItem('theme');
+            } catch (e) {
+                console.warn('localStorage access denied');
+            }
+            
+            if (savedTheme) {
+                setTheme(savedTheme, false);
+            } else {
+                // 2. 其次跟随系统
+                let systemDark = false;
+                try {
+                    systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                } catch(e) {}
+                setTheme(systemDark ? 'dark' : 'light', false);
+            }
+
+            // 3. 监听系统主题变化
+            try {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                    // 只有当用户没有手动设置过主题时(且localStorage可用)，才跟随系统变动
+                    try {
+                        if (!localStorage.getItem('theme')) {
+                            setTheme(e.matches ? 'dark' : 'light', true);
+                        }
+                    } catch (e) {}
+                });
+            } catch (e) {
+                // 老旧浏览器兼容
+            }
         }
 
         function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
+            setTheme(newTheme, true);
         }
 
-        function setTheme(theme) {
+        function setTheme(theme, animate = true) {
             document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
+            
+            try {
+                localStorage.setItem('theme', theme);
+            } catch (e) {
+                // 某些移动端浏览器隐身模式下 setItem 会报错
+                console.warn('Unable to save theme preference');
+            }
             
             const icon = document.querySelector('.theme-toggle i');
+            if (!icon) return;
             
-            if (!icon) return; // 防御性检查
+            // Dark Mode 显示太阳 (切换到 Light)
+            // Light Mode 显示月亮 (切换到 Dark)
+            const targetClass = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
             
-            // 添加切换动画
-            icon.style.transform = 'scale(0.5) rotate(180deg)';
-            icon.style.opacity = '0';
-            
-            setTimeout(() => {
-                if (theme === 'dark') {
-                    icon.className = 'fas fa-moon';
-                } else {
-                    icon.className = 'fas fa-sun';
-                }
+            if (animate) {
+                icon.style.transform = 'scale(0.5) rotate(180deg)';
+                icon.style.opacity = '0';
+                
+                setTimeout(() => {
+                    icon.className = targetClass;
+                    icon.style.transform = 'scale(1) rotate(0)';
+                    icon.style.opacity = '1';
+                }, 200);
+            } else {
+                icon.className = targetClass;
+                // 确保样式重置
                 icon.style.transform = 'scale(1) rotate(0)';
                 icon.style.opacity = '1';
-            }, 200);
+            }
+            
+            // 移动端元数据颜色适配
+            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+            if (metaThemeColor) {
+                metaThemeColor.content = theme === 'dark' ? '#0f172a' : '#ffffff';
+            }
         }
 
         // 界面交互
@@ -2470,6 +2517,8 @@
                 keyInfoDiv.style.display = 'none';
             }
         }
+        // 立即初始化主题
+        initTheme();
     </script>
 </body>
 </html>

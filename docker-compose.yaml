@@ -6,31 +6,13 @@ services:
     container_name: shortlink-app
     restart: unless-stopped
     environment:
+      # ==================== 可选配置 ====================
+      - BASE_URL=  # 可选：短链服务基础 URL (例: https://s.example.com)，留空将从请求自动推导
+      - ADMIN_PATH=/admin  # 可选：自定义管理后台路径，默认 /admin
+      
       # ==================== 必需配置 ====================
-      - BASE_URL=http://localhost  # 短链服务基础 URL,生产环境改为你的域名
-      
-      # ==================== 管理员配置 (必需) ====================
-      - ADMIN_KEY=your-super-secret-admin-key  # 管理员密钥,用于访问 /api/admin/* 端点和创建 API Key
-      # - ADMIN_PATH=/admin  # 可选,自定义管理后台路径,默认 /admin
-      
-      # ==================== 数据库配置 (可选) ====================
-      # 默认使用 SQLite,数据保存在 ./data/shortlinks.db
-      # 如需使用云端数据库,配置以下任一方式:
-      
-      # 方式1: 直接使用连接字符串
-      # - DATABASE_URL=mysql+pymysql://user:pass@host:4000/db?ssl=true
-      
-      # 方式2: 使用独立变量 (TiDB Cloud 推荐)
-      # - DB_HOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
-      # - DB_PORT=4000
-      # - DB_USERNAME=your-username
-      # - DB_PASSWORD=your-password
-      # - DB_DATABASE=test
-      
-      # ==================== 站长验证 (可选) ====================
-      # 微信/其他站长工具的验证文件
-      # - VERIFICATION_FILENAME=09bbc06848f6945e58f841b48ee3de71.txt
-      # - VERIFICATION_CONTENT=27a1dbf4cbff06d0829d3f5af88e8f2139b9f41c
+      - ADMIN_KEY=your-super-secret-admin-key  # 必需：管理员密钥
+      - DATABASE_URL=file:./data/shortlinks.db  # 必需：数据库连接字符串
     ports:
       - "18000:8000"
     volumes:
