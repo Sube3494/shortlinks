@@ -24,13 +24,10 @@ if (dbUrl.startsWith('file:')) {
 
   // 自动同步数据库结构 (Auto-Migration)
   try {
-    console.log('🔄 Checking database schema...');
     // 使用本地安装的 drizzle-kit 进行同步
     const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push' : 'pnpm drizzle-kit push';
     execSync(cmd, { stdio: 'inherit' });
-    console.log('✅ Database schema synced.');
   } catch (error) {
-    console.warn('⚠️ Auto-migration failed (this is normal if drizzle-kit is not installed in prod):', error);
   }
 }
 
@@ -101,7 +98,6 @@ if (isNaN(port)) {
   port = 8000;
 }
 
-console.log(`\nReady on http://localhost:${port}\n`);
 
 serve({
   fetch: server.fetch,

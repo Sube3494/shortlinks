@@ -47,7 +47,8 @@ export type ShortLinkUpdate = z.infer<typeof shortLinkUpdateSchema>;
 // API Key 创建请求
 export const apiKeyCreateSchema = z.object({
   name: z.string().min(1, '名称不能为空'),
-  expires_days: z.number().positive().optional(),
+  expires_days: z.number().min(0).optional(),
+  expires_in_minutes: z.number().min(0).optional(),
 });
 
 export type APIKeyCreate = z.infer<typeof apiKeyCreateSchema>;

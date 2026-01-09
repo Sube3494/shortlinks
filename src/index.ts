@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { getDB } from './db';
 import { shortlinks, apiKeys } from './db/schema';
 import { verifyAPIKey, verifyAdminKey } from './middleware/auth';
@@ -65,24 +65,42 @@ app.get('/', async (c) => {
 });
 
 // 管理后台页面
-app.get('/:adminPath(admin|sube666)?', async (c) => {
-  const adminPathFromEnv = c.env.ADMIN_PATH?.replace(/^\//, '');
-  const requestedPath = c.req.param('adminPath');
+// 管理后台路由处理 (支持动态 ADMIN_PATH)
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url);
+  // 获取 URL path，去掉首尾 /，确保能匹配自定义路径
+  const path = url.pathname.replace(/^\/+|\/+$/g, '');
   
-  // 如果定义了 ADMIN_PATH，则必须匹配；否则使用默认的 admin 或 sube666
-  const isMatch = adminPathFromEnv 
-    ? requestedPath === adminPathFromEnv
-    : (requestedPath === 'admin' || requestedPath === 'sube666' || !requestedPath);
-
-  if (!isMatch && requestedPath) {
-    return c.notFound();
+  // 严格使用环境变量，如果未设置则默认为 'admin'
+  const adminPathEnv = (c.env.ADMIN_PATH || 'admin').replace(/^\/+|\/+$/g, '');
+  
+  // 如果配置了自定义路径，严禁通过默认 'admin'、'admin.html' 或内部模板路径访问
+  // 使用 403 而非 404 是为了防止 wrangler/cloudflare 自动回退到静态资源服务 (Clean URLs)
+  const isDefaultPath = path === 'admin' || path === 'admin.html' || path === '_admin_ui_.html';
+  if (isDefaultPath && adminPathEnv !== 'admin') {
+    try {
+      const response = await c.env.ASSETS.fetch(new Request(new URL('/error.html?type=not_found', url.origin)));
+      return response;
+    } catch {
+      return c.text('Not Found', 404);
+    }
   }
-  try {
-    const response = await c.env.ASSETS.fetch(new Request('https://placeholder/admin.html'));
-    return response;
-  } catch {
+
+  if (path === adminPathEnv) {
+    try {
+      // 构造 internal assets 请求 (使用隐藏的文件名防止绕过)
+      const assetUrl = new URL('/_admin_ui_.html', url.origin);
+      const response = await c.env.ASSETS.fetch(new Request(assetUrl));
+      if (response.status >= 200 && response.status < 300) {
+        return response;
+      }
+    } catch {
+      // Fallback
+    }
     return c.text('管理后台', 200);
   }
+
+  await next();
 });
 
 // API: 获取当前 Key 信息
@@ -298,7 +316,6 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
         expires_at: newLink.expiresAt,
       });
     } catch (error) {
-      console.error('批量创建失败:', error);
     }
   }
   
@@ -449,6 +466,7 @@ app.delete('/api/:code', verifyAPIKey, async (c) => {
 // 管理员 API: 创建 API Key
 app.post('/api/admin/keys/create', verifyAdminKey, async (c) => {
   const body = await c.req.json();
+  
   const validation = apiKeyCreateSchema.safeParse(body);
   
   if (!validation.success) {
@@ -462,6 +480,8 @@ app.post('/api/admin/keys/create', verifyAdminKey, async (c) => {
   let expiresAt: Date | null = null;
   if (data.expires_days) {
     expiresAt = new Date(Date.now() + data.expires_days * 24 * 60 * 60 * 1000);
+  } else if (data.expires_in_minutes) {
+    expiresAt = new Date(Date.now() + data.expires_in_minutes * 60 * 1000);
   }
   
   const [newKey] = await db
@@ -487,9 +507,10 @@ app.get('/api/admin/keys/list', verifyAdminKey, async (c) => {
   const db = await getDB(c.env.DB);
   const keys = await db.select().from(apiKeys).orderBy(desc(apiKeys.createdAt));
   
-  return c.json(
-    keys.map((k: any) => ({
+  return c.json({
+    keys: keys.map((k: any) => ({
       id: k.id,
+      key: k.key,
       name: k.name,
       created_at: k.createdAt,
       expires_at: k.expiresAt,
@@ -497,7 +518,133 @@ app.get('/api/admin/keys/list', verifyAdminKey, async (c) => {
       usage_count: k.usageCount,
       is_active: k.isActive,
     }))
-  );
+  });
+});
+
+import { systemConfig } from './db/schema';
+
+// 管理员 API: 获取清理配置
+app.get('/api/admin/cleanup/config', verifyAdminKey, async (c) => {
+  const db = await getDB(c.env.DB);
+  
+  // 获取所有相关配置
+  const configs = await db
+    .select()
+    .from(systemConfig)
+    .where(
+      sql`key IN ('cleanup_enabled', 'cleanup_hour', 'cleanup_minute')`
+    );
+  
+  // 转换为对象
+  const configMap = configs.reduce((acc: any, curr) => {
+    acc[curr.key] = curr.value;
+    return acc;
+  }, {});
+
+  return c.json({
+    enabled: configMap.cleanup_enabled === 'true',
+    hour: parseInt(configMap.cleanup_hour || '0'),
+    minute: parseInt(configMap.cleanup_minute || '0'),
+  });
+});
+
+// 管理员 API: 更新清理配置
+app.put('/api/admin/cleanup/config', verifyAdminKey, async (c) => {
+  const body = await c.req.json();
+  const db = await getDB(c.env.DB);
+  
+  const updates = [];
+  
+  if (body.enabled !== undefined) {
+    updates.push(
+      db.insert(systemConfig)
+        .values({ key: 'cleanup_enabled', value: String(body.enabled) })
+        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.enabled), updatedAt: new Date() } })
+    );
+  }
+  
+  if (body.hour !== undefined) {
+    updates.push(
+      db.insert(systemConfig)
+        .values({ key: 'cleanup_hour', value: String(body.hour) })
+        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.hour), updatedAt: new Date() } })
+    );
+  }
+  
+  if (body.minute !== undefined) {
+    updates.push(
+      db.insert(systemConfig)
+        .values({ key: 'cleanup_minute', value: String(body.minute) })
+        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.minute), updatedAt: new Date() } })
+    );
+  }
+  
+  await Promise.all(updates);
+  
+  return c.json({ message: '配置已更新' });
+});
+
+// 管理员 API: 触发清理
+app.post('/api/admin/cleanup/trigger', verifyAdminKey, async (c) => {
+  const db = await getDB(c.env.DB);
+  // 删除过期短链
+  // 使用简单的逻辑：获取所有有过期时间的链接，手动判断是否过期
+  // 注意：在海量数据下这效率很低，应该用 SQL 语句。但为了兼容性和避免 SQL 语法错误，先这样写。
+  // 更好的方式是: await db.delete(shortlinks).where(sql\`expires_at IS NOT NULL AND expires_at < ${new Date().toISOString()}\`);
+  
+  const now = new Date();
+  // 简单实现
+  const allLinks = await db.select().from(shortlinks);
+  let deletedCount = 0;
+  
+  for (const link of allLinks) {
+    if (link.expiresAt && link.expiresAt < now) {
+      await db.delete(shortlinks).where(eq(shortlinks.id, link.id));
+      deletedCount++;
+    }
+  }
+
+  return c.json({ deleted_count: deletedCount, message: '清理完成' });
+});
+
+// 管理员 API: 切换 Key 状态
+app.patch('/api/admin/keys/:id/toggle', verifyAdminKey, async (c) => {
+  const id = parseInt(c.req.param('id'));
+  const db = await getDB(c.env.DB);
+  
+  const [key] = await db.select().from(apiKeys).where(eq(apiKeys.id, id)).limit(1);
+  if (!key) return c.json({ error: 'Key 不存在' }, 404);
+  
+  const newStatus = !key.isActive;
+  await db.update(apiKeys).set({ isActive: newStatus }).where(eq(apiKeys.id, id));
+  
+  return c.json({ 
+    message: newStatus ? 'Key 已启用' : 'Key 已禁用', 
+    is_active: newStatus 
+  });
+});
+
+// API: 获取短链统计
+app.get('/api/stats/:code', async (c) => {
+  const code = c.req.param('code');
+  const db = await getDB(c.env.DB);
+  
+  const [link] = await db
+    .select()
+    .from(shortlinks)
+    .where(eq(shortlinks.shortCode, code))
+    .limit(1);
+  
+  if (!link) return c.json({ error: '短链不存在' }, 404);
+  
+   return c.json({
+    short_code: link.shortCode,
+    original_url: link.originalUrl,
+    created_at: link.createdAt,
+    click_count: link.clickCount,
+    last_accessed: link.lastAccessed,
+    expires_at: link.expiresAt
+  });
 });
 
 // 管理员 API: 删除 Key

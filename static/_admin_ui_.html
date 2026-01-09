@@ -1046,12 +1046,12 @@
                 tr.innerHTML = `
                     <td class="id-cell" data-label="ID">#${key.id}</td>
                     <td data-label="持有者信息">${escapeHtml(key.name || '未命名')}</td>
-                    <td class="prefix-cell" data-label="API Key">${key.key_prefix}</td>
+                    <td class="prefix-cell" data-label="API Key" title="${key.key}">${key.key.substring(0, 12)}...</td>
                     <td data-label="生成日期">${formatTime(key.created_at).split(' ')[0]}</td>
                     <td data-label="过期时间">${formatTime(key.expires_at)}</td>
                     <td data-label="状态" class="status-cell">${statusHtml}</td>
                     <td data-label="操作" style="text-align: center;">
-                        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${key.id})" title="删除">
+                        <button class="btn btn-sm btn-danger" onclick="revokeKey(${key.id}, '${escapeHtml(key.name)}')" title="删除">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </td>
@@ -1097,13 +1097,19 @@
                 }
                 
                 // Real API Call
+                // Real API Call
+                const payload = { name };
+                if (durationMinutes > 0) {
+                    payload.expires_in_minutes = durationMinutes;
+                }
+
                 const res = await fetch(`${BASE_URL}/api/admin/keys/create`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'X-Admin-Key': adminKey 
                     },
-                    body: JSON.stringify({ name, expires_in_minutes: durationMinutes })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (!res.ok) throw new Error('创建失败');

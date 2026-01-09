@@ -1790,7 +1790,6 @@
                 // 1. 优先读取本地存储 (包裹 try-catch 以防隐身模式报错)
                 savedTheme = localStorage.getItem('theme');
             } catch (e) {
-                console.warn('localStorage access denied');
             }
             
             if (savedTheme) {
@@ -1832,7 +1831,6 @@
                 localStorage.setItem('theme', theme);
             } catch (e) {
                 // 某些移动端浏览器隐身模式下 setItem 会报错
-                console.warn('Unable to save theme preference');
             }
             
             const icon = document.querySelector('.theme-toggle i');
@@ -2396,7 +2394,6 @@
                         // 等待回调执行完成
                         await confirmCallback();
                     } catch (err) {
-                        console.error('操作失败', err);
                     } finally {
                         // 无论成功失败，恢复状态并关闭
                         btn.disabled = false;
@@ -2513,7 +2510,6 @@
                 keyInfoDiv.style.display = 'block';
                 
             } catch (e) {
-                console.error('加载 Key 信息失败:', e);
                 keyInfoDiv.style.display = 'none';
             }
         }

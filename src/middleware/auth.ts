@@ -56,7 +56,6 @@ function recordAuthFailure(ip: string): boolean {
   // 检查是否达到封禁阈值
   if (record.attempts.length >= MAX_FAILURES) {
     record.banUntil = now + BAN_DURATION;
-    console.log(`⚠️  IP ${ip} 被临时封禁 ${BAN_DURATION / 60000} 分钟（失败尝试: ${record.attempts.length}）`);
     return true;
   }
   
@@ -139,8 +138,7 @@ export async function verifyAPIKey(c: Context, next: Next) {
             usageCount: dbKey.usageCount + 1,
           })
           .where(eq(apiKeys.id, dbKey.id))
-          .run()
-          .catch(console.error);
+          .run();
       }
       
       // 将 Key ID 存储到上下文
