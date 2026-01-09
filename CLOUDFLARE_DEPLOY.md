@@ -25,13 +25,17 @@
 
 | 变量名 | 类型 | 说明 |
 | :--- | :--- | :--- |
-| `CLOUDFLARE_ACCOUNT_ID` | Secret | 在控制台“概览”页右侧获取 |
+| `CLOUDFLARE_ACCOUNT_ID` | Secret | 见下方“获取 Account ID”说明 |
 | `CLOUDFLARE_API_TOKEN` | Secret | 第 2 步申请的令牌 |
 | `D1_DATABASE_ID` | Secret | 第 1 步记录的 UUID |
 | `ADMIN_KEY` | Secret | 管理后台强密码 (建议 32 位以上) |
 | `ADMIN_PATH` | Secret | 管理后台路径 (如 `/admin_portal`) |
 | `IS_CLOUDFLARE` | Plain | 设置为 `true`，用于代码环境识别 |
 | `BASE_URL` | Plain | (可选) 手动指定域名。留空则程序自动识别当前域名。 |
+
+### 3.1 如何获取 Account ID
+1. 登录 Cloudflare 控制台，点击左侧 **Workers 和 Pages**。
+2. 在页面右下角的 **Account Details (账户详情)** 区域即可直接复制 **Account ID**。
 
 ## 4. 自动化部署
 

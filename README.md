@@ -24,8 +24,9 @@
 - ✅ RESTful API 接口
 - ✅ 自动生成 API 文档
 - ✅ CORS 支持，允许跨域调用
-- ✅ 多数据库支持（SQLite / MySQL / TiDB / PostgreSQL）
-- ✅ 多部署方式（Docker / Vercel Serverless）
+- ✅ 多数据库支持（SQLite / MySQL / TiDB / PostgreSQL / **Cloudflare D1**）
+- ✅ 多部署方式（Docker / Vercel Serverless / **Cloudflare Workers**）
+- ✅ **动态 BASE_URL**（自动识别当前访问域名，实现“非死色”部署）
 - ✅ Web API 管理密钥（适用于 Serverless 环境）
 
 ## 部署方式
@@ -36,6 +37,21 @@
 |------|---------|--------|---------|
 | **Docker** | VPS / 本地开发 | SQLite (默认) / 云端数据库 (可选) | CLI 工具 / Web API |
 | **Vercel** | Serverless | 云端数据库 (TiDB/MySQL) | Web API |
+| **Cloudflare** | Serverless / Edge | Cloudflare D1 | Web API |
+
+---
+
+## 部署选项一: Cloudflare Workers (推荐)
+
+### 优势
+- ✅ **完全免费**的 D1 数据库
+- ✅ 真正的 **Edge Computing** (边缘计算)，极速响应
+- ✅ 支持 **GitHub CI/CD** 自动部署
+- ✅ **非死色**设计：自动识别域名，零配置 BASE_URL
+
+### 部署步骤
+
+请参考详细指南：[**Cloudflare Workers 部署参考指南**](CLOUDFLARE_DEPLOY.md)
 
 ---
 
