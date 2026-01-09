@@ -130,14 +130,6 @@ export async function verifyAPIKey(c: Context, next: Next) {
         return c.json({ error: 'API Key 已过期' }, 403);
       }
       
-      // 更新使用统计（异步，不等待）
-      db.update(apiKeys)
-        .set({
-          lastUsedAt: new Date(),
-          usageCount: dbKey.usageCount + 1,
-        })
-        .where(eq(apiKeys.id, dbKey.id))
-        .run();
       
       // 将 Key ID 存储到上下文
       c.set('keyId', dbKey.id);

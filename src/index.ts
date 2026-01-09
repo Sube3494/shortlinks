@@ -232,6 +232,17 @@ app.post('/api/shorten', verifyAPIKey, async (c) => {
   
   const newLink = result[0];
   
+  // 更新使用统计（仅在生成成功后）
+  if (keyId) {
+    db.update(apiKeys)
+      .set({
+        lastUsedAt: new Date(),
+        usageCount: sql`${apiKeys.usageCount} + 1`,
+      })
+      .where(eq(apiKeys.id, keyId))
+      .run();
+  }
+
   return c.json({
     short_code: newLink.shortCode,
     short_url: `${baseURL}/${newLink.shortCode}`,
@@ -319,6 +330,17 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
     }
   }
   
+  // 更新使用统计（按创建成功的数量计次）
+  if (keyId && results.length > 0) {
+    db.update(apiKeys)
+      .set({
+        lastUsedAt: new Date(),
+        usageCount: sql`${apiKeys.usageCount} + ${results.length}`,
+      })
+      .where(eq(apiKeys.id, keyId))
+      .run();
+  }
+
   return c.json(results);
 });
 
