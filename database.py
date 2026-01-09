@@ -1,30 +1,39 @@
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text, Boolean, ForeignKey
+﻿from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
 import os
 
 # 数据库配置
-# 优先级: 1. DATABASE_URL -> 2. TiDB/MySQL 环境变量 -> 3. SQLite (默认)
+# 优先级: 1. DATABASE_URL -> 2. D1 环境变量 -> 3. MySQL 环境变量 -> 4. SQLite (默认)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    # 检查是否配置了 TiDB/MySQL 独立环境变量
-    db_host = os.getenv("DB_HOST")
-    db_user = os.getenv("DB_USERNAME")
-    db_pass = os.getenv("DB_PASSWORD")
-    db_name = os.getenv("DB_DATABASE", "test")
-    db_port = os.getenv("DB_PORT", "4000")
-    
-    if db_host and db_user and db_pass:
-        # 自动构建 MySQL 连接字符串 (适配 TiDB)
-        # 注意: TiDB Serverless 强制要求 SSL，pymysql 默认 ssl=True 即可，或显式指定
-        DATABASE_URL = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?ssl_verify_cert=true&ssl_verify_identity=true"
-        print(f"✅ 检测到 TiDB/MySQL 环境变量，已自动配置连接: {db_host}")
+    # 检查是否配置了 Cloudflare D1 独立环境变量
+    d1_account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID")
+    d1_token = os.getenv("CLOUDFLARE_API_TOKEN")
+    d1_database_id = os.getenv("D1_DATABASE_ID")
+
+    if d1_account_id and d1_token and d1_database_id:
+        # 使用 D1 REST API 方言
+        DATABASE_URL = f"cloudflare_d1://{d1_account_id}:{d1_token}@{d1_database_id}"
+        print(f"✅ 检测到 Cloudflare D1 环境变量，已自动配置连接")
     else:
-        # 默认使用 SQLite (Docker/本地开发)
-        db_path = os.getenv("DATABASE_PATH", "/app/data/shortlinks.db")
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        DATABASE_URL = f"sqlite:///{db_path}"
+        # 检查是否配置了 MySQL/TiDB 独立环境变量
+        db_host = os.getenv("DB_HOST")
+        db_user = os.getenv("DB_USERNAME")
+        db_pass = os.getenv("DB_PASSWORD")
+        db_name = os.getenv("DB_DATABASE", "test")
+        db_port = os.getenv("DB_PORT", "3306")
+        
+        if db_host and db_user and db_pass:
+            # 自动构建 MySQL 连接字符串 (也兼容 TiDB)
+            DATABASE_URL = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}?ssl_verify_cert=true&ssl_verify_identity=true"
+            print(f"✅ 检测到 MySQL 环境变量，已自动配置连接: {db_host}")
+        else:
+            # 默认使用 SQLite (Docker/本地开发)
+            db_path = os.getenv("DATABASE_PATH", "/app/data/shortlinks.db")
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+            DATABASE_URL = f"sqlite:///{db_path}"
 
 # 根据数据库类型配置引擎参数
 if DATABASE_URL.startswith("sqlite"):
@@ -33,13 +42,16 @@ if DATABASE_URL.startswith("sqlite"):
         DATABASE_URL, 
         connect_args={"check_same_thread": False}
     )
+elif DATABASE_URL.startswith("cloudflare_d1"):
+    # D1 (SQLAlchemy 适配器)
+    engine = create_engine(DATABASE_URL)
 else:
     # MySQL/PostgreSQL 配置连接池
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,  # 连接前验证可用性
         pool_recycle=3600,   # 每小时回收连接
-        pool_size=5,         # Serverless 环境保持小连接池
+        pool_size=5,         # 保持小连接池
         max_overflow=10
     )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

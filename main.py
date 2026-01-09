@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Header, Query, Request
+﻿from fastapi import FastAPI, HTTPException, Depends, Header, Query, Request
 from fastapi.responses import RedirectResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,11 +29,15 @@ except ImportError:
 from database import get_db, init_db, ShortLink, APIKey, SessionLocal, SystemConfig
 from models import ShortLinkCreate, ShortLinkResponse, ShortLinkStats, BatchShortLinkCreate, ShortLinkUpdate, CleanupConfigUpdate
 from utils import get_unique_short_code, normalize_url, validate_url
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+try:
+    from apscheduler.schedulers.background import BackgroundScheduler
+    from apscheduler.triggers.cron import CronTrigger
+    HAS_SCHEDULER = True
+except ImportError:
+    HAS_SCHEDULER = False
 
-# 初始化数据库
-init_db()
+# 初始化数据库 (移至 startup_event 中以避免 Workers 验证错误)
+# init_db()
 
 app = FastAPI(
     title="短链服务 API",
@@ -80,7 +84,19 @@ for static_dir in static_dirs:
             continue
 
 # 获取基础URL（用于生成完整短链）
-BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+BASE_URL_ENV = os.getenv("BASE_URL", "").rstrip("/")
+
+def resolve_base_url(request: Request) -> str:
+    """
+    解析基础 URL: 
+    1. 优先使用环境变量 BASE_URL
+    2. 如果环境变量为空, 则从当前请求中动态获取
+    """
+    if BASE_URL_ENV:
+        return BASE_URL_ENV
+    
+    # 动态获取 (识别 http/https 和 域名端口)
+    return f"{request.url.scheme}://{request.url.netloc}"
 
 # API密钥Header
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -355,19 +371,29 @@ def get_cleanup_schedule():
 def update_cleanup_schedule():
     """更新定时任务时间"""
     global scheduler
-    if scheduler:
-        hour, minute = get_cleanup_schedule()
-        scheduler.reschedule_job(
-            'cleanup_expired',
-            trigger=CronTrigger(hour=hour, minute=minute)
-        )
-        print(f"📅 定时清理时间已更新为 {hour:02d}:{minute:02d}")
+    if scheduler and HAS_SCHEDULER:
+        try:
+            hour, minute = get_cleanup_schedule()
+            scheduler.reschedule_job(
+                'cleanup_expired',
+                trigger=CronTrigger(hour=hour, minute=minute)
+            )
+            print(f"📅 定时清理时间已更新为 {hour:02d}:{minute:02d}")
+        except Exception as e:
+            print(f"⚠️ 调度更新失败: {e}")
 
 
 
 @app.on_event("startup")
 async def startup_event():
     """应用启动事件: 初始化定时清理任务"""
+    # 初始化数据库表
+    try:
+        init_db()
+        print("✅ 数据库表初始化完成")
+    except Exception as e:
+        print(f"⚠️ 数据库初始化失败 (可能在 D1 环境中由于权限限制需手动创建): {e}")
+
     # 初始化定时清理配置
     db = SessionLocal()
     try:
@@ -381,18 +407,25 @@ async def startup_event():
     finally:
         db.close()
     
-    # 启动定时任务调度器
+    # 启动定时任务调度器 (在 Cloudflare Workers 中禁用)
+    if not HAS_SCHEDULER or os.getenv("IS_CLOUDFLARE") == "true":
+        print("📅 定时清理任务在当前环境已禁用 (无 APScheduler 或在 Cloudflare 运行)")
+        return
+
     global scheduler
-    scheduler = BackgroundScheduler()
-    hour, minute = get_cleanup_schedule()
-    scheduler.add_job(
-        cleanup_expired_shortlinks,
-        CronTrigger(hour=hour, minute=minute),
-        id='cleanup_expired',
-        replace_existing=True
-    )
-    scheduler.start()
-    print(f"📅 定时清理任务已启动 (每天 {hour:02d}:{minute:02d})")
+    try:
+        scheduler = BackgroundScheduler()
+        hour, minute = get_cleanup_schedule()
+        scheduler.add_job(
+            cleanup_expired_shortlinks,
+            CronTrigger(hour=hour, minute=minute),
+            id='cleanup_expired',
+            replace_existing=True
+        )
+        scheduler.start()
+        print(f"📅 定时清理任务已启动 (每天 {hour:02d}:{minute:02d})")
+    except Exception as e:
+        print(f"⚠️ 调度启动失败: {e}")
 
 
 @app.on_event("shutdown")
@@ -491,7 +524,8 @@ async def get_current_key_info(
 
 @app.post("/api/shorten", response_model=ShortLinkResponse)
 async def create_short_link(
-    request: ShortLinkCreate,
+    data: ShortLinkCreate, # 重命名以避免与 request: Request 冲突
+    request: Request,
     db: Session = Depends(get_db),
     key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
@@ -501,8 +535,11 @@ async def create_short_link(
     - **url**: 原始URL（必需）
     - **custom_code**: 自定义短码（可选，6-10个字符）
     """
+    # 动态获取基础 URL
+    base_url = resolve_base_url(request)
+    
     # 规范化URL（会自动清理无效转义字符）
-    original_url = normalize_url(request.url)
+    original_url = normalize_url(data.url)
     
     # 验证URL格式
     if not validate_url(original_url):
@@ -526,7 +563,7 @@ async def create_short_link(
             # 未过期，直接返回已有短链
             return ShortLinkResponse(
                 short_code=existing.short_code,
-                short_url=f"{BASE_URL}/{existing.short_code}",
+                short_url=f"{base_url}/{existing.short_code}",
                 original_url=existing.original_url,
                 created_at=existing.created_at,
                 click_count=existing.click_count,
@@ -534,15 +571,16 @@ async def create_short_link(
                 expires_at=existing.expires_at
             )
     
+    # ... 后续逻辑中使用 base_url
     # 处理自定义短码或生成新短码
-    if request.custom_code:
+    if data.custom_code:
         # 验证自定义短码格式
-        if not (6 <= len(request.custom_code) <= 10):
+        if not (6 <= len(data.custom_code) <= 10):
             raise HTTPException(
                 status_code=400,
                 detail="自定义短码长度必须在6-10个字符之间"
             )
-        if not request.custom_code.isalnum():
+        if not data.custom_code.isalnum():
             raise HTTPException(
                 status_code=400,
                 detail="自定义短码只能包含字母和数字"
@@ -550,25 +588,25 @@ async def create_short_link(
         
         # 检查自定义短码是否已存在
         existing_code = db.query(ShortLink).filter(
-            ShortLink.short_code == request.custom_code
+            ShortLink.short_code == data.custom_code
         ).first()
         if existing_code:
             raise HTTPException(
                 status_code=409,
-                detail=f"短码 '{request.custom_code}' 已被使用"
+                detail=f"短码 '{data.custom_code}' 已被使用"
             )
-        short_code = request.custom_code
+        short_code = data.custom_code
     else:
         short_code = get_unique_short_code()
     
     # 计算过期时间（优先使用天、分钟、小时）
     expires_at = None
-    if request.expires_in_days and request.expires_in_days > 0:
-        expires_at = datetime.now() + timedelta(days=request.expires_in_days)
-    elif request.expires_in_minutes and request.expires_in_minutes > 0:
-        expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
-    elif request.expires_in_hours and request.expires_in_hours > 0:
-        expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
+    if data.expires_in_days and data.expires_in_days > 0:
+        expires_at = datetime.now() + timedelta(days=data.expires_in_days)
+    elif data.expires_in_minutes and data.expires_in_minutes > 0:
+        expires_at = datetime.now() + timedelta(minutes=data.expires_in_minutes)
+    elif data.expires_in_hours and data.expires_in_hours > 0:
+        expires_at = datetime.now() + timedelta(hours=data.expires_in_hours)
     
     # 创建短链记录
     short_link = ShortLink(
@@ -585,7 +623,7 @@ async def create_short_link(
     
     return ShortLinkResponse(
         short_code=short_link.short_code,
-        short_url=f"{BASE_URL}/{short_link.short_code}",
+        short_url=f"{base_url}/{short_link.short_code}",
         original_url=short_link.original_url,
         created_at=short_link.created_at,
         click_count=short_link.click_count,
@@ -596,7 +634,8 @@ async def create_short_link(
 
 @app.post("/api/shorten/batch", response_model=List[ShortLinkResponse])
 async def create_batch_short_links(
-    request: BatchShortLinkCreate,
+    data: BatchShortLinkCreate, # 重命名以避免与 request: Request 冲突
+    request: Request,
     db: Session = Depends(get_db),
     key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
@@ -606,10 +645,10 @@ async def create_batch_short_links(
     - **urls**: URL列表（必需）
     - **expires_in_hours**: 过期时间（小时数，可选，应用于所有URL）
     """
+    base_url = resolve_base_url(request)
     results = []
     errors = []
-    
-    for idx, url in enumerate(request.urls):
+    for idx, url in enumerate(data.urls):
         try:
             # 规范化URL
             original_url = normalize_url(url.strip())
@@ -637,7 +676,7 @@ async def create_batch_short_links(
                     # 未过期,直接复用已有短链
                     results.append(ShortLinkResponse(
                         short_code=existing.short_code,
-                        short_url=f"{BASE_URL}/{existing.short_code}",
+                        short_url=f"{base_url}/{existing.short_code}",
                         original_url=existing.original_url,
                         created_at=existing.created_at,
                         click_count=existing.click_count,
@@ -651,12 +690,12 @@ async def create_batch_short_links(
             
             # 计算过期时间（优先使用天、分钟、小时）
             expires_at = None
-            if request.expires_in_days and request.expires_in_days > 0:
-                expires_at = datetime.now() + timedelta(days=request.expires_in_days)
-            elif request.expires_in_minutes and request.expires_in_minutes > 0:
-                expires_at = datetime.now() + timedelta(minutes=request.expires_in_minutes)
-            elif request.expires_in_hours and request.expires_in_hours > 0:
-                expires_at = datetime.now() + timedelta(hours=request.expires_in_hours)
+            if data.expires_in_days and data.expires_in_days > 0:
+                expires_at = datetime.now() + timedelta(days=data.expires_in_days)
+            elif data.expires_in_minutes and data.expires_in_minutes > 0:
+                expires_at = datetime.now() + timedelta(minutes=data.expires_in_minutes)
+            elif data.expires_in_hours and data.expires_in_hours > 0:
+                expires_at = datetime.now() + timedelta(hours=data.expires_in_hours)
             
             # 创建短链记录
             short_link = ShortLink(
@@ -673,7 +712,7 @@ async def create_batch_short_links(
             
             results.append(ShortLinkResponse(
                 short_code=short_link.short_code,
-                short_url=f"{BASE_URL}/{short_link.short_code}",
+                short_url=f"{base_url}/{short_link.short_code}",
                 original_url=short_link.original_url,
                 created_at=short_link.created_at,
                 click_count=short_link.click_count,
@@ -734,6 +773,7 @@ async def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
 @app.get("/api/info/{short_code}", response_model=ShortLinkResponse)
 async def get_short_link_info(
     short_code: str,
+    request: Request,
     db: Session = Depends(get_db),
     key_id: Optional[int] = Depends(verify_api_key_no_stats)  # 获取当前 Key ID (不统计次数)
 ):
@@ -752,9 +792,10 @@ async def get_short_link_info(
     if key_id is not None and short_link.created_by_key_id != key_id:
         raise HTTPException(status_code=403, detail="无权查看此短链")
     
+    base_url = resolve_base_url(request)
     return ShortLinkResponse(
         short_code=short_link.short_code,
-        short_url=f"{BASE_URL}/{short_link.short_code}",
+        short_url=f"{base_url}/{short_link.short_code}",
         original_url=short_link.original_url,
         created_at=short_link.created_at,
         click_count=short_link.click_count,
@@ -795,6 +836,7 @@ async def get_short_link_stats(
 
 @app.get("/api/list", response_model=List[ShortLinkResponse])
 async def list_short_links(
+    request: Request,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -820,10 +862,11 @@ async def list_short_links(
     
     short_links = query.offset(skip).limit(limit).all()
     
+    base_url = resolve_base_url(request)
     return [
         ShortLinkResponse(
             short_code=link.short_code,
-            short_url=f"{BASE_URL}/{link.short_code}",
+            short_url=f"{base_url}/{link.short_code}",
             original_url=link.original_url,
             created_at=link.created_at,
             click_count=link.click_count,
@@ -837,7 +880,8 @@ async def list_short_links(
 @app.patch("/api/{short_code}", response_model=ShortLinkResponse)
 async def update_short_link(
     short_code: str,
-    request: ShortLinkUpdate,
+    data: ShortLinkUpdate, # 重命名以避免冲突
+    request: Request,
     db: Session = Depends(get_db),
     key_id: Optional[int] = Depends(verify_api_key)  # 获取当前 Key ID
 ):
@@ -877,9 +921,10 @@ async def update_short_link(
     db.commit()
     db.refresh(short_link)
     
+    base_url = resolve_base_url(request)
     return ShortLinkResponse(
         short_code=short_link.short_code,
-        short_url=f"{BASE_URL}/{short_link.short_code}",
+        short_url=f"{base_url}/{short_link.short_code}",
         original_url=short_link.original_url,
         created_at=short_link.created_at,
         click_count=short_link.click_count,

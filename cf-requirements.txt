@@ -1,12 +1,9 @@
 ﻿fastapi
-uvicorn
 sqlalchemy
 pydantic
 python-multipart
-python-dotenv
 requests
 greenlet
 pymysql
 cryptography
 sqlalchemy-cloudflare-d1
-apscheduler

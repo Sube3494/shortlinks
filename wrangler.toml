@@ -1,0 +1,19 @@
+﻿#:schema node_modules/wrangler/config-schema.json
+name = "shortlinks"
+main = "main.py"
+compatibility_date = "2026-01-09"
+compatibility_flags = ["python_workers"]
+
+[vars]
+IS_CLOUDFLARE = "true"
+
+# 数据库绑定 (可选)
+# 如果您想使用原生 D1 绑定，请取消注释并填写您的 ID
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "your-db-name"
+# database_id = "your-database-id"
+
+[assets]
+directory = "./static"
+binding = "ASSETS"
