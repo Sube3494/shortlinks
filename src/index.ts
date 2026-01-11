@@ -17,6 +17,8 @@ import {
   validateUrl,
   hashUrl,
   generateRandomString,
+  cleanupExpiredLinks,
+  cleanupTaskHook,
 } from './utils';
 
 type Bindings = {
@@ -31,7 +33,7 @@ type Variables = {
   keyId: number | null;
 };
 
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+export const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // CORS 中间件
 app.use('*', cors());
@@ -545,87 +547,33 @@ app.get('/api/admin/keys/list', verifyAdminKey, async (c) => {
 
 import { systemConfig } from './db/schema';
 
-// 管理员 API: 获取清理配置
+// 管理员 API: 获取清理开关状态
 app.get('/api/admin/cleanup/config', verifyAdminKey, async (c) => {
   const db = await getDB(c.env.DB);
-  
-  // 获取所有相关配置
-  const configs = await db
-    .select()
-    .from(systemConfig)
-    .where(
-      sql`key IN ('cleanup_enabled', 'cleanup_hour', 'cleanup_minute')`
-    );
-  
-  // 转换为对象
-  const configMap = configs.reduce((acc: any, curr) => {
-    acc[curr.key] = curr.value;
-    return acc;
-  }, {});
-
-  return c.json({
-    enabled: configMap.cleanup_enabled === 'true',
-    hour: parseInt(configMap.cleanup_hour || '0'),
-    minute: parseInt(configMap.cleanup_minute || '0'),
-  });
+  const [config] = await db.select().from(systemConfig).where(eq(systemConfig.key, 'cleanup_enabled')).limit(1);
+  return c.json({ enabled: config?.value === 'true' });
 });
 
-// 管理员 API: 更新清理配置
+// 管理员 API: 更新清理开关状态
 app.put('/api/admin/cleanup/config', verifyAdminKey, async (c) => {
   const body = await c.req.json();
   const db = await getDB(c.env.DB);
   
-  const updates = [];
+  await db.insert(systemConfig)
+    .values({ key: 'cleanup_enabled', value: String(body.enabled), description: '自动清理开关' })
+    .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.enabled), updatedAt: new Date() } });
   
-  if (body.enabled !== undefined) {
-    updates.push(
-      db.insert(systemConfig)
-        .values({ key: 'cleanup_enabled', value: String(body.enabled) })
-        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.enabled), updatedAt: new Date() } })
-    );
-  }
-  
-  if (body.hour !== undefined) {
-    updates.push(
-      db.insert(systemConfig)
-        .values({ key: 'cleanup_hour', value: String(body.hour) })
-        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.hour), updatedAt: new Date() } })
-    );
-  }
-  
-  if (body.minute !== undefined) {
-    updates.push(
-      db.insert(systemConfig)
-        .values({ key: 'cleanup_minute', value: String(body.minute) })
-        .onConflictDoUpdate({ target: systemConfig.key, set: { value: String(body.minute), updatedAt: new Date() } })
-    );
-  }
-  
-  await Promise.all(updates);
+  // 通知后台任务更新清理状态
+  cleanupTaskHook.refresh();
   
   return c.json({ message: '配置已更新' });
 });
 
-// 管理员 API: 触发清理
+
+// 管理员 API: 手动触发清理 (保留以供测试)
 app.post('/api/admin/cleanup/trigger', verifyAdminKey, async (c) => {
   const db = await getDB(c.env.DB);
-  // 删除过期短链
-  // 使用简单的逻辑：获取所有有过期时间的链接，手动判断是否过期
-  // 注意：在海量数据下这效率很低，应该用 SQL 语句。但为了兼容性和避免 SQL 语法错误，先这样写。
-  // 更好的方式是: await db.delete(shortlinks).where(sql\`expires_at IS NOT NULL AND expires_at < ${new Date().toISOString()}\`);
-  
-  const now = new Date();
-  // 简单实现
-  const allLinks = await db.select().from(shortlinks);
-  let deletedCount = 0;
-  
-  for (const link of allLinks) {
-    if (link.expiresAt && link.expiresAt < now) {
-      await db.delete(shortlinks).where(eq(shortlinks.id, link.id));
-      deletedCount++;
-    }
-  }
-
+  const deletedCount = await cleanupExpiredLinks(db);
   return c.json({ deleted_count: deletedCount, message: '清理完成' });
 });
 
@@ -679,4 +627,21 @@ app.delete('/api/admin/keys/:id', verifyAdminKey, async (c) => {
   return c.json({ message: '删除成功' });
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
+    const db = await getDB(env.DB);
+    
+    // 1. 检查开关状态
+    const [config] = await db
+      .select()
+      .from(systemConfig)
+      .where(eq(systemConfig.key, 'cleanup_enabled'))
+      .limit(1);
+    
+    // 2. 只有开启状态才执行 (Cron 已经设定在 0 点)
+    if (config?.value === 'true') {
+      ctx.waitUntil(cleanupExpiredLinks(db));
+    }
+  }
+};

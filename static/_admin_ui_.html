@@ -728,17 +728,9 @@
                             </label>
                         </div>
 
-                        <!-- Mid: Time Config -->
-                        <div class="cleanup-group time-group">
-                            <span style="color: var(--text-muted); font-size: 0.9rem;">每天</span>
-                            <div class="time-compact">
-                                <input type="number" id="cleanupHour" min="0" max="23" placeholder="00">
-                                <span class="time-sep">:</span>
-                                <input type="number" id="cleanupMinute" min="0" max="59" placeholder="00">
-                            </div>
-                            <button class="btn btn-outline btn-icon-only" onclick="saveCleanupSchedule()" title="保存时间" style="width: 32px; height: 32px; border: none;">
-                                <i class="fas fa-save"></i>
-                            </button>
+                        <!-- Mid: Info -->
+                        <div class="cleanup-group" style="color: var(--text-muted); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> 每天北京时间 <strong style="color: var(--text-main); margin: 0 4px;">00:00</strong> 自动执行
                         </div>
                         
                         <!-- Right: Actions -->
@@ -1290,8 +1282,6 @@
                 
                 const data = await res.json();
                 document.getElementById('cleanupEnabled').checked = data.enabled;
-                document.getElementById('cleanupHour').value = data.hour;
-                document.getElementById('cleanupMinute').value = data.minute;
                 
                 updateCleanupInfo(data);
             } catch (e) {
@@ -1302,9 +1292,9 @@
         function updateCleanupInfo(config) {
             const info = document.getElementById('lastCleanupInfo');
             if (config.enabled) {
-                info.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success);"></i> 每天 ${String(config.hour).padStart(2, '0')}:${String(config.minute).padStart(2, '0')} 执行`;
+                info.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success);"></i> 自动任务运行中`;
             } else {
-                info.innerHTML = `<i class="fas fa-pause-circle" style="color: var(--warning);"></i> 已禁用`;
+                info.innerHTML = `<i class="fas fa-pause-circle" style="color: var(--warning);"></i> 自动任务已暂停`;
             }
         }
 
@@ -1327,49 +1317,6 @@
             } catch (e) {
                 checkbox.checked = !checkbox.checked;
                 showToast(e.message || '操作失败', 'error');
-            }
-        }
-
-        async function saveCleanupSchedule() {
-            const hour = parseInt(document.getElementById('cleanupHour').value);
-            const minute = parseInt(document.getElementById('cleanupMinute').value);
-            const btn = event.target.closest('button');
-            
-            if (isNaN(hour) || hour < 0 || hour > 23) {
-                return showToast('小时必须在 0-23 之间', 'error');
-            }
-            
-            if (isNaN(minute) || minute < 0 || minute > 59) {
-                return showToast('分钟必须在 0-59 之间', 'error');
-            }
-            
-            setBtnLoading(btn, true, '<i class="fas fa-spinner fa-spin"></i>');
-            
-            try {
-                const res = await fetch(`${BASE_URL}/api/admin/cleanup/config`, {
-                    method: 'PUT',
-                    headers: {
-                        'X-Admin-Key': adminKey,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ hour, minute })
-                });
-                
-                if (!res.ok) throw new Error('保存失败');
-                
-                showToast(`清理时间已更新为 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`, 'success');
-                await loadCleanupConfig();
-                
-                // Show success check
-                setBtnLoading(btn, false, '<i class="fas fa-check" style="color: var(--success);"></i>');
-                
-                // Revert to save icon after 2 seconds
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-save"></i>';
-                }, 2000);
-            } catch (e) {
-                showToast(e.message || '保存失败', 'error');
-                setBtnLoading(btn, false, '<i class="fas fa-save"></i>');
             }
         }
 

@@ -98,3 +98,47 @@ export function generateRandomString(length: number): string {
   
   return result;
 }
+
+export async function cleanupExpiredLinks(db: any): Promise<number> {
+  const { shortlinks } = await import('./db/schema');
+  const { lt, and, isNotNull, eq } = await import('drizzle-orm');
+  
+  const now = new Date();
+  
+  // 找出所有已过期记录
+  const expiredResults = await db
+    .select({ id: shortlinks.id })
+    .from(shortlinks)
+    .where(and(isNotNull(shortlinks.expiresAt), lt(shortlinks.expiresAt, now)));
+  
+  if (expiredResults.length > 0) {
+    const ids = expiredResults.map((r: any) => r.id);
+    for (const id of ids) {
+      await db.delete(shortlinks).where(eq(shortlinks.id, id));
+    }
+  }
+  
+  return expiredResults.length;
+}
+
+/**
+ * 任务管理钩子：用于跨文件控制定时任务启停
+ */
+export const cleanupTaskHook = {
+  refresh: () => {} // 默认空实现，由入口文件重写
+};
+
+/**
+ * 计算距离下一个北京时间 0 点的毫秒数
+ */
+export function getMsUntilNextBeijingMidnight(): number {
+  const now = new Date();
+  // 转换为北京时间 (+8)
+  const beijingNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  
+  const nextMidnight = new Date(beijingNow);
+  nextMidnight.setUTCHours(24, 0, 0, 0); // 跳到下一个 0 点 (当前日期+1)
+  
+  return nextMidnight.getTime() - beijingNow.getTime();
+}
+

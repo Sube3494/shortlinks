@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { createClient } from '@libsql/client';
-import app from './index';
+import { app } from './index';
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -78,7 +78,6 @@ server.use('*', async (c, next) => {
 // 这样请求 /shortlink.png 会先被这里拦截，不会落入 app 的 /:code 路由
 server.use('/*', serveStatic({ root: path.resolve('./static') }));
 
-// 3. 挂载主应用
 server.route('/', app);
 
 // 启动服务器
@@ -99,7 +98,53 @@ if (isNaN(port)) {
 }
 
 
+import { cleanupExpiredLinks, cleanupTaskHook, getMsUntilNextBeijingMidnight } from './utils';
+
+// Docker 每日定时清理管理 (零开销：精确计算 + 仅在开启时执行)
+let cleanupTimeout: any = null;
+
+async function manageCleanupTask() {
+  // 销毁旧闹钟
+  if (cleanupTimeout) {
+    clearTimeout(cleanupTimeout);
+    cleanupTimeout = null;
+  }
+
+  try {
+    // 检查数据库开关
+    const result = await client.execute({
+      sql: 'SELECT value FROM system_config WHERE key = ?',
+      args: ['cleanup_enabled']
+    });
+    const config = result.rows[0];
+
+    if (config?.value === 'true') {
+      const ms = getMsUntilNextBeijingMidnight();
+      console.log(`[Cleanup Manager] 定时任务已启用，将在 ${Math.round(ms / 1000 / 60)} 分钟后触发清理`);
+      
+      cleanupTimeout = setTimeout(async () => {
+        console.log(`[Cleanup Manager] 0 点已到，开始每日清理...`);
+        const count = await cleanupExpiredLinks(client);
+        console.log(`[Cleanup Manager] 清理完成，删除了 ${count} 条记录`);
+        // 安排明天的清理
+        manageCleanupTask();
+      }, ms);
+    } else {
+      console.log(`[Cleanup Manager] 定时任务已禁用，后台已进入静默运行模式`);
+    }
+  } catch (err) {
+    console.error('[Cleanup Manager] 任务管理出错:', err);
+  }
+}
+
+// 注册钩子，让 API 可以实时控制后台任务
+cleanupTaskHook.refresh = manageCleanupTask;
+
+// 启动时初始化任务
+manageCleanupTask();
+
 serve({
   fetch: server.fetch,
   port,
 });
+

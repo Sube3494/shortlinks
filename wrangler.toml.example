@@ -11,3 +11,9 @@ database_id = "YOUR_DATABASE_ID_HERE" # 请替换为您自己的 Database ID
 [assets]
 directory = "./static"
 binding = "ASSETS"
+
+[placement]
+mode = "smart"
+
+[triggers]
+crons = ["0 16 * * *"] # 每天北京时间 00:00 执行清理 (UTC 16:00)
