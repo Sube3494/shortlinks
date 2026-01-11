@@ -436,6 +436,15 @@
         <div class="section">
             <h2><i class="fas fa-plug"></i> API 端点</h2>
 
+            <!-- 获取当前 Key 信息 -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method get">GET</span>
+                    <span class="endpoint-path">/api/key/info</span>
+                </div>
+                <p class="endpoint-desc">获取当前正在使用的 API Key 的权限、有效期及使用统计</p>
+            </div>
+
             <!-- 创建短链 -->
             <div class="endpoint">
                 <div class="endpoint-header">
@@ -492,6 +501,19 @@
                 </div>
                 <p class="endpoint-desc">批量创建多个短链接</p>
                 
+                <div class="params">
+                    <div class="param-item">
+                        <span class="param-name">urls</span>
+                        <span class="badge required">必需</span>
+                        <div class="param-desc">原始URL数组</div>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-name">expires_in_days</span>
+                        <span class="badge optional">可选</span>
+                        <div class="param-desc">过期天数</div>
+                    </div>
+                </div>
+
                 <div class="code-label" style="margin-top: 16px;">请求示例</div>
                 <div class="code-block">
 <pre>{
@@ -499,7 +521,7 @@
     "https://example.com/page1",
     "https://example.com/page2"
   ],
-  "expires_in_hours": 24
+  "expires_in_days": 7
 }</pre>
                 </div>
             </div>
@@ -619,34 +641,55 @@
                     <p class="endpoint-desc">获取指定 API Key 的详情</p>
                 </div>
 
-                <!-- 更新 Key -->
+                <!-- 切换 Key 状态 -->
                 <div class="endpoint">
                     <div class="endpoint-header">
-                        <span class="method post" style="background: #fbfb8d; color: #854d0e;">PUT</span>
-                        <span class="endpoint-path">/api/admin/keys/{key_id}</span>
+                        <span class="method post" style="background: #e0f2fe; color: #0369a1;">PATCH</span>
+                        <span class="endpoint-path">/api/admin/keys/{key_id}/toggle</span>
                     </div>
-                    <p class="endpoint-desc">更新 API Key 信息</p>
-                    <div class="params">
-                        <div class="param-item">
-                            <span class="param-name">name</span>
-                            <span class="badge optional">可选</span>
-                            <div class="param-desc">新名称</div>
-                        </div>
-                        <div class="param-item">
-                            <span class="param-name">expires_days</span>
-                            <span class="badge optional">可选</span>
-                            <div class="param-desc">新过期天数 (0=永久)</div>
-                        </div>
-                    </div>
+                    <p class="endpoint-desc">切换 API Key 的启用/禁用状态</p>
                 </div>
 
-                 <!-- 撤销 Key -->
+                <!-- 撤销 Key -->
+
                 <div class="endpoint">
                     <div class="endpoint-header">
                         <span class="method delete">DELETE</span>
                         <span class="endpoint-path">/api/admin/keys/{key_id}</span>
                     </div>
-                    <p class="endpoint-desc">撤销 API Key (软删除)</p>
+                    <p class="endpoint-desc">彻底删除 API Key</p>
+                </div>
+
+                <!-- 清理配置管理 -->
+                <div class="endpoint" style="margin-top: 32px; border-top: 1px dashed var(--border-color); padding-top: 24px;">
+                    <div class="endpoint-header">
+                        <span class="method get">GET</span>
+                        <span class="endpoint-path">/api/admin/cleanup/config</span>
+                    </div>
+                    <p class="endpoint-desc">获取自动清理配置状态</p>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method put">PUT</span>
+                        <span class="endpoint-path">/api/admin/cleanup/config</span>
+                    </div>
+                    <p class="endpoint-desc">更新自动清理状态（启用/禁用）</p>
+                    <div class="params">
+                        <div class="param-item">
+                            <span class="param-name">enabled</span>
+                            <span class="badge required">必需</span>
+                            <div class="param-desc">布尔值，是否开启北京时间 0:00 自动清理</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="endpoint">
+                    <div class="endpoint-header">
+                        <span class="method post">POST</span>
+                        <span class="endpoint-path">/api/admin/cleanup/trigger</span>
+                    </div>
+                    <p class="endpoint-desc">立即手动触发过期链接清理</p>
                 </div>
             </div>
         </details>
