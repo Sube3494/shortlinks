@@ -195,12 +195,12 @@
             width: 100%;
             padding: 10px 14px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius);
             background: var(--bg-body);
             color: var(--text-main);
             font-size: 0.95rem;
             transition: var(--transition);
-            height: 44px; /* Fix height */
+            height: 48px; /* Fix height */
         }
 
         input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
@@ -309,9 +309,9 @@
             display: flex;
             background: var(--bg-body);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: var(--radius);
             overflow: visible;
-            height: 44px; /* Consistent height */
+            height: 48px; /* Consistent height */
             transition: all 0.2s;
         }
         
@@ -347,8 +347,8 @@
             position: relative; min-width: 90px; cursor: pointer; user-select: none;
             border-left: 1px solid var(--border); display: flex; align-items: center;
             padding: 0 12px; background: transparent; transition: var(--transition);
-            border-top-right-radius: 8px;
-            border-bottom-right-radius: 8px;
+            border-top-right-radius: var(--radius);
+            border-bottom-right-radius: var(--radius);
         }
         .custom-select:hover { background-color: var(--card-bg); }
         
@@ -366,7 +366,7 @@
         .options-menu {
             position: absolute; top: calc(100% + 4px); right: 0;
             min-width: 100px; background: var(--card-bg);
-            border: 1px solid var(--border); border-radius: 8px;
+            border: 1px solid var(--border); border-radius: var(--radius);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             opacity: 0; visibility: hidden; transform: translateY(-10px);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1001;
@@ -386,7 +386,7 @@
         /* Confirm Content (Ensure styles are correct) */
         .confirm-content {
             background: var(--card-bg); width: 100%; max-width: 360px;
-            padding: 32px; border-radius: 20px; border: 1px solid var(--border);
+            padding: 32px; border-radius: 16px; border: 1px solid var(--border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transform: scale(0.95); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -588,11 +588,11 @@
             }
             /* Critical Fix: Reset flex-basis (height in column mode) */
             .form-group, .expiry-group { margin-bottom: 0; width: 100%; flex: 0 0 auto; }
-            .btn { width: 100%; height: 44px; display: flex; justify-content: center; }
+            .btn { width: 100%; height: 48px; display: flex; justify-content: center; }
             
             /* Inputs */
             input, .input-with-unit, .custom-select {
-                height: 44px;
+                height: 48px;
                 font-size: 16px; /* Prevent iOS zoom */
             }
             
