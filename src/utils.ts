@@ -57,9 +57,27 @@ export function validateUrl(url: string): boolean {
 export async function hashUrl(url: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(url);
-  const hashBuffer = await crypto.subtle.digest('MD5', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  try {
+    // 1. 尝试 Web Crypto API (Cloudflare Workers 支持 MD5)
+    // 注意：Node.js 的 WebCrypto 实现不支持 MD5，会抛出 NotSupportedError
+    const hashBuffer = await crypto.subtle.digest('MD5', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e: any) {
+    // 2. 如果不支持 (主要是 Node.js 环境)，回退到 Node 原生 crypto 模块
+    if (e.name === 'NotSupportedError' || e.code === 'ERR_CRYPTO_UNKNOWN_CIPHER') {
+      try {
+        // 动态导入 node:crypto 以避免在非 Node 环境下构建报错
+        const { createHash } = await import('node:crypto');
+        return createHash('md5').update(url).digest('hex');
+      } catch (importError) {
+        console.error('MD5 hashing failed: node:crypto not available', importError);
+        throw e;
+      }
+    }
+    throw e;
+  }
 }
 
 /**
