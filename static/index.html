@@ -2270,6 +2270,7 @@
         function updatePagination(itemCount) {
             let paginationHtml = '';
             
+            // 只有当不在第一页，或者当前页满载（暗示可能有下一页）时才显示分页
             if (currentPage > 1 || itemCount === pageSize) {
                 paginationHtml = `
                     <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color);">

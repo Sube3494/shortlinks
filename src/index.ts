@@ -437,16 +437,19 @@ app.get('/api/list', verifyAPIKey, async (c) => {
   const keyId = c.get('keyId') as number | null;
   const baseURL = resolveBaseURL(c);
   
+  // 获取分页参数
+  const skip = parseInt(c.req.query('skip') || '0');
+  const limit = Math.min(parseInt(c.req.query('limit') || '20'), 100);
+  
   // 只显示自己创建的
-  const links = keyId
-    ? await db.select().from(shortlinks)
+  const query = keyId
+    ? db.select().from(shortlinks)
         .where(eq(shortlinks.createdByKeyId, keyId))
         .orderBy(desc(shortlinks.createdAt))
-        .limit(100)
-    : await db.select().from(shortlinks)
-        .orderBy(desc(shortlinks.createdAt))
-        .limit(100);
+    : db.select().from(shortlinks)
+        .orderBy(desc(shortlinks.createdAt));
 
+  const links = await query.offset(skip).limit(limit);
   
   return c.json(
     links.map((link: any) => ({
