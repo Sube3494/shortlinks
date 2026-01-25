@@ -43,30 +43,22 @@
 
 最适合拥有 VPS 的用户，数据保存在本地。
 
-### 1. 准备配置文件
-复制 `docker-compose.yaml` (如有需要修改 `ADMIN_KEY`)。
+### 1. 准备配置
+复制配置文件模板：
+```bash
+# 复制配置文件
+cp .env.example .env
 
-```yaml
-version: '3.8'
-services:
-  shortlink:
-    image: shortlinks:latest
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/app/data   # 数据库持久化
-    environment:
-      - BASE_URL=http://localhost:8000  # 你的域名
-      - ADMIN_KEY=your-secret-key       # 管理密码
-      - ADMIN_PATH=/admin               # 管理后台路径
+# 编辑配置 (设置 ADMIN_KEY 等)
+vim .env
 ```
+_注意：项目所有配置均通过 `.env` 环境变量管理，`docker-compose.yaml` 不再包含硬编码配置。_
 
 ### 2. 启动服务
 ```bash
 docker-compose up -d
 ```
-访问 `http://localhost:8000` 即可使用。
+默认访问端口为宿主机的 **18000** (可在 `.env` 中修改 `HOST_PORT`)，即 `http://localhost:18000`。
 
 ---
 

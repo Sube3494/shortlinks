@@ -6,14 +6,15 @@ services:
     container_name: shortlink-app
     restart: unless-stopped
     environment:
-      # ==================== 可选配置 ====================
-      - BASE_URL=  # 可选：短链服务基础 URL (例: https://s.example.com)，留空将从请求自动推导
-      - ADMIN_PATH=/admin  # 可选：自定义管理后台路径，默认 /admin
+      # ==================== 核心配置 ====================
+      - ADMIN_KEY=${ADMIN_KEY}                    # [必需] 管理员密钥
+      - DATABASE_URL=${DATABASE_URL}              # [可选] 数据库地址
       
-      # ==================== 必需配置 ====================
-      - ADMIN_KEY=your-super-secret-admin-key  # 必需：管理员密钥
-      - DATABASE_URL=file:./data/shortlinks.db  # 必需：数据库连接字符串
+      # ==================== 可选配置 ====================
+      - BASE_URL=${BASE_URL}                      # [可选] 基础 URL
+      - ADMIN_PATH=${ADMIN_PATH}                  # [可选] 自定义后台路径
+      - PORT=${APP_PORT}                          # [可选] 容器内部监听端口
     ports:
-      - "18000:8000"
+      - "${HOST_PORT}:${APP_PORT}"                # [可选] 宿主机端口:容器端口
     volumes:
       - ./data:/app/data
