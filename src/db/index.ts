@@ -1,3 +1,10 @@
+/*
+ * @Date: 2026-01-09 20:12:00
+ * @Author: Sube
+ * @FilePath: index.ts
+ * @LastEditTime: 2026-01-25 20:56:41
+ * @Description: 
+ */
 import { drizzle as drizzleD1 } from 'drizzle-orm/d1';
 import * as schema from './schema';
 
