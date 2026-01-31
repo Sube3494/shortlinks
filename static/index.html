@@ -1688,6 +1688,11 @@
             background: var(--primary-light); 
             color: var(--primary); 
             border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+            max-width: 150px; /* 限制最大宽度 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle; /* 保持对齐 */
         }
 
         /* Mobile Optimization */
@@ -2758,7 +2763,7 @@
                                     <h3 class="link-title">
                                         <a href="${link.short_url}" target="_blank">${link.short_url}</a>
                                     </h3>
-                                    ${link.title ? `<span class="link-badge title-badge">${link.title}</span>` : ''}
+                                    ${link.title ? `<span class="link-badge title-badge" title="${link.title}">${link.title}</span>` : ''}
                                     ${isExpired ? '<span class="expired-tag">已过期</span>' : ''}
                                 </div>
                                 <div class="link-meta">
