@@ -2306,8 +2306,10 @@
         // 工具函数
         function getHeaders() {
             const headers = { 'Content-Type': 'application/json' };
-            const apiKey = document.getElementById('apiKey').value;
-            if (apiKey) headers['X-API-Key'] = apiKey;
+            const apiKeyInput = document.getElementById('apiKey');
+            if (apiKeyInput && apiKeyInput.value.trim()) {
+                headers['X-API-Key'] = apiKeyInput.value.trim();
+            }
             return headers;
         }
 
@@ -2631,13 +2633,14 @@
                 updatePagination(links.length);
                 
             } catch (err) {
+                console.error('加载链接失败:', err);
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="state-icon" style="background: rgba(239, 68, 68, 0.1);">
                             <i class="fas fa-link-slash" style="color: var(--error);"></i>
                         </div>
                         <h3 class="state-title">服务连接失败</h3>
-                        <p class="state-desc">无法连接到后端 API，请检查服务器状态或 API 密钥。</p>
+                        <p class="state-desc">无法连接到服务器 (${err.message})。请检查网络或 API 设置。</p>
                         <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
                             <button class="btn" style="width: auto;" onclick="loadLinks(1)">
                                 <i class="fas fa-sync-alt"></i> 重试
@@ -2653,7 +2656,7 @@
             // 只有当不在第一页，或者当前页满载（暗示可能有下一页）时才显示分页
             if (currentPage > 1 || itemCount === pageSize) {
                 paginationHtml = `
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <div class="pagination-controls" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color);">
                         <button 
                             class="btn-outline" 
                             onclick="loadLinks(${currentPage - 1})" 
