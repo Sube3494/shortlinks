@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="简单、高效、可靠的短链接生成服务">
     <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>短链服务 - 简单、高效、可靠</title>
@@ -2594,8 +2595,8 @@
                     return `
                         <div class="link-card fade-in-up ${isExpired ? 'expired' : ''}" 
                              style="animation-delay: ${index * 0.1}s; ${isSelected ? 'background: var(--selection-bg); border-color: var(--primary);' : ''}">
-                            <div style="display: flex; align-items: flex-start; gap: 16px; flex: 1; min-width: 0;">
-                                <div style="padding-top: 1px;">
+                            <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
+                                <div style="display: flex;">
                                     <input type="checkbox" class="link-checkbox" 
                                         onclick="toggleSelection('${link.short_code}', event)" 
                                         ${isSelected ? 'checked' : ''}>
@@ -2702,6 +2703,11 @@
             const confirmed = await showConfirm('确定要删除这个短链吗? 此操作无法撤销。');
             if (!confirmed) return;
 
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.loading-spinner').style.display = 'block';
+
             try {
                 const res = await fetch(`${API_BASE}/api/${code}`, {
                     method: 'DELETE',
@@ -2711,10 +2717,13 @@
                     showToast('删除成功', 'success');
                     loadLinks(1);  // 重置到第一页
                 } else {
-                    showToast('删除失败', 'error');
+                    const result = await res.json();
+                    showToast(result.error || '删除失败', 'error');
                 }
             } catch (err) {
                 showToast('请求失败', 'error');
+            } finally {
+                closeConfirmModal();
             }
         }
 
@@ -2803,31 +2812,32 @@
         }
 
         async function deleteExpired() {
-            showConfirm('确定要清除所有已过期的短链接吗？该操作不可撤销。', async () => {
-                const btn = document.getElementById('confirmBtn');
-                btn.disabled = true;
-                btn.querySelector('.btn-text').style.display = 'none';
-                btn.querySelector('.loading-spinner').style.display = 'block';
+            const confirmed = await showConfirm('确定要清除所有已过期的短链接吗？该操作不可撤销。');
+            if (!confirmed) return;
 
-                try {
-                    const res = await fetch(`${API_BASE}/api/delete/expired`, {
-                        method: 'POST',
-                        headers: getHeaders()
-                    });
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.loading-spinner').style.display = 'block';
 
-                    if (res.ok) {
-                        showToast('过期短链已清理', 'success');
-                        loadLinks(1);
-                    } else {
-                        const err = await res.json();
-                        showToast(err.error || '清理失败', 'error');
-                    }
-                } catch (e) {
-                    showToast(e.message, 'error');
-                } finally {
-                    closeConfirmModal();
+            try {
+                const res = await fetch(`${API_BASE}/api/delete/expired`, {
+                    method: 'POST',
+                    headers: getHeaders()
+                });
+
+                if (res.ok) {
+                    showToast('过期短链已清理', 'success');
+                    loadLinks(1);
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || '清理失败', 'error');
                 }
-            });
+            } catch (e) {
+                showToast(e.message, 'error');
+            } finally {
+                closeConfirmModal();
+            }
         }
 
         async function deleteBatch() {
@@ -2835,6 +2845,11 @@
             
             const confirmed = await showConfirm(`确认删除选中的 ${selectedCodes.size} 条记录吗？此操作不可撤销。`);
             if (!confirmed) return;
+
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.loading-spinner').style.display = 'block';
             
             try {
                 const res = await fetch(`${API_BASE}/api/delete/batch`, {
@@ -2845,6 +2860,8 @@
 
                 if (res.ok) {
                     showToast('批量删除成功', 'success');
+                    selectedCodes.clear();
+                    updateBatchBar();
                     loadLinks(currentPage);
                 } else {
                     const result = await res.json();
@@ -2852,6 +2869,8 @@
                 }
             } catch (err) {
                 showToast(err.message, 'error');
+            } finally {
+                closeConfirmModal();
             }
         }
 
@@ -2932,47 +2951,24 @@
         }
 
         // 确认对话框
-        let confirmCallback = null;
+        let confirmResolve = null;
 
-        function showConfirm(message, onConfirm) {
-            confirmCallback = onConfirm;
-            document.getElementById('confirmMessage').textContent = message;
-            
-            const modal = document.getElementById('confirmModal');
-            modal.style.display = 'flex';
-            modal.offsetHeight;
-            modal.classList.add('show');
-            
-            document.getElementById('confirmBtn').onclick = async () => {
-                if (confirmCallback) {
-                    // 设置 Loading 状态
-                    const btn = document.getElementById('confirmBtn');
-                    const text = btn.querySelector('.btn-text');
-                    const spinner = btn.querySelector('.loading-spinner');
-                    
-                    btn.disabled = true;
-                    btn.style.opacity = '0.8';
-                    btn.style.cursor = 'not-allowed';
-                    text.style.display = 'none';
-                    spinner.style.display = 'inline-block';
-                    
-                    try {
-                        // 等待回调执行完成
-                        await confirmCallback();
-                    } catch (err) {
-                    } finally {
-                        // 无论成功失败，恢复状态并关闭
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                        btn.style.cursor = 'pointer';
-                        text.style.display = 'inline-block';
-                        spinner.style.display = 'none';
-                        closeConfirmModal();
-                    }
-                } else {
-                    closeConfirmModal();
-                }
-            };
+        function showConfirm(message) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                document.getElementById('confirmMessage').textContent = message;
+                
+                const modal = document.getElementById('confirmModal');
+                // 重置按钮状态
+                const btn = document.getElementById('confirmBtn');
+                btn.disabled = false;
+                btn.querySelector('.btn-text').style.display = 'block';
+                btn.querySelector('.loading-spinner').style.display = 'none';
+                
+                modal.style.display = 'flex';
+                modal.offsetHeight;
+                modal.classList.add('show');
+            });
         }
 
         function closeConfirmModal() {
@@ -2980,9 +2976,21 @@
             modal.classList.remove('show');
             setTimeout(() => {
                 modal.style.display = 'none';
-                confirmCallback = null;
-            }, 250);
+                if (confirmResolve) {
+                    confirmResolve(false); // 如果是关闭而非点击确认，返回 false
+                    confirmResolve = null;
+                }
+            }, 300);
         }
+
+        // 绑定确认按钮逻辑
+        document.getElementById('confirmBtn').onclick = () => {
+             if (confirmResolve) {
+                const resolve = confirmResolve;
+                confirmResolve = null; // 先清空防止二次触发
+                resolve(true);
+             }
+        };
 
         function closeConfirm(event) {
             if (event.target === document.getElementById('confirmModal')) {
