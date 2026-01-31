@@ -184,22 +184,23 @@
             height: 88px;
             margin: 0 auto 24px auto;
             display: block;
-            border-radius: 24px;
             background: transparent;
             padding: 0;
-            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.4);
+            /* 移除阴影与圆角，使其不再像一个“底座” */
+            box-shadow: none;
+            border-radius: 0;
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             animation: logo-float 6s infinite ease-in-out;
         }
 
         [data-theme="dark"] .header-logo {
             background: transparent;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: none;
         }
 
         .header-logo:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: var(--shadow-glow);
+            transform: scale(1.1); /* 移除旋转，保持简洁 */
+            box-shadow: none;
         }
 
         @keyframes logo-float {
@@ -1927,10 +1928,11 @@
             }
             
             .header-logo {
-                width: 64px; /* 稍微调大一点 */
+                width: 64px;
                 height: 64px;
-                border-radius: 16px;
+                border-radius: 0;
                 margin-bottom: 16px;
+                box-shadow: none;
             }
              
             .settings-btn-container {
