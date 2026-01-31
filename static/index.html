@@ -957,8 +957,9 @@
 
         .expired-tag {
             color: var(--error);
-            background: rgba(255, 77, 77, 0.1);
-            border: 1px solid rgba(255, 77, 77, 0.15);
+            /* 移除背景和边框，使其更轻盈 */
+            background: transparent;
+            border: none;
         }
 
         .link-checkbox {
@@ -1658,26 +1659,40 @@
         }
 
         .link-title-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
             margin-bottom: 8px;
         }
 
         .link-title {
             margin: 0;
             font-size: 1.05rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            line-height: 1;
         }
 
         .link-badge {
-            padding: 2px 10px; 
+            padding: 1px 10px; 
             border-radius: var(--radius-pill); 
             font-size: 0.75rem; 
-            font-weight: 600; 
+            font-weight: 500; 
             display: inline-flex;
             align-items: center;
             line-height: 1;
+            font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+        }
+
+        .link-title a {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
         }
 
         .title-badge {
@@ -1688,6 +1703,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            display: inline-block; /* 确保截断在行内块中生效 */
+            flex-shrink: 0; /* 防止备注标签被压缩 */
         }
 
         /* Mobile Optimization */
@@ -1759,7 +1776,7 @@
 
             .link-title {
                 font-size: 1rem;
-                line-height: 1.4;
+                line-height: 1;
                 margin-top: 0;
             }
 
@@ -2222,6 +2239,35 @@
 
     <script>
         const API_BASE = window.location.origin;
+        
+        // 环境检测
+        const isLocal = () => 
+            window.location.hostname === 'localhost' || 
+            window.location.hostname === '127.0.0.1' || 
+            window.location.protocol === 'file:';
+
+        // 仅在本地显示的测试数据
+        const TEST_LINKS = [
+            {
+                short_code: 'local-demo-1',
+                short_url: 'https://shortlinks.sube.top/demo-repo',
+                original_url: 'https://github.com/Sube3494/shortlinks',
+                title: '测试备注：开源仓库',
+                click_count: 520,
+                created_at: new Date().toISOString(),
+                expires_at: null
+            },
+            {
+                short_code: 'local-demo-2',
+                short_url: 'https://shortlinks.sube.top/demo-expired',
+                original_url: 'https://sube.top',
+                title: '测试备注：已过期的短链',
+                click_count: 13,
+                created_at: '2024-12-01T10:00:00',
+                expires_at: '2025-01-01T10:00:00'
+            }
+        ];
+
         let currentBatchResults = [];
         let selectedCodes = new Set();
         // 分页状态
@@ -2696,7 +2742,12 @@
                 }
                 
                 if (!res.ok) throw new Error('加载失败');
-                const links = await res.json();
+                let links = await res.json();
+
+                // 本地环境在第一页注入测试数据
+                if (isLocal() && page === 1) {
+                    links = [...TEST_LINKS, ...links];
+                }
 
                 if (!links.length && page === 1) {
                     renderEmptyState(container);
@@ -2710,6 +2761,14 @@
                 
             } catch (err) {
                 console.error('加载链接失败:', err);
+                
+                // 本地环境下，即使请求失败也尝试渲染测试数据
+                if (isLocal() && page === 1) {
+                    renderLinks(TEST_LINKS, container);
+                    updatePagination(TEST_LINKS.length);
+                    return;
+                }
+
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="state-icon" style="background: rgba(239, 68, 68, 0.1);">
@@ -2755,15 +2814,14 @@
                                 <div class="link-title-row">
                                     <h3 class="link-title">
                                         <a href="${link.short_url}" target="_blank">${link.short_url}</a>
+                                        ${link.title ? `<span class="link-badge title-badge" title="${link.title}">${link.title}</span>` : ''}
                                     </h3>
-                                    ${link.title ? `<span class="link-badge title-badge" title="${link.title}">${link.title}</span>` : ''}
-                                    ${isExpired ? '<span class="link-badge expired-tag">已过期</span>' : ''}
                                 </div>
                                 <div class="link-meta">
                                     <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
                                     <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count} 访问</span>
                                     ${link.expires_at ? 
-                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
+                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}${isExpired ? ' (已过期)' : ''}</span>` : 
                                         '<span class="link-tag"><i class="fas fa-infinity"></i> 永久有效</span>'}
                                 </div>
                             </div>
