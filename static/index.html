@@ -1632,8 +1632,8 @@
         /* Mobile Optimization */
         @media screen and (max-width: 768px) {
             .container {
-                /* Increased top padding to clear fixed buttons (16px top + 40px button + spacing) */
-                padding: 80px 20px 40px; 
+                /* Reduced top padding, increased bottom for scrolling space */
+                padding: 24px 16px 80px;
             }
             
             .header {
@@ -1644,45 +1644,64 @@
             }
             
             .card { 
-                padding: 24px 20px; 
+                padding: 20px 16px; 
             }
             
             /* 移动端卡片重新设计 */
             .link-card { 
                 flex-direction: column;
                 align-items: stretch;
-                padding: 14px;
-                gap: 0;
+                padding: 16px;
+                gap: 12px;
             }
             
+            .link-card > div:first-child {
+                display: flex;
+                align-items: flex-start; /* 顶部对齐，防止checkbox在中间 */
+                width: 100%;
+                gap: 12px;
+            }
+
+            .link-checkbox {
+                margin-top: 4px; /* 微调对齐 */
+                flex-shrink: 0; /* 防止压缩 */
+            }
+
             .link-info {
                 width: 100%;
-                margin-bottom: 12px;
+                flex: 1;
+                min-width: 0; /* 防止文本溢出 */
+                margin-bottom: 0;
             }
             
             .link-info h3 {
-                font-size: 0.9rem;
-                margin-bottom: 10px;
+                font-size: 1rem;
+                margin-bottom: 8px;
+                line-height: 1.4;
+                word-break: break-all;
             }
             
             .link-meta {
-                font-size: 0.7rem;
-                gap: 10px;
+                font-size: 0.75rem;
+                gap: 8px 12px; /* 行间距8px 列间距12px */
                 flex-wrap: wrap;
+                margin-top: 8px;
             }
             
             .link-actions { 
                 display: flex;
-                justify-content: flex-end;
-                gap: 6px;
+                justify-content: flex-end; /* 右对齐 */
+                gap: 8px;
                 padding-top: 12px;
                 border-top: 1px solid var(--border-color);
+                width: 100%;
+                margin-top: 4px;
             }
             
             .action-btn {
-                width: 36px;
-                height: 36px;
-                font-size: 0.9rem;
+                width: 40px; /* 增大触控区域 */
+                height: 40px;
+                font-size: 1rem;
             }
             
             .link-original { 
@@ -1701,18 +1720,17 @@
             }
             .form-grid-row {
                 grid-template-columns: 1fr !important;
-                gap: 0 !important;
+                gap: 16px !important;
             }
 
 
             
-            /* Toast Position for Mobile: Top Center (Safe Layout) */
+            /* Toast Position for Mobile */
             .toast-container {
                 bottom: auto;
-                right: auto;
-                top: 80px; /* Below the fixed buttons line */
+                top: 80px; 
                 left: 16px;
-                right: 16px; /* Use left/right anchor instead of transform for safety */
+                right: 16px;
                 width: auto;
                 max-width: none;
                 transform: none;
@@ -1721,23 +1739,24 @@
             
             .toast {
                 width: 100%;
-                justify-content: center;
+                justify-content: flex-start; /* 内容左对齐更好读 */
+                padding: 14px 18px;
                 box-shadow: var(--shadow-float);
                 animation: slideDownTop 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-                /* Ensure text doesn't overflow */
                 white-space: normal;
+                text-align: left;
             }
             
-            /* Larger Touch Targets - 只对主要输入元素 */
-            .btn, input, .tab {
-                min-height: 44px;
+            /* Larger Touch Targets */
+            .btn, .input-wrapper, input, .tab, .custom-select {
+                min-height: 48px;
             }
             
             .tabs-container {
                 overflow-x: auto;
-                margin-left: -20px;
-                margin-right: -20px;
-                padding: 0 20px 4px 20px;
+                margin-left: -16px;
+                margin-right: -16px;
+                padding: 0 16px 4px 16px;
                 -webkit-overflow-scrolling: touch;
             }
             
@@ -1749,6 +1768,7 @@
                 flex: 1;
                 justify-content: center;
                 white-space: nowrap;
+                padding: 10px 16px;
             }
             
             /* Admin Panel Mobile Optimization */
@@ -1761,6 +1781,10 @@
                 flex-direction: column;
                 align-items: stretch;
             }
+
+            .input-group {
+                margin-bottom: 20px; /* 增加间距 */
+            }
             
             .input-group .input-wrapper, 
             .form-row .form-group,
@@ -1771,12 +1795,12 @@
             }
             
             /* Modal Mobile Fullscreen/Bottom Sheet */
-            .modal-content, .stats-modal-content, .confirm-content {
+            .modal-content, .stats-modal-content, .confirm-content, .settings-content {
                 width: 90% !important;
                 max-width: none !important;
                 max-height: 85vh;
                 margin: 20px auto;
-                padding: 24px;
+                padding: 24px 20px;
             }
             
             /* Adjust spacing for key generator */
@@ -1788,22 +1812,19 @@
             }
             
             .header-logo {
-                width: 48px;
-                height: 48px;
-                border-radius: 12px;
+                width: 64px; /* 稍微调大一点 */
+                height: 64px;
+                border-radius: 16px;
+                margin-bottom: 16px;
             }
              
-            .header h1 {
-                font-size: 1.75rem;
-            }
-            
             .settings-btn-container {
                 right: 16px; 
                 top: 16px;
                 gap: 8px;
             }
 
-            /* 针对 input-with-unit 在窄屏下的最后优化（确保优先级） */
+            /* input-with-unit 移动端适配 */
             .input-with-unit {
                 width: 100% !important;
                 display: flex !important;
@@ -1813,18 +1834,20 @@
             .input-with-unit .input-wrapper {
                 min-width: 0 !important;
                 flex: 1 !important;
+                border-radius: var(--radius-pill) 0 0 var(--radius-pill) !important;
             }
             
             .custom-select {
-                min-width: 70px !important;
+                min-width: 90px !important; /* 保证文字显示 */
                 flex-shrink: 0 !important;
-                padding: 0 8px !important;
+                padding: 0 12px !important;
                 width: auto !important;
+                justify-content: center;
             }
 
             .selected-value {
-                font-size: 0.85rem !important;
-                margin-right: 4px !important;
+                font-size: 0.9rem !important;
+                margin-right: 6px !important;
             }
         }
     </style>
