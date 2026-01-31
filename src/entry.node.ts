@@ -18,35 +18,35 @@ const client = createClient({
   url: dbUrl,
 });
 
-// 确保目录存在
-if (dbUrl.startsWith('file:')) {
-  const dbPath = dbUrl.slice(5);
-  const dir = path.dirname(dbPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+// 确保数据库准备就绪的异步逻辑
+async function initializeDatabase() {
+  if (dbUrl.startsWith('file:')) {
+    const dbPath = dbUrl.slice(5);
+    const dir = path.dirname(dbPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
 
-  // 自动同步数据库结构 (Auto-Migration)
-  try {
-    console.log('[Database] 正在同步数据库结构...');
-    // 使用 --force 强制推送，避免 Docker 环境下的交互式询问导致挂起或失败
-    const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push --force' : 'pnpm drizzle-kit push --force';
-    execSync(cmd, { stdio: 'inherit' });
-    console.log('[Database] 数据库结构同步完成');
-  } catch (error) {
-    console.error('[Database] 自动同步失败，尝试手动修复字段...', error);
+    // 自动同步数据库结构 (Auto-Migration)
     try {
-      // 容错：如果 push 失败（通常是因为并发或锁），尝试手动补全缺失的 title 字段
-      await client.execute({
-        sql: 'ALTER TABLE shortlinks ADD COLUMN title TEXT',
-        args: []
-      });
-      console.log('[Database] 手动补齐 title 字段完成');
-    } catch (manualError: any) {
-      if (manualError?.message?.includes('duplicate column name') || manualError?.message?.includes('already exists')) {
-        console.log('[Database] 字段解析：title 字段已存在');
-      } else {
-        console.error('[Database] 手动修复失败:', manualError);
+      console.log('[Database] 正在同步数据库结构...');
+      const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push --force' : 'pnpm drizzle-kit push --force';
+      execSync(cmd, { stdio: 'inherit' });
+      console.log('[Database] 数据库结构同步完成');
+    } catch (error) {
+      console.error('[Database] 自动同步失败，尝试手动修复字段...', error);
+      try {
+        await client.execute({
+          sql: 'ALTER TABLE shortlinks ADD COLUMN title TEXT',
+          args: []
+        });
+        console.log('[Database] 手动补齐 title 字段完成');
+      } catch (manualError: any) {
+        if (manualError?.message?.includes('duplicate column name') || manualError?.message?.includes('already exists')) {
+          console.log('[Database] 字段解析：title 字段已存在');
+        } else {
+          console.error('[Database] 手动修复失败:', manualError);
+        }
       }
     }
   }
@@ -57,19 +57,15 @@ const server = new Hono();
 
 // 1. 注入环境变量和 DB (最优先)
 server.use('*', async (c, next) => {
-  // Polyfill ASSETS.fetch 用于 index.html 和 admin.html 的加载
   const assetsFetcher = {
     fetch: async (request: Request) => {
       try {
         const url = new URL(request.url);
-        // 主程序中请求的是 mock URL (e.g. https://placeholder/index.html)
-        // 我们只需要文件名
         const filename = path.basename(url.pathname);
         const filePath = path.resolve('./static', filename);
         
         if (fs.existsSync(filePath)) {
            const content = fs.readFileSync(filePath);
-           // 简单设置 HTML 类型，其他类型通常由 serveStatic 处理
            return new Response(content, {
              headers: { 'Content-Type': 'text/html; charset=utf-8' }
            });
@@ -91,44 +87,31 @@ server.use('*', async (c, next) => {
   await next();
 });
 
-// 2. 静态文件服务 (优先于应用路由)
-// 这样请求 /shortlink.png 会先被这里拦截，不会落入 app 的 /:code 路由
+// 2. 静态文件服务
 server.use('/*', serveStatic({ root: path.resolve('./static') }));
 
 server.route('/', app);
 
-// 启动服务器
-// 优先使用 PORT 环境变量，其次尝试从 BASE_URL 解析端口，默认 8000
+// 启动参数解析
 let port = parseInt(process.env.PORT || '');
 if (isNaN(port) && process.env.BASE_URL) {
   try {
     const url = new URL(process.env.BASE_URL);
-    if (url.port) {
-      port = parseInt(url.port);
-    }
-  } catch (e) {
-    // 忽略 URL 解析错误
-  }
+    if (url.port) port = parseInt(url.port);
+  } catch (e) {}
 }
-if (isNaN(port)) {
-  port = 8000;
-}
-
+if (isNaN(port)) port = 8000;
 
 import { cleanupExpiredLinks, cleanupTaskHook, getMsUntilNextBeijingMidnight } from './utils';
-
-// Docker 每日定时清理管理 (零开销：精确计算 + 仅在开启时执行)
 let cleanupTimeout: any = null;
 
 async function manageCleanupTask() {
-  // 销毁旧闹钟
   if (cleanupTimeout) {
     clearTimeout(cleanupTimeout);
     cleanupTimeout = null;
   }
 
   try {
-    // 检查数据库开关
     const result = await client.execute({
       sql: 'SELECT value FROM system_config WHERE key = ?',
       args: ['cleanup_enabled']
@@ -143,7 +126,6 @@ async function manageCleanupTask() {
         console.log(`[Cleanup Manager] 0 点已到，开始每日清理...`);
         const count = await cleanupExpiredLinks(client);
         console.log(`[Cleanup Manager] 清理完成，删除了 ${count} 条记录`);
-        // 安排明天的清理
         manageCleanupTask();
       }, ms);
     } else {
@@ -154,14 +136,22 @@ async function manageCleanupTask() {
   }
 }
 
-// 注册钩子，让 API 可以实时控制后台任务
 cleanupTaskHook.refresh = manageCleanupTask;
 
-// 启动时初始化任务
-manageCleanupTask();
+// 统一启动入口
+async function start() {
+  await initializeDatabase();
+  await manageCleanupTask();
+  
+  console.log(`[Server] 服务已启动，监听端口: ${port}`);
+  serve({
+    fetch: server.fetch,
+    port,
+  });
+}
 
-serve({
-  fetch: server.fetch,
-  port,
+start().catch(err => {
+  console.error('[Fatal] 服务启动失败:', err);
+  process.exit(1);
 });
 
