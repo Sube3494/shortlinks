@@ -1759,13 +1759,13 @@
             
             .link-title-row {
                 margin-bottom: 6px; /* 减小间距 */
-                align-items: flex-start; /* 顶部对齐 */
+                align-items: center; /* 垂直居中对齐，修复备注不对齐问题 */
             }
 
             .link-title {
                 font-size: 1rem;
                 line-height: 1.4;
-                margin-top: -2px; /* 视觉对齐 */
+                margin-top: 0; /* 移除视觉对齐的负边距 */
             }
             
             .link-meta {
@@ -2152,9 +2152,6 @@
             <div class="links-header">
                 <button class="refresh-btn" onclick="loadLinks()">
                     <i class="fas fa-sync-alt"></i> 刷新
-                </button>
-                <button class="refresh-btn" onclick="loadMockData()" style="margin-left: 10px;">
-                    <i class="fas fa-vial"></i> 测试数据
                 </button>
             </div>
 
@@ -2782,87 +2779,16 @@
                             <button class="action-btn" onclick="window.open('${link.short_url}', '_blank')" title="立即开启">
                                 <i class="fas fa-external-link-alt"></i>
                             </button>
-                            ${link.is_mock ? '' : `
                             <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细数据">
                                 <i class="fas fa-chart-line"></i>
                             </button>
                             <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="彻底删除">
                                 <i class="far fa-trash-alt"></i>
-                            </button>`}
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        function loadMockData() {
-            // 清理选择状态
-            selectedCodes.clear();
-            updateBatchBar();
-            
-            const container = document.getElementById('linksContainer');
-            // Mock Data
-            const now = new Date();
-            const mockLinks = [
-                {
-                    short_code: 'mock-1',
-                    short_url: `${API_BASE}/mock-1`,
-                    original_url: 'https://example.com',
-                    title: '测试永久链接',
-                    created_at: now.toISOString(),
-                    click_count: 128,
-                    expires_at: null,
-                    is_mock: true
-                },
-                {
-                    short_code: 'mock-2',
-                    short_url: `${API_BASE}/mock-very-long-code-for-testing-layout`,
-                    original_url: 'https://github.com',
-                    title: '超长标题测试：这里是一个非常非常长长长长长长长长长的标题，用于测试移动端换行显示效果是否正常',
-                    created_at: new Date(now.getTime() - 86400000).toISOString(),
-                    click_count: 50,
-                    expires_at: new Date(now.getTime() + 3600000).toISOString(), // 1小时后过期
-                    is_mock: true
-                },
-                {
-                    short_code: 'mock-3',
-                    short_url: `${API_BASE}/expired`,
-                    original_url: 'https://google.com',
-                    title: '已过期链接',
-                    created_at: new Date(now.getTime() - 172800000).toISOString(),
-                    click_count: 0,
-                    expires_at: new Date(now.getTime() - 3600000).toISOString(), // 1小时前过期
-                    is_mock: true
-                },
-                {
-                    short_code: 'mock-4',
-                    short_url: `${API_BASE}/mk4`,
-                    original_url: 'https://bilibili.com',
-                    title: '无标题链接',
-                    created_at: now.toISOString(),
-                    click_count: 9999,
-                    expires_at: null,
-                    is_mock: true
-                },
-                 {
-                    short_code: 'mock-5',
-                    short_url: `${API_BASE}/mk5`,
-                    original_url: 'https://bilibili.com',
-                    title: '无标题链接',
-                    created_at: now.toISOString(),
-                    click_count: 9999,
-                    expires_at: null,
-                    is_mock: true
-                }
-            ];
-
-            renderLinks(mockLinks, container);
-            
-            // 隐藏分页
-            const pagination = document.getElementById('paginationContainer');
-            if (pagination) pagination.style.display = 'none';
-            
-            showToast('已加载测试数据', 'info');
         }
 
         function updatePagination(itemCount) {
