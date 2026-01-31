@@ -19,10 +19,12 @@
 ## ✨ 功能特性
 
 ### 核心功能
-- [x] **极简短链**：支持生成短码、自定义短码。
+- [x] **极简短链**：支持生成短码、自定义短码（支持 4 位以上）。
 - [x] **智能防重**：相同 URL 自动复用已有短链，避免资源浪费。
 - [x] **有效期管理**：支持设置分钟、小时、天级别的过期时间。
+- [x] **备注/昵称**：支持为短链添加昵称，方便管理及防止误删。
 - [x] **访问统计**：记录点击次数、最后访问时间。
+- [x] **批量管理**：支持批量创建链接及一键勾选批量删除记录。
 - [x] **安全认证**：API Key 机制，支持 Header/Query/Bearer 多种认证方式。
 
 ### 架构亮点
@@ -128,7 +130,7 @@ pnpm run dev:node
 curl -X POST http://localhost:8000/api/shorten \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://www.example.com", "custom_code": "my-link"}'
+  -d '{"url": "https://www.example.com", "custom_code": "work", "title": "项目主页"}'
 ```
 
 **获取统计**

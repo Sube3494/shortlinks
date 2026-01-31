@@ -462,7 +462,12 @@
                     <div class="param-item">
                         <span class="param-name">custom_code</span>
                         <span class="badge optional">可选</span>
-                        <div class="param-desc">自定义短码 (6-10个字符)</div>
+                        <div class="param-desc">自定义短码 (4-10个字符)</div>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-name">title</span>
+                        <span class="badge optional">可选</span>
+                        <div class="param-desc">短链备注/昵称 (用于识别)</div>
                     </div>
                     <div class="param-item">
                         <span class="param-name">expires_in_hours</span>
@@ -475,7 +480,8 @@
                 <div class="code-block">
 <pre>{
   "url": "https://www.example.com/very/long/url",
-  "custom_code": "my-link",
+  "custom_code": "work",
+  "title": "工作文档",
   "expires_in_hours": 24
 }</pre>
                 </div>
@@ -483,9 +489,10 @@
                 <div class="code-label" style="margin-top: 16px;">响应示例</div>
                 <div class="code-block">
 <pre>{
-  "short_code": "my-link",
-  "short_url": "http://localhost:8000/my-link",
+  "short_code": "work",
+  "short_url": "http://localhost:8000/work",
   "original_url": "https://www.example.com/very/long/url",
+  "title": "工作文档",
   "created_at": "2024-01-01T12:00:00",
   "click_count": 0,
   "expires_at": "2024-01-02T12:00:00"
@@ -511,6 +518,11 @@
                         <span class="param-name">expires_in_days</span>
                         <span class="badge optional">可选</span>
                         <div class="param-desc">过期天数</div>
+                    </div>
+                    <div class="param-item">
+                        <span class="param-name">title</span>
+                        <span class="badge optional">可选</span>
+                        <div class="param-desc">统一备注/昵称</div>
                     </div>
                 </div>
 
@@ -573,6 +585,28 @@
                     <span class="endpoint-path">/api/{short_code}</span>
                 </div>
                 <p class="endpoint-desc">删除指定的短链</p>
+            </div>
+
+            <!-- 批量删除 -->
+            <div class="endpoint">
+                <div class="endpoint-header">
+                    <span class="method post">POST</span>
+                    <span class="endpoint-path">/api/delete/batch</span>
+                </div>
+                <p class="endpoint-desc">批量删除指定的短链</p>
+                <div class="params">
+                    <div class="param-item">
+                        <span class="param-name">codes</span>
+                        <span class="badge required">必需</span>
+                        <div class="param-desc">短码数组，例如: ["code1", "code2"]</div>
+                    </div>
+                </div>
+                <div class="code-label" style="margin-top: 16px;">请求示例</div>
+                <div class="code-block">
+<pre>{
+  "codes": ["work", "test-link"]
+}</pre>
+                </div>
             </div>
 
             <!-- 短链重定向 -->

@@ -15,59 +15,68 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Indigo Theme - Enhanced */
-            --bg-color: #f8fafc;
-            --surface-color: #ffffff;
-            --secondary-bg: #f1f5f9;
-            --border-color: #e2e8f0;
-            --text-main: #0f172a;
-            --text-secondary: #64748b;
+            /* Classic Blue HSL Palette */
+            --primary-h: 217;
+            --primary-s: 91%;
+            --primary-l: 60%;
             
-            /* Modern Blue Primary */
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --primary-light: rgba(59, 130, 246, 0.1);
+            --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+            --primary-hover: hsl(var(--primary-h), var(--primary-s), calc(var(--primary-l) - 10%));
+            --primary-light: hsl(var(--primary-h), var(--primary-s), 95%);
             --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             
+            --bg-color: #fbfbfe;
+            --surface-color: #ffffff;
+            --secondary-bg: #f8f9ff;
+            --border-color: rgba(226, 232, 240, 0.8);
+            --text-main: #1a1a2e;
+            --text-secondary: #6b7280;
+            
             --success: #10b981;
-            --error: #ef4444;
+            --error: #ff4d4d;
             --warning: #f59e0b;
             
-            /* Enhanced Shadows */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
-            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            --shadow-float: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.3);
+            /* Glassmorphism & Depth */
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --card-border: rgba(226, 232, 240, 0.5);
             
-            --radius: 16px;
-            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+            --shadow: 0 10px 25px -5px rgba(31, 38, 135, 0.08), 0 8px 10px -6px rgba(31, 38, 135, 0.05);
+            --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+            --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.25);
+            
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-pill: 99px; /* 专门用于胶囊形状 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Batch Actions Styles */
+            --selection-bg: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.08);
             
             /* Texture */
-            --dot-color: #cbd5e1;
-            --glass-bg: rgba(255, 255, 255, 0.8);
+            --dot-color: rgba(203, 213, 225, 0.5);
         }
 
         [data-theme="dark"] {
-            --bg-color: #020617;
-            --surface-color: #0f172a;
-            --secondary-bg: #1e293b;
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-secondary: #94a3b8;
+            --bg-color: #030712;
+            --surface-color: #111827;
+            --secondary-bg: #1f2937;
+            --border-color: rgba(55, 65, 81, 0.5);
+            --text-main: #f9fafb;
+            --text-secondary: #9ca3af;
             
-            --primary: #60a5fa;
-            --primary-hover: #3b82f6;
-            --primary-light: rgba(96, 165, 250, 0.15);
-            --primary-gradient: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            --primary-l: 65%;
+            --primary-light: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
             
-            --success: #34d399;
-            --error: #f87171;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.2);
+            --glass-bg: rgba(17, 24, 39, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(55, 65, 81, 0.3);
             
-            --dot-color: #1e293b;
-            --glass-bg: rgba(15, 23, 42, 0.8);
+            --shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 30px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+            
+            --dot-color: rgba(55, 65, 81, 0.3);
         }
 
         * {
@@ -87,12 +96,46 @@
             line-height: 1.5;
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s ease;
+            transition: var(--transition);
+            overflow-x: hidden;
             
-            /* Refined Dot Matrix */
-            background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
-            background-size: 32px 32px;
-            background-position: center;
+            /* Decorative Animated Background */
+            background-image: 
+                radial-gradient(circle at 10% 20%, hsla(var(--primary-h), 80%, 90%, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, hsla(210, 80%, 90%, 0.4) 0%, transparent 40%),
+                radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+            background-size: 100% 100%, 100% 100%, 40px 40px;
+            background-attachment: fixed;
+        }
+
+        [data-theme="dark"] body {
+            background-image: 
+                radial-gradient(circle at 10% 20%, hsla(var(--primary-h), 40%, 15%, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, hsla(210, 40%, 15%, 0.4) 0%, transparent 40%),
+                radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
+        }
+
+        /* Abstract blobs for added texture */
+        body::before, body::after {
+            content: "";
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: var(--primary);
+            filter: blur(120px);
+            opacity: 0.05;
+            z-index: -1;
+            pointer-events: none;
+            animation: blob-float 20s infinite alternate cubic-bezier(0.45, 0, 0.55, 1);
+        }
+
+        body::before { top: -10%; left: -10%; background: var(--primary); }
+        body::after { bottom: -10%; right: -10%; background: #60a5fa; animation-delay: -10s; }
+
+        @keyframes blob-float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, 10%) scale(1.1); }
         }
 
         .container {
@@ -108,60 +151,83 @@
         /* Header */
         .header {
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 24px;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            position: relative;
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            letter-spacing: -0.03em;
+            font-size: 3rem;
+            font-weight: 850;
+            margin-bottom: 16px;
+            letter-spacing: -0.05em;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             display: inline-block;
+            filter: drop-shadow(0 2px 10px rgba(99, 102, 241, 0.15));
         }
 
         .header p {
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
+            font-weight: 500;
+            max-width: 500px;
+            margin: 0 auto;
             line-height: 1.6;
         }
 
         .header-logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px auto;
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 24px auto;
             display: block;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 24px;
+            background: white;
+            padding: 4px;
+            box-shadow: 
+                0 10px 30px -10px rgba(99, 102, 241, 0.4),
+                0 0 0 1px var(--card-border);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: logo-float 6s infinite ease-in-out;
+        }
+
+        [data-theme="dark"] .header-logo {
+            background: var(--surface-color);
+            box-shadow: 
+                0 10px 30px -5px rgba(0, 0, 0, 0.5),
+                0 0 0 1px var(--border-color);
         }
 
         .header-logo:hover {
-            transform: scale(1.1) rotate(3deg);
+            transform: scale(1.1) rotate(5deg);
             box-shadow: var(--shadow-glow);
+        }
+
+        @keyframes logo-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         /* Card/Section */
         .card {
             position: relative;
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
             border-radius: var(--radius);
             padding: 32px;
             margin-bottom: 32px;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
         }
         
         .card:hover {
             box-shadow: var(--shadow-lg);
-            border-color: var(--primary);
-            transform: translateY(-2px);
+            border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3);
+            transform: translateY(-4px);
         }
 
         /* Input with Unit Group */
@@ -169,12 +235,12 @@
             display: flex;
             align-items: stretch;
             position: relative;
-            background: var(--surface-color);
+            background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            overflow: visible; /* 改为 visible 以允许下拉菜单溢出 */
-            transition: border-color 0.2s, box-shadow 0.2s;
-            height: 48px;
+            border-radius: var(--radius-sm);
+            overflow: hidden; /* 强制裁剪溢出 */
+            transition: var(--transition);
+            height: 52px;
         }
 
         .input-with-unit .input-wrapper {
@@ -189,20 +255,23 @@
             border: none !important;
             border-radius: 0 !important;
             background: transparent !important;
-            padding: 10px 16px 10px 40px !important; /* 留出图标位置 */
+            padding: 10px 16px 10px 44px !important;
             margin: 0;
             box-shadow: none !important;
+            font-size: 1rem;
+            color: var(--text-main);
+            font-weight: 500;
         }
 
         .input-with-unit .input-wrapper i {
             position: absolute;
-            left: 14px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 1rem;
             pointer-events: none;
-            transition: color 0.2s;
+            transition: var(--transition);
             z-index: 2;
         }
 
@@ -215,11 +284,11 @@
             border-left: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            padding: 0 12px;
+            padding: 0 20px 0 16px; /* 增加右边距适配圆角 */
             background: transparent;
             transition: var(--transition);
-            border-top-right-radius: var(--radius);
-            border-bottom-right-radius: var(--radius);
+            border-top-right-radius: var(--radius-pill);
+            border-bottom-right-radius: var(--radius-pill);
         }
 
         .custom-select:hover {
@@ -251,7 +320,7 @@
             min-width: 120px;
             background: var(--surface-color);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius);
+            border-radius: 12px; /* 菜单保持规整圆角 */
             box-shadow: var(--shadow-lg);
             opacity: 0;
             visibility: hidden;
@@ -302,9 +371,14 @@
 
         /* Unified Focus State */
         .input-with-unit:focus-within {
+            background: var(--surface-color);
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+            box-shadow: 0 0 0 4px var(--primary-light);
             z-index: 10;
+        }
+
+        .input-with-unit:focus-within i {
+            color: var(--primary);
         }
         
         /* Remove Spinners */
@@ -383,17 +457,90 @@
 
         .input-wrapper {
             position: relative;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-pill); /* 仅输入框使用胶囊形 */
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            height: 48px; /* 统一高度 */
+        }
+
+        .input-wrapper:focus-within {
+            background: var(--surface-color);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+        }
+
+        /* 彻底统一 input-with-unit 内部结构 */
+        .input-with-unit {
+            display: flex;
+            align-items: stretch;
+            position: relative;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-pill);
+            height: 48px; /* 统一高度 */
+            /* 取消溢出裁剪，以防裁剪下拉框。改用子元素圆角校正 */
+            overflow: visible; 
+            transition: var(--transition);
+        }
+
+        .input-with-unit .input-wrapper {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: var(--radius-pill) 0 0 var(--radius-pill) !important;
+            flex: 1;
+            overflow: hidden; /* 仅内部包装器裁剪 */
+        }
+
+        .input-with-unit input {
+            padding-right: 12px !important; /* 调整间距 */
+        }
+
+        .input-with-unit:focus-within {
+            background: var(--surface-color);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+            z-index: 10;
+        }
+
+        .input-wrapper input, .input-wrapper textarea {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: none !important;
+            background: transparent !important;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 500;
+            outline: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .input-wrapper textarea {
+            border-radius: var(--radius) !important;
+        }
+
+        .input-wrapper textarea {
+            min-height: 120px;
+            resize: vertical;
         }
 
         .input-wrapper i {
             position: absolute;
-            left: 14px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-secondary);
-            font-size: 0.95rem; /* Slightly larger */
+            font-size: 1rem;
             pointer-events: none;
-            transition: color 0.2s;
+            transition: var(--transition);
+        }
+
+        .input-wrapper:focus-within i {
+            color: var(--primary);
         }
         
         .input-wrapper:focus-within i {
@@ -402,25 +549,34 @@
 
         input[type="text"], input[type="password"], input[type="number"], textarea {
             width: 100%;
-            padding: 10px 14px 10px 40px; /* More padding */
+            padding: 12px 16px 12px 44px; /* 与 wrapper 内部對齐 */
             border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            font-size: 0.95rem;
-            background: var(--surface-color); /* Plain white bg for inputs */
+            border-radius: var(--radius-pill);
+            font-size: 1rem;
+            background: var(--secondary-bg);
             color: var(--text-main);
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: var(--transition);
             font-family: inherit;
+            outline: none;
         }
 
         textarea {
-            padding: 12px;
+            padding: 16px;
             min-height: 120px;
+            border-radius: var(--radius) !important; /* 文本框不应该用胶囊形 */
         }
 
         input:focus, textarea:focus {
-            outline: none;
+            background: var(--surface-color) !important;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-light);
+            box-shadow: 0 0 0 3px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.15);
+        }
+
+        /* 当 input 在 wrapper 内部时，禁用其自带的聚焦阴影，由 wrapper 统一处理 */
+        .input-wrapper input:focus, 
+        .input-with-unit input:focus {
+            box-shadow: none !important;
+            border-color: transparent !important;
         }
 
         /* Buttons */
@@ -430,7 +586,7 @@
             border: 1px solid transparent;
             padding: 0 24px;
             height: 48px;
-            border-radius: 12px;
+            border-radius: var(--radius-pill);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -464,12 +620,13 @@
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: var(--radius);
-            font-size: 0.85rem;
+            padding: 0 24px;
+            height: 48px;
+            border-radius: var(--radius-pill);
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -604,6 +761,27 @@
             transform: translateY(-2px) scale(1.05);
             box-shadow: var(--shadow-float);
         }
+
+        .settings-btn.in-card {
+            position: absolute;
+            top: 28px;
+            right: 32px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            width: 32px;
+            height: 32px;
+            z-index: 10;
+            border-radius: 8px;
+        }
+
+        .settings-btn.in-card:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            transform: rotate(45deg) scale(1.1);
+            border-color: transparent;
+            box-shadow: none;
+        }
         
         .theme-toggle:active, .settings-btn:active, .github-btn:active {
             transform: scale(0.95);
@@ -712,23 +890,27 @@
         }
 
         .link-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            padding: 16px;
-            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 18px 20px;
+            margin-bottom: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        [data-theme="dark"] .link-card {
+            background: rgba(31, 41, 55, 0.3);
         }
 
         .link-card:hover {
-            border-color: var(--primary);
+            background: var(--surface-color);
+            border-color: hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.4);
             box-shadow: var(--shadow);
-            transform: translateY(-2px);
+            transform: translateX(4px);
         }
 
         .link-info h3 {
@@ -779,9 +961,58 @@
         .expired-tag {
             color: var(--error);
             font-weight: 600;
-            background: rgba(239, 68, 68, 0.1);
-            padding: 2px 6px;
-            border-radius: 4px;
+            background: rgba(255, 77, 77, 0.1);
+            padding: 2px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            border: 1px solid rgba(255, 77, 77, 0.15);
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+
+        .link-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            background: var(--surface-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .link-checkbox:checked {
+            background: transparent !important;
+            border-color: var(--primary) !important;
+        }
+
+        .link-checkbox:checked::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: var(--primary);
+            font-size: 11px;
+            line-height: 1;
+            display: block;
+        }
+
+        .link-checkbox:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
+        }
+
+        .link-checkbox:focus {
+            box-shadow: 0 0 0 4px hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2);
         }
 
         .link-actions {
@@ -790,9 +1021,9 @@
         }
 
         .action-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: var(--radius);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             background: var(--surface-color);
             color: var(--text-secondary);
@@ -801,25 +1032,24 @@
             align-items: center;
             justify-content: center;
             transition: var(--transition);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
         }
 
         .action-btn:hover {
-            background: var(--secondary-bg);
-            color: var(--text-main);
-            border-color: var(--text-secondary);
-            transform: translateY(-1px);
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-2px) scale(1.05);
         }
 
         .action-btn.delete:hover {
-            color: var(--error);
+            color: #ffffff;
             border-color: var(--error);
-            background: var(--secondary-bg);
+            background: var(--error);
         }
         
         .action-btn:active {
-            transform: scale(0.92);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            transform: scale(0.95);
         }
 
         /* Confirm Modal */
@@ -1155,7 +1385,7 @@
         }
 
         .brand-text {
-            background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, #60a5fa 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -1204,20 +1434,26 @@
         }
 
         .toast {
-            background: var(--surface-color);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             color: var(--text-main);
-            padding: 14px 20px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
             box-shadow: var(--shadow-lg); 
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             font-size: 0.95rem;
-            font-weight: 500;
-            /* Animation for desktop */
-            animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            max-width: 360px;
+            font-weight: 600;
+            animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 380px;
+        }
+
+        @keyframes toast-in {
+            from { transform: translateX(30px) scale(0.9); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
         }
 
         @keyframes slideInRight {
@@ -1276,25 +1512,108 @@
             }
         }
 
-        /* Batch List */
+        /* Batch List & Items */
         .batch-list {
-            max-height: 240px;
+            max-height: 280px;
             overflow-y: auto;
-            margin-top: 12px;
+            margin-top: 16px;
+            border-radius: var(--radius-sm);
+            background: var(--secondary-bg);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            background: var(--surface-color);
         }
 
         .batch-item {
-            padding: 12px;
+            padding: 14px 18px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: var(--transition);
+        }
+
+        .batch-item:hover {
+            background: var(--surface-color);
         }
 
         .batch-item:last-child { border-bottom: none; }
+
+        .batch-item-info {
+            overflow: hidden;
+            margin-right: 12px;
+            flex: 1;
+        }
+
+        .batch-item-url {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .batch-item-original {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* States */
+        .empty-state, .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--glass-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(8px);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .state-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
+
+        .state-icon i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .state-title {
+            color: var(--text-main);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .state-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Global Entry Animation */
+        .fade-in-up {
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
 
         /* Top Left Container for API Docs */
         .top-left-container {
@@ -1552,27 +1871,26 @@
     </div>
 
     <div class="container">
-        <!-- 左上角 API 设置 -->
-        <div class="top-left-container">
-            <div class="settings-btn" onclick="openSettings()" title="设置">
-                <i class="fas fa-cog"></i>
-            </div>
-        </div>
-
-        <!-- 设置按钮和GitHub链接 -->
+        <!-- 顶部工具栏 (主题切换) -->
         <div class="settings-btn-container">
             <div class="theme-toggle" onclick="toggleTheme()" title="切换主题">
                 <i class="fas fa-moon"></i>
             </div>
         </div>
 
-        <div class="header">
-            <img src="/shortlink.png" alt="短链服务" class="header-logo">
+        <!-- Header -->
+        <header class="header fade-in-up">
+            <img src="/shortlink.png" alt="Logo" class="header-logo">
             <h1>短链服务</h1>
-            <p>快速生成、管理和追踪您的短链接，支持自定义短码和有效期控制</p>
-        </div>
+            <p>简单、高效、可靠的短链接生成服务</p>
+        </header>
 
-        <div class="card">
+        <main class="fade-in-up stagger-1">
+            <div class="card">
+                <!-- 设置按钮集成到卡片右上角 -->
+                <div class="settings-btn in-card" onclick="openSettings()" title="API 设置">
+                    <i class="fas fa-cog"></i>
+                </div>
             <div class="tabs-container">
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab('single')" id="tab-single">
@@ -1624,6 +1942,13 @@
                     </div>
                 </div>
 
+                <div class="input-group">
+                    <label>备注/昵称 (可选)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-edit"></i>
+                        <input type="text" id="linkTitle" placeholder="给短链起个名字，方便识别" maxlength="50">
+                    </div>
+                </div>
                 <button class="btn" onclick="createShortLink()" id="createBtn">
                     <span class="btn-text">生成短链</span>
                     <div class="loading-spinner" style="display: none;"></div>
@@ -1674,10 +1999,18 @@
                     </div>
                 </div>
 
-                <button class="btn" onclick="createBatchShortLinks()" id="batchBtn">
-                    <span class="btn-text">批量生成</span>
+                <button class="btn" onclick="createBatchShortLinks()" id="batchBtn" style="margin-top: 20px;">
+                    <span class="btn-text">批量生成短链</span>
                     <div class="loading-spinner" style="display: none;"></div>
                 </button>
+
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>统一备注 (可选)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-edit"></i>
+                        <input type="text" id="batchTitle" placeholder="为这批链接设置相同的备注" maxlength="50">
+                    </div>
+                </div>
 
                 <div class="result-card" id="batchResult">
                     <div class="result-header" style="justify-content: space-between;">
@@ -1693,11 +2026,24 @@
 
         <div class="links-section">
             <div class="links-header">
-                <h2><i class="fas fa-history" style="color: var(--primary);"></i> 最近记录</h2>
                 <button class="refresh-btn" onclick="loadLinks()">
                     <i class="fas fa-sync-alt"></i> 刷新
                 </button>
             </div>
+
+            <!-- 批量操作工具栏 -->
+            <div id="batchActionBar" style="display: none; align-items: center; justify-content: space-between; background: var(--primary-light); border: 1px solid var(--primary); border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px; animation: slideDown 0.3s ease;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--primary); font-weight: 700; font-size: 0.95rem;">
+                        <input type="checkbox" id="selectAll" class="link-checkbox" onclick="toggleSelectAll()"> 全选
+                    </label>
+                    <span id="selectedCount" style="font-size: 0.9rem; color: var(--text-secondary);">已选 0 项</span>
+                </div>
+                <button class="btn" onclick="deleteBatch()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--error); box-shadow: none;">
+                    <i class="far fa-trash-alt"></i> 批量删除
+                </button>
+            </div>
+
             <div id="linksContainer"></div>
         </div>
 
@@ -1752,9 +2098,49 @@
     <script>
         const API_BASE = window.location.origin;
         let currentBatchResults = [];
+        let selectedCodes = new Set();
         // 分页状态
         let currentPage = 1;
         const pageSize = 5;
+
+        // --- Mock Data for Testing ---
+        const MOCK_LINKS = [
+            {
+                short_code: "google",
+                short_url: window.location.origin + "/google",
+                original_url: "https://www.google.com",
+                created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+                click_count: 128,
+                expires_at: null,
+                title: "Google Search"
+            },
+            {
+                short_code: "github",
+                short_url: window.location.origin + "/github",
+                original_url: "https://github.com/Sube3494/shortlinks",
+                created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+                click_count: 56,
+                expires_at: new Date(Date.now() + 86400000 * 30).toISOString(),
+                title: "Shortlinks Project"
+            },
+            {
+                short_code: "expired",
+                short_url: window.location.origin + "/expired",
+                original_url: "https://example.com/old",
+                created_at: new Date(Date.now() - 86400000 * 60).toISOString(),
+                click_count: 12,
+                expires_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+                title: "Expired Demo"
+            }
+        ];
+        // 自动判定开发环境，显示/隐藏业务演示入口
+        const isDev = window.location.hostname === 'localhost' || 
+                      window.location.hostname === '127.0.0.1' || 
+                      window.location.protocol === 'file:';
+        
+        // 支持通过 URL 参数 ?mock 强制开启预览模式
+        let useMockData = new URLSearchParams(window.location.search).has('mock');
+        // -----------------------------
 
         // 初始化
         window.onload = () => {
@@ -2048,6 +2434,9 @@
                         data.expires_in_hours = val;
                     }
                 }
+                
+                const title = document.getElementById('linkTitle').value.trim();
+                if (title) data.title = title;
 
                 const res = await fetch(`${API_BASE}/api/shorten`, {
                     method: 'POST',
@@ -2072,7 +2461,8 @@
                     document.getElementById('longUrl').value = '';
                     document.getElementById('customCode').value = '';
                     document.getElementById('expiresValue').value = '';
-                    document.getElementById('expiresUnit').value = 'hours'; // Reset unit
+                    document.getElementById('linkTitle').value = '';
+                    document.getElementById('expiresUnit').value = 'minutes'; // Reset unit
                     loadLinks(1);  // 重置到第一页
                     showToast('创建成功', 'success');
                 } else {
@@ -2116,6 +2506,7 @@
                 const data = { urls };
                 const expiresValue = document.getElementById('batchExpiresValue').value.trim();
                 const expiresUnit = document.getElementById('batchExpiresUnit').value;
+                const batchTitle = document.getElementById('batchTitle').value.trim();
                 
                 if (expiresValue) {
                     const val = parseInt(expiresValue);
@@ -2127,6 +2518,7 @@
                         data.expires_in_hours = val;
                     }
                 }
+                if (batchTitle) data.title = batchTitle;
 
                 const res = await fetch(`${API_BASE}/api/shorten/batch`, {
                     method: 'POST',
@@ -2138,13 +2530,13 @@
 
                 if (res.ok) {
                     currentBatchResults = result;
-                    const html = result.map(link => {
+                    const html = result.map((link, index) => {
                         const encodedOriginalUrl = encodeURI(link.original_url);
                         return `
-                            <div class="batch-item">
-                                <div style="overflow: hidden; margin-right: 10px;">
-                                    <div style="color: var(--primary); font-weight: 600;">${link.short_url}</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${encodedOriginalUrl}</div>
+                            <div class="batch-item fade-in-up" style="animation-delay: ${index * 0.05}s">
+                                <div class="batch-item-info">
+                                    <div class="batch-item-url">${link.short_url}</div>
+                                    <div class="batch-item-original">${encodedOriginalUrl}</div>
                                 </div>
                                 <button class="icon-btn" onclick="copyText('${link.short_url}')">
                                     <i class="far fa-copy"></i>
@@ -2157,7 +2549,8 @@
                     document.getElementById('batchResult').style.display = 'block';
                     document.getElementById('batchUrls').value = '';
                     document.getElementById('batchExpiresValue').value = '';
-                    document.getElementById('batchExpiresUnit').value = 'hours';
+                    document.getElementById('batchTitle').value = '';
+                    document.getElementById('batchExpiresUnit').value = 'minutes';
                     loadLinks(1);  // 重置到第一页
                     showToast(`批量创建成功 ${result.length} 个`, 'success');
                 } else {
@@ -2179,80 +2572,112 @@
             currentPage = page;
             const skip = (page - 1) * pageSize;
             
+            // 清理选择状态
+            selectedCodes.clear();
+            updateBatchBar();
+            
             const container = document.getElementById('linksContainer');
-            container.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="loading-spinner" style="border-color: var(--primary-light); border-top-color: var(--primary); width: 30px; height: 30px; margin: 0 auto;"></div></div>';
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="loading-spinner" style="width: 40px; height: 40px; border-width: 3px; border-color: rgba(99, 102, 241, 0.1); border-top-color: var(--primary);"></div>
+                    <div class="state-desc" style="margin-top: 16px;">正在加载您的链接...</div>
+                </div>`;
 
             try {
-                const res = await fetch(`${API_BASE}/api/list?skip=${skip}&limit=${pageSize}`, { headers: getHeaders() });
-                
-                // 检查认证错误
-                if (res.status === 401 || res.status === 403) {
-                    // 区分未设置密钥和密钥错误
-                    const isInvalidKey = res.status === 403;
-                    const iconClass = isInvalidKey ? 'fa-exclamation-triangle' : 'fa-key';
-                    const iconColor = isInvalidKey ? 'var(--error)' : 'var(--primary)';
-                    const iconBg = isInvalidKey ? 'rgba(239, 68, 68, 0.1)' : 'var(--primary-light)';
-                    const title = isInvalidKey ? 'API 密钥无效' : '此服务需要 API 密钥';
-                    const message = isInvalidKey 
-                        ? '您保存的密钥无效或已过期，请检查后重新设置' 
-                        : '请点击左上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用';
+                let links = [];
+                if (useMockData) {
+                    // 模拟网络延迟
+                    await new Promise(r => setTimeout(r, 500));
+                    links = MOCK_LINKS.slice(skip, skip + pageSize);
+                } else {
+                    const res = await fetch(`${API_BASE}/api/list?skip=${skip}&limit=${pageSize}`, { headers: getHeaders() });
                     
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: var(--secondary-bg); border-radius: var(--radius); border: 1px solid var(--border-color);">
-                            <div style="width: 80px; height: 80px; background: ${iconBg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                <i class="fas ${iconClass}" style="font-size: 2.5rem; color: ${iconColor};"></i>
-                            </div>
-                            <p style="color: var(--text-main); font-size: 1.1rem; font-weight: 600; margin-bottom: 12px;">${title}</p>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem;">${message}</p>
-                        </div>`;
-                    return;
+                    // 检查认证错误
+                    if (res.status === 401 || res.status === 403) {
+                        const isInvalidKey = res.status === 403;
+                        const iconColor = isInvalidKey ? 'var(--error)' : 'var(--primary)';
+                        const iconBg = isInvalidKey ? 'rgba(239, 68, 68, 0.1)' : 'var(--primary-light)';
+                        const title = isInvalidKey ? 'API 密钥无效' : '此服务需要 API 密钥';
+                        const message = isInvalidKey 
+                            ? '您保存的密钥无效或已过期，请检查后重新设置' 
+                            : '请点击左上角设置图标 <i class="fas fa-cog" style="color: var(--primary);"></i> 填写密钥后使用';
+                        
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <div class="state-icon" style="background: ${iconBg}">
+                                    <i class="fas ${isInvalidKey ? 'fa-exclamation-triangle' : 'fa-key'}" style="color: ${iconColor};"></i>
+                                </div>
+                                <p class="state-desc">${message}</p>
+                                ${isDev ? `
+                                <button class="btn-outline" style="margin-top: 20px; width: auto;" onclick="enableMockData()">
+                                    <i class="fas fa-vial"></i> 加载测试数据 (预览模式)
+                                </button>` : ''}
+                            </div>`;
+                        return;
+                    }
+                    
+                    if (!res.ok) throw new Error('加载失败');
+                    links = await res.json();
                 }
-                
-                if (!res.ok) throw new Error('加载失败');
-                const links = await res.json();
 
                 if (!links.length && page === 1) {
                     container.innerHTML = `
-                        <div style="text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: var(--backdrop);">
-                            <div style="width: 80px; height: 80px; background: var(--input-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                <i class="fas fa-inbox" style="font-size: 2.5rem; color: var(--text-secondary); opacity: 0.5;"></i>
+                        <div class="empty-state">
+                            <div class="state-icon">
+                                <i class="fas fa-inbox"></i>
                             </div>
-                            <p style="color: var(--text-secondary); font-size: 1.1rem;">暂无记录，快来创建一个吧！</p>
+                            <h3 class="state-title">空空如也</h3>
+                            <p class="state-desc">暂无记录，快来创建一个吧！</p>
+                            ${isDev ? `
+                            <button class="btn" style="margin-top: 20px; width: auto;" onclick="enableMockData()">
+                                <i class="fas fa-vial"></i> 加载测试数据
+                            </button>` : ''}
                         </div>`;
                     updatePagination(0);
                     return;
                 }
 
-                container.innerHTML = links.map(link => {
+                container.innerHTML = links.map((link, index) => {
                     const isExpired = link.expires_at && parseApiDate(link.expires_at) < new Date();
-                    const expiredStyle = isExpired ? 'opacity: 0.75; border-color: var(--error);' : '';
+                    const isSelected = selectedCodes.has(link.short_code);
                     
                     return `
-                        <div class="link-card" style="${expiredStyle}">
-                            <div class="link-info" style="flex: 1; min-width: 0;">
-                                <h3>
-                                    <a href="${link.short_url}" target="_blank">${link.short_url}</a>
-                                    ${isExpired ? '<span class="link-tag expired-tag" style="font-size: 0.75rem; margin-left: 10px;">已过期</span>' : ''}
-                                </h3>
-                                <div class="link-meta">
-                                    <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
-                                    <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count}</span>
-                                    ${link.expires_at ? 
-                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
-                                        '<span class="link-tag"><i class="fas fa-infinity"></i> 永久</span>'}
+                        <div class="link-card fade-in-up ${isExpired ? 'expired' : ''}" 
+                             style="animation-delay: ${index * 0.1}s; ${isSelected ? 'background: var(--selection-bg); border-color: var(--primary);' : ''}">
+                            <div style="display: flex; align-items: flex-start; gap: 16px; flex: 1; min-width: 0;">
+                                <div style="padding-top: 1px;">
+                                    <input type="checkbox" class="link-checkbox" 
+                                        onclick="toggleSelection('${link.short_code}', event)" 
+                                        ${isSelected ? 'checked' : ''}>
+                                </div>
+                                <div class="link-info">
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+                                        <h3 style="margin: 0; font-size: 1.05rem;">
+                                            <a href="${link.short_url}" target="_blank">${link.short_url}</a>
+                                        </h3>
+                                        ${link.title ? `<span style="background: var(--primary-light); color: var(--primary); padding: 2px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);">${link.title}</span>` : ''}
+                                        ${isExpired ? '<span class="expired-tag">已过期</span>' : ''}
+                                    </div>
+                                    <div class="link-meta">
+                                        <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
+                                        <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count} 访问</span>
+                                        ${link.expires_at ? 
+                                            `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
+                                            '<span class="link-tag"><i class="fas fa-infinity"></i> 永久有效</span>'}
+                                    </div>
                                 </div>
                             </div>
                             <div class="link-actions">
                                 <button class="action-btn" onclick="copyText('${link.short_url}')" title="复制">
                                     <i class="far fa-copy"></i>
                                 </button>
-                                <button class="action-btn" onclick="window.open('${link.short_url}', '_blank')" title="打开">
+                                <button class="action-btn" onclick="window.open('${link.short_url}', '_blank')" title="立即开启">
                                     <i class="fas fa-external-link-alt"></i>
                                 </button>
-                                <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细">
-                                    <i class="fas fa-info-circle"></i>
+                                <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细数据">
+                                    <i class="fas fa-chart-line"></i>
                                 </button>
-                                <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="删除">
+                                <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="彻底删除">
                                     <i class="far fa-trash-alt"></i>
                                 </button>
                             </div>
@@ -2264,7 +2689,23 @@
                 updatePagination(links.length);
                 
             } catch (err) {
-                container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius);">加载失败: ${err.message}</div>`;
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="state-icon" style="background: rgba(239, 68, 68, 0.1);">
+                            <i class="fas fa-link-slash" style="color: var(--error);"></i>
+                        </div>
+                        <h3 class="state-title">服务连接失败</h3>
+                        <p class="state-desc">无法连接到后端 API，请检查服务器状态或 API 密钥。</p>
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                            <button class="btn" style="width: auto;" onclick="loadLinks(1)">
+                                <i class="fas fa-sync-alt"></i> 重试
+                            </button>
+                            ${isDev ? `
+                            <button class="btn-outline" style="width: auto;" onclick="enableMockData()">
+                                <i class="fas fa-vial"></i> 加载测试数据
+                            </button>` : ''}
+                        </div>
+                    </div>`;
             }
         }
 
@@ -2312,24 +2753,135 @@
         }
 
         async function deleteLink(code) {
-            showConfirm('确定要删除这个短链吗? 此操作无法撤销。', async () => {
-                try {
-                    const res = await fetch(`${API_BASE}/api/${code}`, {
-                        method: 'DELETE',
-                        headers: getHeaders()
-                    });
-                    if (res.ok) {
-                        showToast('删除成功', 'success');
-                        loadLinks(1);  // 重置到第一页
-                    } else {
-                        showToast('删除失败', 'error');
-                    }
-                } catch (err) {
-                    showToast('请求失败', 'error');
+            const confirmed = await showConfirm('确定要删除这个短链吗? 此操作无法撤销。');
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/${code}`, {
+                    method: 'DELETE',
+                    headers: getHeaders()
+                });
+                if (res.ok) {
+                    showToast('删除成功', 'success');
+                    loadLinks(1);  // 重置到第一页
+                } else {
+                    showToast('删除失败', 'error');
                 }
-            });
+            } catch (err) {
+                showToast('请求失败', 'error');
+            }
         }
 
+        // 批量选择逻辑
+        function toggleSelection(code, e) {
+            // 阻止冒泡防止触发可能的卡片点击事件
+            e.stopPropagation();
+            
+            const checkbox = e.target;
+            if (selectedCodes.has(code)) {
+                selectedCodes.delete(code);
+                checkbox.checked = false;
+            } else {
+                selectedCodes.add(code);
+                checkbox.checked = true;
+            }
+            
+            updateBatchBar();
+            
+            // 局部更新卡片样式
+            const card = checkbox.closest('.link-card');
+            if (selectedCodes.has(code)) {
+                card.style.background = 'var(--selection-bg)';
+                card.style.borderColor = 'var(--primary)';
+            } else {
+                card.style.background = '';
+                card.style.borderColor = '';
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.link-checkbox');
+            checkboxes.forEach(cb => {
+                // Extract code from onclick attribute
+                const onclickAttr = cb.getAttribute('onclick');
+                const match = onclickAttr.match(/'(.*?)'/);
+                const code = match ? match[1] : null;
+
+                if (code) {
+                    if (selectAll.checked) {
+                        selectedCodes.add(code);
+                        cb.checked = true;
+                    } else {
+                        selectedCodes.delete(code);
+                        cb.checked = false;
+                    }
+                    const card = cb.closest('.link-card');
+                    if (selectedCodes.has(code)) {
+                        card.style.background = 'var(--selection-bg)';
+                        card.style.borderColor = 'var(--primary)';
+                    } else {
+                        card.style.background = '';
+                        card.style.borderColor = '';
+                    }
+                }
+            });
+            updateBatchBar();
+        }
+
+        function updateBatchBar() {
+            const bar = document.getElementById('batchActionBar');
+            const countLabel = document.getElementById('selectedCount');
+            const selectAll = document.getElementById('selectAll');
+            
+            if (selectedCodes.size > 0) {
+                bar.style.display = 'flex';
+                countLabel.textContent = `已选 ${selectedCodes.size} 项`;
+                
+                // 更新全选框状态
+                const checkboxes = document.querySelectorAll('.link-checkbox');
+                if (checkboxes.length > 0) {
+                    let allChecked = true;
+                    checkboxes.forEach(cb => {
+                        const onclickAttr = cb.getAttribute('onclick');
+                        const match = onclickAttr.match(/'(.*?)'/);
+                        const code = match ? match[1] : null;
+                        if (code && !selectedCodes.has(code)) allChecked = false;
+                    });
+                    selectAll.checked = allChecked;
+                }
+            } else {
+                bar.style.display = 'none';
+                selectAll.checked = false;
+            }
+        }
+
+        async function deleteBatch() {
+            if (selectedCodes.size === 0) return;
+            
+            const confirmed = await showConfirm(`确认删除选中的 ${selectedCodes.size} 条记录吗？此操作不可撤销。`);
+            if (!confirmed) return;
+            
+            try {
+                const res = await fetch(`${API_BASE}/api/delete/batch`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ codes: Array.from(selectedCodes) })
+                });
+
+                if (res.ok) {
+                    showToast('批量删除成功', 'success');
+                    loadLinks(currentPage);
+                } else {
+                    const result = await res.json();
+                    showToast(result.error || '批量删除失败', 'error');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // 详细信息
         async function showStats(code, originalUrl) {
             const modal = document.getElementById('statsModal');
             const statsGrid = document.getElementById('statsGrid');
@@ -2553,6 +3105,12 @@
                 keyInfoDiv.style.display = 'none';
             }
         }
+        function enableMockData() {
+            useMockData = true;
+            loadLinks(1);
+            showToast('已加载测试演示数据', 'success');
+        }
+
         // 立即初始化主题
         initTheme();
     </script>

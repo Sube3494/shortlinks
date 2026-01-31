@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const shortLinkCreateSchema = z.object({
   url: z.string().url('无效的URL格式'),
   custom_code: z.string().min(4).max(10).regex(/^[a-zA-Z0-9]+$/).optional(),
+  title: z.string().max(50, '备注长度不能超过50个字符').optional(),
   expires_in_days: z.number().positive().optional(),
   expires_in_hours: z.number().positive().optional(),
   expires_in_minutes: z.number().positive().optional(),
@@ -14,6 +15,7 @@ export type ShortLinkCreate = z.infer<typeof shortLinkCreateSchema>;
 // 批量短链创建请求
 export const batchShortLinkCreateSchema = z.object({
   urls: z.array(z.string().url()),
+  title: z.string().max(50, '备注长度不能超过50个字符').optional(),
   expires_in_days: z.number().positive().optional(),
   expires_in_hours: z.number().positive().optional(),
   expires_in_minutes: z.number().positive().optional(),
@@ -27,6 +29,7 @@ export const shortLinkResponseSchema = z.object({
   short_url: z.string(),
   original_url: z.string(),
   created_at: z.date(),
+  title: z.string().nullable(),
   click_count: z.number(),
   last_accessed: z.date().nullable(),
   expires_at: z.date().nullable(),

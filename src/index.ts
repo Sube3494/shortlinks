@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { getDB } from './db';
 import { shortlinks, apiKeys } from './db/schema';
 import { verifyAPIKey, verifyAdminKey } from './middleware/auth';
@@ -185,6 +185,7 @@ app.post('/api/shorten', verifyAPIKey, async (c) => {
         short_code: existing.shortCode,
         short_url: `${baseURL}/${existing.shortCode}`,
         original_url: existing.originalUrl,
+        title: existing.title,
         created_at: existing.createdAt,
         click_count: existing.clickCount,
         last_accessed: existing.lastAccessed,
@@ -229,6 +230,7 @@ app.post('/api/shorten', verifyAPIKey, async (c) => {
       urlHash,
       expiresAt,
       createdByKeyId: keyId,
+      title: data.title,
     })
     .returning();
   
@@ -249,6 +251,7 @@ app.post('/api/shorten', verifyAPIKey, async (c) => {
     short_code: newLink.shortCode,
     short_url: `${baseURL}/${newLink.shortCode}`,
     original_url: newLink.originalUrl,
+    title: newLink.title,
     created_at: newLink.createdAt,
     click_count: newLink.clickCount,
     last_accessed: newLink.lastAccessed,
@@ -288,6 +291,7 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
           short_code: existing.shortCode,
           short_url: `${baseURL}/${existing.shortCode}`,
           original_url: existing.originalUrl,
+          title: existing.title,
           created_at: existing.createdAt,
           click_count: existing.clickCount,
           last_accessed: existing.lastAccessed,
@@ -314,6 +318,7 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
           urlHash,
           expiresAt,
           createdByKeyId: keyId,
+          title: data.title,
         })
         .returning();
       
@@ -323,6 +328,7 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
         short_code: newLink.shortCode,
         short_url: `${baseURL}/${newLink.shortCode}`,
         original_url: newLink.originalUrl,
+        title: newLink.title,
         created_at: newLink.createdAt,
         click_count: newLink.clickCount,
         last_accessed: newLink.lastAccessed,
@@ -424,11 +430,35 @@ app.get('/api/info/:code', verifyAPIKey, async (c) => {
     short_code: link.shortCode,
     short_url: `${baseURL}/${link.shortCode}`,
     original_url: link.originalUrl,
+    title: link.title,
     created_at: link.createdAt,
     click_count: link.clickCount,
     last_accessed: link.lastAccessed,
     expires_at: link.expiresAt,
   });
+});
+
+// API: 批量删除短链
+app.post('/api/delete/batch', verifyAPIKey, async (c) => {
+  const body = await c.req.json();
+  const codes = body.codes;
+  
+  if (!Array.isArray(codes) || codes.length === 0) {
+    return c.json({ error: '无效的短码列表' }, 400);
+  }
+  
+  const db = await getDB(c.env.DB);
+  const keyId = c.get('keyId') as number | null;
+  
+  // 如果有认证，限制只能删除自己创建的
+  const conditions = [inArray(shortlinks.shortCode, codes)];
+  if (keyId) {
+    conditions.push(eq(shortlinks.createdByKeyId, keyId));
+  }
+  
+  await db.delete(shortlinks).where(and(...conditions));
+  
+  return c.json({ message: `成功删除 ${codes.length} 条记录` });
 });
 
 // API: 列出所有短链
@@ -456,6 +486,7 @@ app.get('/api/list', verifyAPIKey, async (c) => {
       short_code: link.shortCode,
       short_url: `${baseURL}/${link.shortCode}`,
       original_url: link.originalUrl,
+      title: link.title,
       created_at: link.createdAt,
       click_count: link.clickCount,
       last_accessed: link.lastAccessed,

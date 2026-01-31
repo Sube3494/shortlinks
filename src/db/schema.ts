@@ -13,6 +13,7 @@ export const shortlinks = sqliteTable('shortlinks', {
   lastAccessed: integer('last_accessed', { mode: 'timestamp' }),
   expiresAt: integer('expires_at', { mode: 'timestamp' }),
   createdByKeyId: integer('created_by_key_id'),
+  title: text('title'),
 });
 
 // APIKey 表
