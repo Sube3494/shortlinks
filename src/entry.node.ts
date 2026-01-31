@@ -14,6 +14,10 @@ const dbUrl = process.env.DATABASE_URL || 'file:./data/shortlinks.db';
 
 import { execSync } from 'child_process';
 
+const client = createClient({
+  url: dbUrl,
+});
+
 // 确保目录存在
 if (dbUrl.startsWith('file:')) {
   const dbPath = dbUrl.slice(5);
@@ -25,18 +29,28 @@ if (dbUrl.startsWith('file:')) {
   // 自动同步数据库结构 (Auto-Migration)
   try {
     console.log('[Database] 正在同步数据库结构...');
-    // 使用本地安装的 drizzle-kit 进行同步
-    const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push' : 'pnpm drizzle-kit push';
+    // 使用 --force 强制推送，避免 Docker 环境下的交互式询问导致挂起或失败
+    const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push --force' : 'pnpm drizzle-kit push --force';
     execSync(cmd, { stdio: 'inherit' });
     console.log('[Database] 数据库结构同步完成');
   } catch (error) {
-    console.error('[Database] 数据库结构同步失败:', error);
+    console.error('[Database] 自动同步失败，尝试手动修复字段...', error);
+    try {
+      // 容错：如果 push 失败（通常是因为并发或锁），尝试手动补全缺失的 title 字段
+      await client.execute({
+        sql: 'ALTER TABLE shortlinks ADD COLUMN title TEXT',
+        args: []
+      });
+      console.log('[Database] 手动补齐 title 字段完成');
+    } catch (manualError: any) {
+      if (manualError?.message?.includes('duplicate column name') || manualError?.message?.includes('already exists')) {
+        console.log('[Database] 字段解析：title 字段已存在');
+      } else {
+        console.error('[Database] 手动修复失败:', manualError);
+      }
+    }
   }
 }
-
-const client = createClient({
-  url: dbUrl,
-});
 
 // 创建一个新的 Hono 实例作为根服务，用于控制中间件顺序
 const server = new Hono();
