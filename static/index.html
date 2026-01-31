@@ -1622,11 +1622,72 @@
             gap: 12px;
         }
 
-        /* Form Grid Row for Responsive Layout */
+        /* Batch Action Button Styles */
+        .batch-action-btn {
+            width: auto;
+            height: 36px;
+            padding: 0 16px;
+            font-size: 0.85rem;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .batch-action-btn.warning {
+            background: var(--warning);
+            color: #fff;
+        }
+
+        .batch-action-btn.danger {
+            background: var(--error);
+            color: #fff;
+        }
+
         .form-grid-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+
+        /* Helper Classes replacing inline styles */
+        .link-item-row {
+            display: flex;
+            align-items: center; /* Desktop 默认居中 */
+            gap: 16px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .link-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .link-title {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .link-badge {
+            padding: 2px 10px; 
+            border-radius: 99px; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+        }
+
+        .title-badge {
+            background: var(--primary-light); 
+            color: var(--primary); 
+            border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);
         }
 
         /* Mobile Optimization */
@@ -1652,19 +1713,36 @@
                 flex-direction: column;
                 align-items: stretch;
                 padding: 16px;
+                padding-right: 48px; /* 右侧留出空间给 absolute 的 checkbox */
                 gap: 12px;
+                position: relative; /* 为 checkbox定位提供锚点 */
             }
             
-            .link-card > div:first-child {
-                display: flex;
-                align-items: flex-start; /* 顶部对齐，防止checkbox在中间 */
-                width: 100%;
-                gap: 12px;
+            .link-item-row {
+                flex-direction: row; /* 保持行布局 */
+                align-items: flex-start; /* 顶部对齐 */
+                gap: 0; /* 移除间距，因为checkbox已经飞走了 */
             }
 
+            .link-checkbox-wrapper {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                height: 24px;
+                width: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2; /* 确保可点击 */
+            }
+            
             .link-checkbox {
-                margin-top: 4px; /* 微调对齐 */
-                flex-shrink: 0; /* 防止压缩 */
+                margin: 0; /* 清除margin */
+                flex-shrink: 0;
+                width: 22px !important;
+                height: 22px !important;
+                min-height: 22px !important; /* 覆盖全局 input min-height 防止拉伸 */
+                min-width: 22px !important;
             }
 
             .link-info {
@@ -1674,18 +1752,22 @@
                 margin-bottom: 0;
             }
             
-            .link-info h3 {
+            .link-title-row {
+                margin-bottom: 6px; /* 减小间距 */
+                align-items: flex-start; /* 顶部对齐 */
+            }
+
+            .link-title {
                 font-size: 1rem;
-                margin-bottom: 8px;
                 line-height: 1.4;
-                word-break: break-all;
+                margin-top: -2px; /* 视觉对齐 */
             }
             
             .link-meta {
                 font-size: 0.75rem;
                 gap: 8px 12px; /* 行间距8px 列间距12px */
                 flex-wrap: wrap;
-                margin-top: 8px;
+                margin-top: 6px;
             }
             
             .link-actions { 
@@ -1724,6 +1806,21 @@
             }
 
 
+            
+            /* Batch Action Bar Mobile Optimization */
+            .batch-action-btn span {
+                display: none;
+            }
+            .batch-action-btn {
+                padding: 0 0; /* Clear horizontal padding */
+                width: 36px; /* Fixed width for icon-only */
+                justify-content: center;
+                min-height: 36px !important; /* Override global mobile min-height */
+                height: 36px !important;
+                border-radius: 50%; /* Make them circular */
+            }
+            
+        /* Form Grid Row for Responsive Layout */
             
             /* Toast Position for Mobile */
             .toast-container {
@@ -1898,6 +1995,12 @@
             </div>
         </div>
 
+        <div class="top-left-container">
+            <div class="settings-btn" onclick="openSettings()" title="API 设置">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+
         <!-- Header -->
         <header class="header fade-in-up">
             <img src="/shortlink.png" alt="Logo" class="header-logo">
@@ -1907,10 +2010,6 @@
 
         <main class="fade-in-up stagger-1">
             <div class="card">
-                <!-- 设置按钮集成到卡片右上角 -->
-                <div class="settings-btn in-card" onclick="openSettings()" title="API 设置">
-                    <i class="fas fa-cog"></i>
-                </div>
             <div class="tabs-container">
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab('single')" id="tab-single">
@@ -2049,6 +2148,9 @@
                 <button class="refresh-btn" onclick="loadLinks()">
                     <i class="fas fa-sync-alt"></i> 刷新
                 </button>
+                <button class="refresh-btn" onclick="loadMockData()" style="margin-left: 10px;">
+                    <i class="fas fa-vial"></i> 测试数据
+                </button>
             </div>
 
             <!-- 批量操作工具栏 -->
@@ -2060,11 +2162,11 @@
                     <span id="selectedCount" style="font-size: 0.9rem; color: var(--text-secondary);">已选 0 项</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn" onclick="deleteExpired()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--warning); box-shadow: none;">
-                        <i class="fas fa-hourglass-end"></i> 清除过期
+                    <button class="btn batch-action-btn warning" onclick="deleteExpired()">
+                        <i class="fas fa-hourglass-end"></i> <span>清除过期</span>
                     </button>
-                    <button class="btn" onclick="deleteBatch()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--error); box-shadow: none;">
-                        <i class="far fa-trash-alt"></i> 批量删除
+                    <button class="btn batch-action-btn danger" onclick="deleteBatch()">
+                        <i class="far fa-trash-alt"></i> <span>批量删除</span>
                     </button>
                 </div>
             </div>
@@ -2599,65 +2701,12 @@
                 const links = await res.json();
 
                 if (!links.length && page === 1) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="state-icon">
-                                <i class="fas fa-inbox"></i>
-                            </div>
-                            <h3 class="state-title">空空如也</h3>
-                            <p class="state-desc">暂无记录，快来创建一个吧！</p>
-                        </div>`;
+                    renderEmptyState(container);
                     updatePagination(0);
                     return;
                 }
 
-                container.innerHTML = links.map((link, index) => {
-                    const isExpired = link.expires_at && parseApiDate(link.expires_at) < new Date();
-                    const isSelected = selectedCodes.has(link.short_code);
-                    
-                    return `
-                        <div class="link-card fade-in-up ${isExpired ? 'expired' : ''}" 
-                             style="animation-delay: ${index * 0.1}s; ${isSelected ? 'background: var(--selection-bg); border-color: var(--primary);' : ''}">
-                            <div style="display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0;">
-                                <div style="display: flex;">
-                                    <input type="checkbox" class="link-checkbox" 
-                                        onclick="toggleSelection('${link.short_code}', event)" 
-                                        ${isSelected ? 'checked' : ''}>
-                                </div>
-                                <div class="link-info">
-                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
-                                        <h3 style="margin: 0; font-size: 1.05rem;">
-                                            <a href="${link.short_url}" target="_blank">${link.short_url}</a>
-                                        </h3>
-                                        ${link.title ? `<span style="background: var(--primary-light); color: var(--primary); padding: 2px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; border: 1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1);">${link.title}</span>` : ''}
-                                        ${isExpired ? '<span class="expired-tag">已过期</span>' : ''}
-                                    </div>
-                                    <div class="link-meta">
-                                        <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
-                                        <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count} 访问</span>
-                                        ${link.expires_at ? 
-                                            `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
-                                            '<span class="link-tag"><i class="fas fa-infinity"></i> 永久有效</span>'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="link-actions">
-                                <button class="action-btn" onclick="copyText('${link.short_url}')" title="复制">
-                                    <i class="far fa-copy"></i>
-                                </button>
-                                <button class="action-btn" onclick="window.open('${link.short_url}', '_blank')" title="立即开启">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </button>
-                                <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细数据">
-                                    <i class="fas fa-chart-line"></i>
-                                </button>
-                                <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="彻底删除">
-                                    <i class="far fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                renderLinks(links, container);
                 
                 updatePagination(links.length);
                 
@@ -2677,6 +2726,138 @@
                         </div>
                     </div>`;
             }
+        }
+
+        function renderEmptyState(container) {
+             container.innerHTML = `
+                <div class="empty-state">
+                    <div class="state-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3 class="state-title">空空如也</h3>
+                    <p class="state-desc">暂无记录，快来创建一个吧！</p>
+                </div>`;
+        }
+
+        function renderLinks(links, container) {
+            container.innerHTML = links.map((link, index) => {
+                const isExpired = link.expires_at && parseApiDate(link.expires_at) < new Date();
+                const isSelected = selectedCodes.has(link.short_code);
+                
+                return `
+                    <div class="link-card fade-in-up ${isExpired ? 'expired' : ''}" 
+                            style="animation-delay: ${index * 0.1}s; ${isSelected ? 'background: var(--selection-bg); border-color: var(--primary);' : ''}">
+                        <div class="link-item-row">
+                            <div class="link-checkbox-wrapper">
+                                <input type="checkbox" class="link-checkbox" 
+                                    onclick="toggleSelection('${link.short_code}', event)" 
+                                    ${isSelected ? 'checked' : ''}>
+                            </div>
+                            <div class="link-info">
+                                <div class="link-title-row">
+                                    <h3 class="link-title">
+                                        <a href="${link.short_url}" target="_blank">${link.short_url}</a>
+                                    </h3>
+                                    ${link.title ? `<span class="link-badge title-badge">${link.title}</span>` : ''}
+                                    ${isExpired ? '<span class="expired-tag">已过期</span>' : ''}
+                                </div>
+                                <div class="link-meta">
+                                    <span class="link-tag"><i class="far fa-clock"></i> ${formatDateTime(link.created_at)}</span>
+                                    <span class="link-tag"><i class="far fa-eye"></i> ${link.click_count} 访问</span>
+                                    ${link.expires_at ? 
+                                        `<span class="link-tag ${isExpired ? 'expired-tag' : ''}"><i class="fas fa-hourglass-half"></i> ${formatDateTime(link.expires_at)}</span>` : 
+                                        '<span class="link-tag"><i class="fas fa-infinity"></i> 永久有效</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="link-actions">
+                            <button class="action-btn" onclick="copyText('${link.short_url}')" title="复制">
+                                <i class="far fa-copy"></i>
+                            </button>
+                            <button class="action-btn" onclick="window.open('${link.short_url}', '_blank')" title="立即开启">
+                                <i class="fas fa-external-link-alt"></i>
+                            </button>
+                            ${link.is_mock ? '' : `
+                            <button class="action-btn" onclick="showStats('${link.short_code}', '${link.original_url}')" title="详细数据">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteLink('${link.short_code}')" title="彻底删除">
+                                <i class="far fa-trash-alt"></i>
+                            </button>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadMockData() {
+            // 清理选择状态
+            selectedCodes.clear();
+            updateBatchBar();
+            
+            const container = document.getElementById('linksContainer');
+            // Mock Data
+            const now = new Date();
+            const mockLinks = [
+                {
+                    short_code: 'mock-1',
+                    short_url: `${API_BASE}/mock-1`,
+                    original_url: 'https://example.com',
+                    title: '测试永久链接',
+                    created_at: now.toISOString(),
+                    click_count: 128,
+                    expires_at: null,
+                    is_mock: true
+                },
+                {
+                    short_code: 'mock-2',
+                    short_url: `${API_BASE}/mock-very-long-code-for-testing-layout`,
+                    original_url: 'https://github.com',
+                    title: '超长标题测试：这里是一个非常非常长长长长长长长长长的标题，用于测试移动端换行显示效果是否正常',
+                    created_at: new Date(now.getTime() - 86400000).toISOString(),
+                    click_count: 50,
+                    expires_at: new Date(now.getTime() + 3600000).toISOString(), // 1小时后过期
+                    is_mock: true
+                },
+                {
+                    short_code: 'mock-3',
+                    short_url: `${API_BASE}/expired`,
+                    original_url: 'https://google.com',
+                    title: '已过期链接',
+                    created_at: new Date(now.getTime() - 172800000).toISOString(),
+                    click_count: 0,
+                    expires_at: new Date(now.getTime() - 3600000).toISOString(), // 1小时前过期
+                    is_mock: true
+                },
+                {
+                    short_code: 'mock-4',
+                    short_url: `${API_BASE}/mk4`,
+                    original_url: 'https://bilibili.com',
+                    title: '无标题链接',
+                    created_at: now.toISOString(),
+                    click_count: 9999,
+                    expires_at: null,
+                    is_mock: true
+                },
+                 {
+                    short_code: 'mock-5',
+                    short_url: `${API_BASE}/mk5`,
+                    original_url: 'https://bilibili.com',
+                    title: '无标题链接',
+                    created_at: now.toISOString(),
+                    click_count: 9999,
+                    expires_at: null,
+                    is_mock: true
+                }
+            ];
+
+            renderLinks(mockLinks, container);
+            
+            // 隐藏分页
+            const pagination = document.getElementById('paginationContainer');
+            if (pagination) pagination.style.display = 'none';
+            
+            showToast('已加载测试数据', 'info');
         }
 
         function updatePagination(itemCount) {
