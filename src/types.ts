@@ -3,7 +3,7 @@ import { z } from 'zod';
 // 短链创建请求
 export const shortLinkCreateSchema = z.object({
   url: z.string().url('无效的URL格式'),
-  custom_code: z.string().min(6).max(10).regex(/^[a-zA-Z0-9]+$/).optional(),
+  custom_code: z.string().min(4).max(10).regex(/^[a-zA-Z0-9]+$/).optional(),
   expires_in_days: z.number().positive().optional(),
   expires_in_hours: z.number().positive().optional(),
   expires_in_minutes: z.number().positive().optional(),
