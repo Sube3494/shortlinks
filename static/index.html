@@ -2035,9 +2035,14 @@
                     </label>
                     <span id="selectedCount" style="font-size: 0.9rem; color: var(--text-secondary);">已选 0 项</span>
                 </div>
-                <button class="btn" onclick="deleteBatch()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--error); box-shadow: none;">
-                    <i class="far fa-trash-alt"></i> 批量删除
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" onclick="deleteExpired()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--warning); box-shadow: none;">
+                        <i class="fas fa-hourglass-end"></i> 清除过期
+                    </button>
+                    <button class="btn" onclick="deleteBatch()" style="width: auto; height: 36px; padding: 0 16px; font-size: 0.85rem; background: var(--error); box-shadow: none;">
+                        <i class="far fa-trash-alt"></i> 批量删除
+                    </button>
+                </div>
             </div>
 
             <div id="linksContainer"></div>
@@ -2795,6 +2800,34 @@
                 bar.style.display = 'none';
                 selectAll.checked = false;
             }
+        }
+
+        async function deleteExpired() {
+            showConfirm('确定要清除所有已过期的短链接吗？该操作不可撤销。', async () => {
+                const btn = document.getElementById('confirmBtn');
+                btn.disabled = true;
+                btn.querySelector('.btn-text').style.display = 'none';
+                btn.querySelector('.loading-spinner').style.display = 'block';
+
+                try {
+                    const res = await fetch(`${API_BASE}/api/delete/expired`, {
+                        method: 'POST',
+                        headers: getHeaders()
+                    });
+
+                    if (res.ok) {
+                        showToast('过期短链已清理', 'success');
+                        loadLinks(1);
+                    } else {
+                        const err = await res.json();
+                        showToast(err.error || '清理失败', 'error');
+                    }
+                } catch (e) {
+                    showToast(e.message, 'error');
+                } finally {
+                    closeConfirmModal();
+                }
+            });
         }
 
         async function deleteBatch() {

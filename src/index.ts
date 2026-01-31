@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
-import { eq, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray, lt, isNotNull } from 'drizzle-orm';
 import { getDB } from './db';
 import { shortlinks, apiKeys } from './db/schema';
 import { verifyAPIKey, verifyAdminKey } from './middleware/auth';
@@ -457,6 +457,26 @@ app.post('/api/delete/batch', verifyAPIKey, async (c) => {
   await db.delete(shortlinks).where(and(...conditions));
   
   return c.json({ message: `成功删除 ${codes.length} 条记录` });
+});
+
+// API: 清理过期短链
+app.post('/api/delete/expired', verifyAPIKey, async (c) => {
+  const db = await getDB(c.env.DB);
+  const keyId = c.get('keyId') as number | null;
+  const now = new Date();
+  
+  const conditions = [
+    isNotNull(shortlinks.expiresAt),
+    lt(shortlinks.expiresAt, now)
+  ];
+  
+  if (keyId) {
+    conditions.push(eq(shortlinks.createdByKeyId, keyId));
+  }
+  
+  await db.delete(shortlinks).where(and(...conditions));
+  
+  return c.json({ message: '过期短链已清理' });
 });
 
 // API: 列出所有短链
