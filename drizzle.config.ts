@@ -8,17 +8,13 @@
 import { defineConfig } from 'drizzle-kit';
 import 'dotenv/config';
 
+const dbUrl = process.env.DATABASE_URL || 'file:./data/shortlinks.db';
+
 export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle/migrations',
   dialect: 'sqlite',
-  ...(process.env.DATABASE_URL
-    ? {
-        dbCredentials: {
-          url: process.env.DATABASE_URL,
-        },
-      }
-    : {
-        driver: 'd1-http',
-      }),
+  dbCredentials: {
+    url: dbUrl,
+  },
 });

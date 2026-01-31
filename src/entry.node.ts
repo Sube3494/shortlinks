@@ -24,10 +24,13 @@ if (dbUrl.startsWith('file:')) {
 
   // 自动同步数据库结构 (Auto-Migration)
   try {
+    console.log('[Database] 正在同步数据库结构...');
     // 使用本地安装的 drizzle-kit 进行同步
     const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push' : 'pnpm drizzle-kit push';
     execSync(cmd, { stdio: 'inherit' });
+    console.log('[Database] 数据库结构同步完成');
   } catch (error) {
+    console.error('[Database] 数据库结构同步失败:', error);
   }
 }
 

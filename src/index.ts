@@ -140,7 +140,7 @@ app.get('/api/key/info', verifyAPIKey, async (c) => {
     name: apiKey.name,
     created_at: apiKey.createdAt,
     expires_at: apiKey.expiresAt,
-    is_expired: apiKey.expiresAt ? new Date() > apiKey.expiresAt : false,
+    is_expired: apiKey.expiresAt ? new Date() > new Date(apiKey.expiresAt) : false,
     usage_count: apiKey.usageCount,
     last_used_at: apiKey.lastUsedAt,
   });
@@ -238,13 +238,12 @@ app.post('/api/shorten', verifyAPIKey, async (c) => {
   
   // 更新使用统计（仅在生成成功后）
   if (keyId) {
-    db.update(apiKeys)
+    await db.update(apiKeys)
       .set({
         lastUsedAt: new Date(),
         usageCount: sql`${apiKeys.usageCount} + 1`,
       })
-      .where(eq(apiKeys.id, keyId))
-      .run();
+      .where(eq(apiKeys.id, keyId));
   }
 
   return c.json({
@@ -340,13 +339,12 @@ app.post('/api/shorten/batch', verifyAPIKey, async (c) => {
   
   // 更新使用统计（按创建成功的数量计次）
   if (keyId && results.length > 0) {
-    db.update(apiKeys)
+    await db.update(apiKeys)
       .set({
         lastUsedAt: new Date(),
         usageCount: sql`${apiKeys.usageCount} + ${results.length}`,
       })
-      .where(eq(apiKeys.id, keyId))
-      .run();
+      .where(eq(apiKeys.id, keyId));
   }
 
   return c.json(results);
@@ -468,18 +466,20 @@ app.get('/api/list', verifyAPIKey, async (c) => {
   const baseURL = resolveBaseURL(c);
   
   // 获取分页参数
-  const skip = parseInt(c.req.query('skip') || '0');
-  const limit = Math.min(parseInt(c.req.query('limit') || '20'), 100);
+  const skip = Math.max(0, parseInt(c.req.query('skip') || '0'));
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') || '20'), 100));
   
   // 只显示自己创建的
-  const query = keyId
-    ? db.select().from(shortlinks)
-        .where(eq(shortlinks.createdByKeyId, keyId))
-        .orderBy(desc(shortlinks.createdAt))
-    : db.select().from(shortlinks)
-        .orderBy(desc(shortlinks.createdAt));
-
-  const links = await query.offset(skip).limit(limit);
+  let query = db.select().from(shortlinks);
+  
+  if (keyId) {
+    query = query.where(eq(shortlinks.createdByKeyId, keyId)) as any;
+  }
+  
+  const links = await query
+    .orderBy(desc(shortlinks.createdAt))
+    .offset(skip)
+    .limit(limit);
   
   return c.json(
     links.map((link: any) => ({
