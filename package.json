@@ -4,8 +4,9 @@
   "description": "短链服务 - TypeScript + Cloudflare Workers 版本",
   "main": "src/index.ts",
   "scripts": {
+    "build:node": "tsc",
+    "start:node": "node dist/entry.node.js",
     "dev": "wrangler dev",
-    "start:node": "tsx src/entry.node.ts",
     "deploy": "wrangler deploy",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 execute shortlinks-db --remote --file=./drizzle/migrations/0000_tranquil_dakota_north.sql",
