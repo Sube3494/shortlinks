@@ -405,6 +405,9 @@ app.get('/:code', async (c) => {
 // API: 获取短链信息
 app.get('/api/info/:code', verifyAPIKey, async (c) => {
   const code = c.req.param('code');
+  if (!code) {
+    return c.json({ error: '短链不存在' }, 404);
+  }
   const db = await getDB(c.env.DB);
   const keyId = c.get('keyId') as number | null;
   
@@ -518,6 +521,9 @@ app.get('/api/list', verifyAPIKey, async (c) => {
 // API: 删除短链
 app.delete('/api/:code', verifyAPIKey, async (c) => {
   const code = c.req.param('code');
+  if (!code) {
+    return c.json({ error: '短链不存在' }, 404);
+  }
   const db = await getDB(c.env.DB);
   const keyId = c.get('keyId') as number | null;
   
@@ -633,7 +639,11 @@ app.post('/api/admin/cleanup/trigger', verifyAdminKey, async (c) => {
 
 // 管理员 API: 切换 Key 状态
 app.patch('/api/admin/keys/:id/toggle', verifyAdminKey, async (c) => {
-  const id = parseInt(c.req.param('id'));
+  const idParam = c.req.param('id');
+  const id = idParam ? parseInt(idParam, 10) : NaN;
+  if (Number.isNaN(id)) {
+    return c.json({ error: '无效的 Key ID' }, 400);
+  }
   const db = await getDB(c.env.DB);
   
   const [key] = await db.select().from(apiKeys).where(eq(apiKeys.id, id)).limit(1);
@@ -651,6 +661,9 @@ app.patch('/api/admin/keys/:id/toggle', verifyAdminKey, async (c) => {
 // API: 获取短链统计
 app.get('/api/stats/:code', async (c) => {
   const code = c.req.param('code');
+  if (!code) {
+    return c.json({ error: '短链不存在' }, 404);
+  }
   const db = await getDB(c.env.DB);
   
   const [link] = await db
@@ -673,7 +686,11 @@ app.get('/api/stats/:code', async (c) => {
 
 // 管理员 API: 删除 Key
 app.delete('/api/admin/keys/:id', verifyAdminKey, async (c) => {
-  const id = parseInt(c.req.param('id'));
+  const idParam = c.req.param('id');
+  const id = idParam ? parseInt(idParam, 10) : NaN;
+  if (Number.isNaN(id)) {
+    return c.json({ error: '无效的 Key ID' }, 400);
+  }
   const db = await getDB(c.env.DB);
   
   await db.delete(apiKeys).where(eq(apiKeys.id, id));
