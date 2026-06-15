@@ -12,11 +12,49 @@ import { Hono } from 'hono';
 // 初始化 LibSQL 客户端 (Docker/Node 环境下的 SQLite)
 const dbUrl = process.env.DATABASE_URL || 'file:./data/shortlinks.db';
 
-import { execSync } from 'child_process';
-
 const client = createClient({
   url: dbUrl,
 });
+
+const bootstrapStatements = [
+  `CREATE TABLE IF NOT EXISTS api_keys (
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    key text NOT NULL,
+    name text NOT NULL,
+    created_at integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expires_at integer,
+    last_used_at integer,
+    usage_count integer DEFAULT 0 NOT NULL,
+    is_active integer DEFAULT true NOT NULL
+  )`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS api_keys_key_unique ON api_keys (key)',
+  `CREATE TABLE IF NOT EXISTS shortlinks (
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    short_code text NOT NULL,
+    original_url text NOT NULL,
+    url_hash text,
+    created_at integer DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    click_count integer DEFAULT 0 NOT NULL,
+    last_accessed integer,
+    expires_at integer,
+    created_by_key_id integer,
+    title text
+  )`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS shortlinks_short_code_unique ON shortlinks (short_code)',
+  `CREATE TABLE IF NOT EXISTS system_config (
+    id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    key text NOT NULL,
+    value text NOT NULL,
+    description text,
+    updated_at integer DEFAULT CURRENT_TIMESTAMP NOT NULL
+  )`,
+  'CREATE UNIQUE INDEX IF NOT EXISTS system_config_key_unique ON system_config (key)',
+];
+
+async function columnExists(tableName: string, columnName: string) {
+  const result = await client.execute(`PRAGMA table_info(${tableName})`);
+  return result.rows.some((row: any) => row.name === columnName);
+}
 
 // 确保数据库准备就绪的异步逻辑
 async function initializeDatabase() {
@@ -27,27 +65,21 @@ async function initializeDatabase() {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    // 自动同步数据库结构 (Auto-Migration)
     try {
-      console.log('[Database] 正在同步数据库结构...');
-      const cmd = process.platform === 'win32' ? 'pnpm.cmd drizzle-kit push --force' : 'pnpm drizzle-kit push --force';
-      execSync(cmd, { stdio: 'inherit' });
-      console.log('[Database] 数据库结构同步完成');
-    } catch (error) {
-      console.error('[Database] 自动同步失败，尝试手动修复字段...', error);
-      try {
-        await client.execute({
-          sql: 'ALTER TABLE shortlinks ADD COLUMN title TEXT',
-          args: []
-        });
-        console.log('[Database] 手动补齐 title 字段完成');
-      } catch (manualError: any) {
-        if (manualError?.message?.includes('duplicate column name') || manualError?.message?.includes('already exists')) {
-          console.log('[Database] 字段解析：title 字段已存在');
-        } else {
-          console.error('[Database] 手动修复失败:', manualError);
-        }
+      console.log('[Database] 正在检查并同步本地 SQLite 结构...');
+      for (const statement of bootstrapStatements) {
+        await client.execute(statement);
       }
+
+      if (!(await columnExists('shortlinks', 'title'))) {
+        await client.execute('ALTER TABLE shortlinks ADD COLUMN title TEXT');
+        console.log('[Database] 已为 shortlinks 补齐 title 字段');
+      }
+
+      console.log('[Database] 本地 SQLite 结构已就绪');
+    } catch (error) {
+      console.error('[Database] 本地 SQLite 结构同步失败:', error);
+      throw error;
     }
   }
 }

@@ -14,6 +14,9 @@ RUN pnpm install
 # 复制项目文件
 COPY . .
 
+# 构建 Node 运行时产物
+RUN pnpm run build:node
+
 # 确保 static 和 data 目录存在
 RUN mkdir -p static data
 
@@ -22,4 +25,3 @@ EXPOSE 8000
 
 # 启动命令
 CMD ["pnpm", "run", "start:node"]
-
