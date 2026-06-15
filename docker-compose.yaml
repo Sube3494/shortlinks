@@ -2,13 +2,27 @@ version: '3.8'
 
 services:
   shortlink:
-    build: .
+    build:
+      context: .
+      args:
+        HTTP_PROXY: ""
+        HTTPS_PROXY: ""
+        ALL_PROXY: ""
+        NO_PROXY: "localhost,127.0.0.1"
     container_name: shortlink-app
     restart: unless-stopped
     environment:
       # ==================== 核心配置 ====================
       - ADMIN_KEY=${ADMIN_KEY}                    # [必需] 管理员密钥
       - DATABASE_URL=${DATABASE_URL}              # [可选] 数据库地址
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - ALL_PROXY=
+      - NO_PROXY=localhost,127.0.0.1
+      - http_proxy=
+      - https_proxy=
+      - all_proxy=
+      - no_proxy=localhost,127.0.0.1
       
       # ==================== 可选配置 ====================
       - BASE_URL=${BASE_URL}                      # [可选] 基础 URL
