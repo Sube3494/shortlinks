@@ -41,6 +41,10 @@ data/
 .env
 .env.local
 
+# Bun
+.bun-install/
+.bun-tmp/
+
 # 日志
 
 # Cloudflare

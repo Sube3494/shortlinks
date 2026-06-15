@@ -37,7 +37,7 @@
 - � **开发友好**：
     - 自动数据库迁移 (Auto-Migration)。
     - 完整的 API 文档 (Swagger UI)。
-    - 标准化的 `pnpm` 工作流。
+    - 标准化的 `bun` 工作流。
 
 ---
 
@@ -69,10 +69,9 @@ docker-compose up -d
 最适合追求高性能、零服务器运维的用户。
 
 ### 1. 准备环境
-确保安装了 Node.js 和 Wrangler。
+确保安装了 Bun。
 ```bash
-npm install -g pnpm wrangler
-pnpm install
+bun install
 ```
 
 ### 2. 配置数据库
@@ -82,19 +81,19 @@ cp wrangler.toml.example wrangler.toml
 # 编辑 wrangler.toml，填入你的 database_id（见下步）
 
 # 2. 创建 D1 数据库
-wrangler d1 create shortlinks-db
+bunx wrangler d1 create shortlinks-db
 
 # 3. 初始化表结构 (第一次部署需要)
-pnpm run db:migrate
+bun run db:migrate
 ```
 
 ### 3. 部署上线
 ```bash
 # 1. 登录 Cloudflare 账号 (首次需要)
-npx wrangler login
+bunx wrangler login
 
 # 2. 推送代码
-pnpm run deploy
+bun run deploy
 ```
 你的服务将运行在 Cloudflare 的全球边缘节点上。
 
@@ -105,14 +104,14 @@ pnpm run deploy
 ### 本地开发 (Cloudflare 模式)
 使用 Wrangler 模拟 D1 数据库。
 ```bash
-pnpm dev
+bun run dev
 # 访问 http://localhost:8787
 ```
 
 ### 本地开发 (Node 模式)
 使用本地 SQLite 文件，更快的开发体验。
 ```bash
-pnpm run dev:node
+bun run dev:node
 # 访问 http://localhost:8000
 ```
 

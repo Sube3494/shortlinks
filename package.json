@@ -1,17 +1,18 @@
 {
   "name": "shortlinks",
   "version": "2.0.0",
+  "packageManager": "bun@1.3.13",
   "description": "短链服务 - TypeScript + Cloudflare Workers 版本",
   "main": "src/index.ts",
   "scripts": {
     "build:node": "tsc -p tsconfig.node.json",
-    "start:node": "node dist/entry.node.js",
+    "start:node": "bun dist/entry.node.js",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 execute shortlinks-db --remote --file=./drizzle/migrations/0000_tranquil_dakota_north.sql",
     "db:studio": "drizzle-kit studio",
-    "dev:node": "tsx watch src/entry.node.ts"
+    "dev:node": "bun --watch src/entry.node.ts"
   },
   "keywords": [
     "shortlink",
@@ -24,7 +25,6 @@
     "@cloudflare/workers-types": "^4.20260109.0",
     "@types/node": "^22.10.2",
     "drizzle-kit": "^0.30.0",
-    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "wrangler": "^3.100.0"
   },
