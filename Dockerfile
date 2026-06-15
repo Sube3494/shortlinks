@@ -3,10 +3,10 @@ FROM oven/bun:1.3.13
 WORKDIR /app
 
 # 复制依赖文件
-COPY package.json ./
+COPY package.json bun.lock ./
 
 # 安装依赖
-RUN bun install
+RUN bun install --frozen-lockfile
 
 # 复制项目文件
 COPY . .
