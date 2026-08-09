@@ -1967,6 +1967,183 @@
                 margin-right: 6px !important;
             }
         }
+        /* UI refresh: quieter surfaces, clearer hierarchy, and stronger focus states */
+        body {
+            background:
+                radial-gradient(circle at 10% 0%, rgba(59, 130, 246, .12), transparent 32rem),
+                radial-gradient(circle at 90% 10%, rgba(124, 58, 237, .10), transparent 28rem),
+                var(--bg-color);
+        }
+
+        .container { max-width: 1080px; }
+        .header { padding-top: 28px; }
+        .header h1 { letter-spacing: -.045em; font-size: clamp(2.25rem, 5vw, 3.75rem); }
+        .header p { font-size: 1.05rem; color: var(--text-secondary); }
+        .card { border-radius: 26px; border-color: color-mix(in srgb, var(--primary) 14%, var(--glass-border)); }
+        .tabs { gap: 6px; padding: 5px; border: 1px solid var(--border-color); border-radius: 16px; background: var(--secondary-bg); }
+        .tab { flex: 1; text-align: center; border-radius: 12px; }
+        .tab.active { background: var(--surface-color); color: var(--primary); box-shadow: var(--shadow-sm); }
+        .input-wrapper, .input-with-unit { border-radius: 14px; }
+        .form-grid-row > .input-group { min-width: 0; }
+        .input-with-unit { width: 100%; min-width: 0; }
+        .input-with-unit .input-wrapper { min-width: 0; }
+        .input-with-unit .input-wrapper input { min-width: 0; }
+        .input-with-unit .custom-select { flex: 0 0 104px; min-width: 104px; }
+        .input-with-unit { box-sizing: border-box; overflow: visible; }
+        .input-with-unit > .input-wrapper {
+            height: 100%;
+            min-height: 0;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .input-with-unit > .custom-select {
+            height: 100%;
+            border-left: 1px solid var(--border-color);
+            border-radius: 0 !important;
+            background: transparent;
+        }
+        .input-with-unit:focus-within > .custom-select {
+            border-left: 1px solid var(--primary) !important;
+        }
+        .input-wrapper:focus-within { transform: translateY(-1px); box-shadow: 0 0 0 4px var(--primary-light), var(--shadow-sm); }
+        .input-with-unit,
+        .input-with-unit:focus,
+        .input-with-unit:focus-within {
+            outline: none !important;
+            border-color: var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transform: none !important;
+            isolation: isolate;
+        }
+        .input-with-unit:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light), var(--shadow-sm);
+        }
+        .input-with-unit > .input-wrapper,
+        .input-with-unit > .input-wrapper:focus-within {
+            position: relative;
+            z-index: 0;
+            width: auto;
+            flex: 1 1 auto;
+            display: flex !important;
+            margin: 0 !important;
+            transform: none !important;
+            border: 0 !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+            border-top: 0 !important;
+            border-bottom: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+        .input-with-unit > .input-wrapper::before,
+        .input-with-unit > .input-wrapper::after { display: none !important; }
+        .input-with-unit > .input-wrapper i,
+        .input-with-unit > .input-wrapper i::before,
+        .input-with-unit > .input-wrapper i::after {
+            background: transparent !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            z-index: 2;
+        }
+        .input-with-unit > .input-wrapper { overflow: visible !important; }
+        .input-with-unit > .custom-select {
+            position: relative;
+            z-index: 1;
+            flex: 0 0 104px;
+            min-width: 104px;
+            border-top: 0 !important;
+            border-right: 0 !important;
+            border-bottom: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .input-with-unit {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) 104px;
+            align-items: stretch;
+        }
+        .input-with-unit > .input-wrapper { grid-column: 1; }
+        .input-with-unit > .custom-select { grid-column: 2; grid-row: 1; }
+        .input-with-unit input:focus,
+        .input-with-unit .custom-select:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Rebuilt expiry control: one visual surface, two content zones */
+        .expiry-control {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            height: 52px !important;
+            min-height: 52px !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            background: var(--secondary-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 16px !important;
+            box-shadow: none !important;
+        }
+        .expiry-control:focus-within {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-light) !important;
+        }
+        .expiry-control > .input-wrapper {
+            flex: 1 1 auto !important;
+            width: auto !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .expiry-control > .input-wrapper input {
+            height: 100% !important;
+            min-width: 0 !important;
+            padding: 0 12px 0 44px !important;
+            background: transparent !important;
+            border: 0 !important;
+        }
+        .expiry-control > .input-wrapper i {
+            left: 16px !important;
+            background: none !important;
+        }
+        .expiry-control > .custom-select {
+            flex: 0 0 120px !important;
+            width: 120px !important;
+            height: 100% !important;
+            border: 0 !important;
+            border-left: 1px solid var(--border-color) !important;
+            border-radius: 0 15px 15px 0 !important;
+            background: transparent !important;
+        }
+        .expiry-control:focus-within > .custom-select {
+            border-left-color: var(--primary) !important;
+        }
+        .btn { border-radius: 14px; min-height: 52px; box-shadow: 0 10px 24px -12px var(--primary); }
+        .btn:hover { transform: translateY(-2px); }
+        button, .tab, .custom-select, a { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, a:focus-visible, .tab:focus-visible, .custom-select:focus-visible {
+            outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
+            outline-offset: 3px;
+        }
+        @media (max-width: 800px) {
+            .container { padding-left: 16px; padding-right: 16px; }
+            .card { padding: 20px 16px; border-radius: 22px; }
+            .header-logo { width: 68px; height: 68px; margin-bottom: 16px; }
+            .form-grid-row { gap: 14px; }
+            .form-grid-row { grid-template-columns: minmax(0, 1fr); }
+            .batch-action-btn span { display: none; }
+            .input-with-unit .custom-select { flex-basis: 92px; min-width: 92px; }
+        }
     </style>
 </head>
 <body>
@@ -2061,7 +2238,7 @@
                     </div>
                     <div class="input-group">
                         <label>有效期</label>
-                        <div class="input-with-unit">
+                        <div class="input-with-unit expiry-control">
                             <div class="input-wrapper">
                                 <i class="fas fa-hourglass-half"></i>
                                 <input type="number" id="expiresValue" placeholder="留空永久有效" min="1" inputmode="numeric">
@@ -2119,7 +2296,7 @@
 
                 <div class="input-group">
                     <label>有效期 - 应用于所有链接</label>
-                    <div class="input-with-unit">
+                    <div class="input-with-unit expiry-control">
                         <div class="input-wrapper">
                             <i class="fas fa-hourglass-half"></i>
                             <input type="number" id="batchExpiresValue" placeholder="留空永久有效" min="1" inputmode="numeric">
@@ -3279,6 +3456,24 @@
             }
         }
 
+
+        // 键盘交互：标签页与批量输入支持无鼠标操作
+        document.querySelectorAll('.tab').forEach((tab) => {
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('tabindex', '0');
+            tab.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    tab.click();
+                }
+            });
+        });
+        document.getElementById('batchUrls').addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                event.preventDefault();
+                createBatchShortLinks();
+            }
+        });
 
         // 立即初始化主题
         initTheme();
